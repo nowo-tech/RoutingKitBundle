@@ -94,7 +94,7 @@ PHP);
         self::assertCount(1, $dispatches);
         self::assertInstanceOf(RoutePathsChangedEvent::class, $dispatches[0]);
         self::assertFalse($dispatches[0]->deleted);
-        self::assertSame($saved->id, $storage->findById((string) $saved->id)?->id);
+        self::assertSame($saved->id, $storage->findById($saved->id)?->id);
     }
 
     public function testSaveThrowsWhenValidationFails(): void

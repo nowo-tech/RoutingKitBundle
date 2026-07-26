@@ -17,7 +17,7 @@
         <select id="route_name" name="route_name" required>
             {% for item in routables %}
                 <option value="{{ item.route_name }}" {% if definition and definition.routeName == item.route_name %}selected{% endif %}>
-                    {{ item.label ? item.label ~ ' (' ~ item.route_name ~ ')' : item.route_name }}
+                    {{ item.route_name }}
                 </option>
             {% endfor %}
         </select>

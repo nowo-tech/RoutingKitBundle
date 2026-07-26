@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-26
+
+### Removed
+
+- Optional `label` argument on `#[Routable]`. The CRUD route selector shows the Symfony route **`name`** only.
+
+### Changed
+
+- Panel create/edit `<select>` options use `route_name` as the visible label (no separate display name).
+- Docs and demo controllers no longer pass `label:` to `#[Routable]`.
+- Minor Rector / CS cleanups so `make release-check` (including `rector-dry`) stays green.
+
+### Compatibility
+
+- Unchanged: PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+- **BC note:** remove any `label:` named arguments from `#[Routable(...)]` (see [UPGRADING.md](UPGRADING.md)).
+
 ## [1.0.0] - 2026-07-26
 
 First stable release of **Routing Kit Bundle**.
@@ -55,5 +72,6 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.0.0

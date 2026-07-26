@@ -123,7 +123,7 @@ final class RoutePathValidator
      */
     private function extractPlaceholders(string $path): array
     {
-        preg_match_all('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $path, $m);
+        preg_match_all('/\{([a-zA-Z_]\w*)\}/', $path, $m);
 
         return array_values(array_unique($m[1]));
     }

@@ -27,7 +27,7 @@ final class PublicPathResolver
     public function resolveDefinition(string $routeName, string $locale): ?RoutePathDefinition
     {
         $direct = $this->storage->find($routeName, $locale);
-        if ($direct !== null && $direct->enabled) {
+        if ($direct instanceof RoutePathDefinition && $direct->enabled) {
             return $direct;
         }
 
@@ -37,7 +37,7 @@ final class PublicPathResolver
         }
 
         $fallback = $this->storage->find($routeName, $defaultLocale);
-        if ($fallback !== null && $fallback->enabled) {
+        if ($fallback instanceof RoutePathDefinition && $fallback->enabled) {
             // Re-bind fallback path under requested locale (same path segment)
             return new RoutePathDefinition(
                 routeName: $fallback->routeName,

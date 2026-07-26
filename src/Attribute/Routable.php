@@ -18,7 +18,6 @@ final class Routable
     public function __construct(
         public readonly string $name,
         public readonly array $params = [],
-        public readonly ?string $label = null,
     ) {
     }
 }

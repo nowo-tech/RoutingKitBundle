@@ -32,7 +32,6 @@ final class RoutableControllerDiscovery
     /**
      * @return list<array{
      *     route_name: string,
-     *     label: string|null,
      *     controller: string,
      *     class: string,
      *     method: string,
@@ -57,7 +56,7 @@ final class RoutableControllerDiscovery
 
             $finder = (new Finder())->files()->name('*Controller.php')->in($dir);
             foreach ($finder as $file) {
-                $class = $this->guessClassName($file->getRealPath(), $dir);
+                $class = $this->guessClassName($file->getRealPath());
                 if ($class === null || !class_exists($class)) {
                     continue;
                 }
@@ -65,7 +64,7 @@ final class RoutableControllerDiscovery
                 $ref = new ReflectionClass($class);
                 foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                     $attr = $this->resolveRoutable($ref, $method);
-                    if ($attr === null) {
+                    if (!$attr instanceof Routable) {
                         continue;
                     }
 
@@ -83,7 +82,6 @@ final class RoutableControllerDiscovery
 
                     $out[] = [
                         'route_name' => $attr->name,
-                        'label'      => $attr->label,
                         'controller' => sprintf('%s::%s', $class, $method->getName()),
                         'class'      => $class,
                         'method'     => $method->getName(),
@@ -99,7 +97,6 @@ final class RoutableControllerDiscovery
     /**
      * @return array{
      *     route_name: string,
-     *     label: string|null,
      *     controller: string,
      *     class: string,
      *     method: string,
@@ -172,7 +169,7 @@ final class RoutableControllerDiscovery
         return $classAttrs[0]->newInstance();
     }
 
-    private function guessClassName(string $filePath, string $scanDir): ?string
+    private function guessClassName(string $filePath): ?string
     {
         // Prefer Composer classmap via token parse when available; fall back to PSR-4-ish guess from App\
         $contents = @file_get_contents($filePath);

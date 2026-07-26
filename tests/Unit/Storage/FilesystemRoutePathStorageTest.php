@@ -41,11 +41,11 @@ final class FilesystemRoutePathStorageTest extends TestCase
 
         self::assertNotNull($saved->id);
         self::assertSame('/', $storage->find('app_home', 'en')?->path);
-        self::assertSame($saved->id, $storage->findById((string) $saved->id)?->id);
+        self::assertSame($saved->id, $storage->findById($saved->id)?->id);
         self::assertCount(1, $storage->findByRouteName('app_home'));
         self::assertCount(1, $storage->all());
 
-        $storage->delete((string) $saved->id);
+        $storage->delete($saved->id);
         self::assertCount(0, $storage->all());
     }
 

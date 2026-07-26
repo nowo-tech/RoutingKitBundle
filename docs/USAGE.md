@@ -10,7 +10,6 @@ final class BlogController
 {
     #[Routable(
         name: 'app_blog_show',
-        label: 'Blog post',
         params: [
             new RouteParam('slug', required: true, requirement: '[a-z0-9-]+'),
         ],

@@ -48,7 +48,7 @@ final class RootRedirectSubscriber implements EventSubscriberInterface
         }
 
         $target = match ($this->homeCanonicalStyle) {
-            CanonicalStyle::WithPrefix    => '/' . $this->locales->getDefaultLocale() . ($this->homePath === '/' ? '/' : $this->homePath),
+            CanonicalStyle::WithPrefix    => '/' . $this->locales->getDefaultLocale() . $this->homePath,
             CanonicalStyle::WithoutPrefix => $this->homePath,
         };
 

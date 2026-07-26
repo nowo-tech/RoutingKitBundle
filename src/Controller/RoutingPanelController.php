@@ -54,7 +54,7 @@ final class RoutingPanelController
     public function edit(Request $request, string $id): Response
     {
         $definition = $this->manager->get($id);
-        if ($definition === null) {
+        if (!$definition instanceof RoutePathDefinition) {
             return new Response('Not found', 404);
         }
 
@@ -142,7 +142,7 @@ final class RoutingPanelController
 
     private function isCsrfValid(Request $request): bool
     {
-        if ($this->csrfTokenManager === null) {
+        if (!$this->csrfTokenManager instanceof CsrfTokenManagerInterface) {
             return true;
         }
 

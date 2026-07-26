@@ -48,7 +48,7 @@ use Nowo\RoutingKitBundle\Attribute\RouteParam;
 
 final class PanelArticleController
 {
-    #[Routable(name: 'app_article_show', label: 'Article', params: [
+    #[Routable(name: 'app_article_show', params: [
         new RouteParam('slug', required: true, requirement: '[a-z0-9-]+'),
     ])]
     public function show(string $slug): void
@@ -258,7 +258,6 @@ PHP);
         $existing                        = new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1');
         [$controller, $storage, $router] = $this->createController(
             definitions: [$existing],
-            csrfTokenManager: null,
         );
 
         $deleteResponse = $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'POST'), 'rk_1');

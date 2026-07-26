@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Seo;
 
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
+use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 
 /**
@@ -23,7 +24,7 @@ final class RoutingKitSeoPathProvider
     public function pagePath(string $route, string $locale, ?string $fallbackPath = null): ?string
     {
         $definition = $this->paths->resolveDefinition($route, $locale);
-        if ($definition === null) {
+        if (!$definition instanceof RoutePathDefinition) {
             return $fallbackPath;
         }
 

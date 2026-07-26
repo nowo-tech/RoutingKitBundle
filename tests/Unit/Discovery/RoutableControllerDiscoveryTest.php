@@ -28,7 +28,7 @@ final class DiscoveryArticleController
     #[Routable(name: 'app_article_show', params: [
         new RouteParam('slug', required: true, requirement: '[a-z0-9-]+'),
         new RouteParam('page', required: false, type: 'int', default: 1),
-    ], label: 'Article')]
+    ])]
     public function show(string $slug): void
     {
     }
@@ -154,7 +154,8 @@ PHP);
         $params = $discovery->paramsForRoute('app_article_show');
 
         self::assertNotNull($item);
-        self::assertSame('Article', $item['label']);
+        self::assertSame('app_article_show', $item['route_name']);
+        self::assertArrayNotHasKey('label', $item);
         self::assertCount(2, $params);
         self::assertSame('slug', $params[0]->name);
         self::assertSame('[a-z0-9-]+', $params[0]->requirement);

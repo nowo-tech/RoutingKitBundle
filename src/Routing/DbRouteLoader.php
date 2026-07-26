@@ -103,7 +103,7 @@ final class DbRouteLoader extends Loader
                     $collection->add(
                         $routeName,
                         new Route(
-                            path: $unprefixed === '/' ? '/' : $unprefixed,
+                            path: $unprefixed,
                             defaults: $defaults,
                             requirements: $requirements,
                         ),
@@ -128,7 +128,7 @@ final class DbRouteLoader extends Loader
             // Ensure $routeName points at default-locale canonical when we have a default row
             if (isset($localeMap[$defaultLocale]) || $this->pathResolver->resolveDefinition($routeName, $defaultLocale)) {
                 $def = $this->pathResolver->resolveDefinition($routeName, $defaultLocale);
-                if ($def !== null) {
+                if ($def instanceof RoutePathDefinition) {
                     $ctrl = $def->controller ?? $controller;
                     if ($ctrl !== null) {
                         $requirements = $this->buildRequirements($routeName);

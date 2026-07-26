@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\EventSubscriber;
 
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
+use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
@@ -53,7 +54,7 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface
             // Expand fallback locales
             foreach ($this->locales->getLocales() as $locale) {
                 $definition = $this->paths->resolveDefinition($stored->routeName, $locale);
-                if ($definition === null) {
+                if (!$definition instanceof RoutePathDefinition) {
                     continue;
                 }
 

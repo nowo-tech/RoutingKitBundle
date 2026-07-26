@@ -1,5 +1,49 @@
 # Upgrading
 
+## To 1.0.1
+
+Patch release: the CRUD panel lists routes by **`name`** only; the optional `label` argument on `#[Routable]` is removed.
+
+### Requirements
+
+Same as 1.0.0:
+
+- **PHP** `>=8.2` and `<8.6`. Symfony **8.x** requires **PHP 8.4+**.
+- **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
+- **Twig** for the routing CRUD panel templates.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.0
+php bin/console cache:clear
+```
+
+### Breaking changes
+
+| Topic | Before (1.0.0) | 1.0.1 |
+| --- | --- | --- |
+| `#[Routable]` | Optional `label: '…'` for panel display | Constructor is `name` + `params` only |
+| Panel `<select>` | Could show `label` when set | Always shows `route_name` |
+
+If you used `label:`, drop it:
+
+```php
+// Before
+#[Routable(name: 'app_about', label: 'About')]
+
+// After
+#[Routable(name: 'app_about')]
+```
+
+Leaving `label:` causes a PHP error (`Unknown named parameter $label`).
+
+### Behaviour notes (non-breaking)
+
+Storage rows, loader behaviour, config keys, and SeoKit bridge are unchanged.
+
+---
+
 ## To 1.0.0
 
 First public release. No prior Packagist versions — install fresh.

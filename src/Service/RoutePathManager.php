@@ -59,7 +59,7 @@ final class RoutePathManager
     {
         $existing = $this->storage->findById($id);
         $this->storage->delete($id);
-        if ($existing !== null) {
+        if ($existing instanceof RoutePathDefinition) {
             $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($existing, deleted: true));
         }
 
