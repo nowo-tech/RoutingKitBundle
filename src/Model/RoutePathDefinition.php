@@ -81,4 +81,19 @@ final class RoutePathDefinition
             $id,
         );
     }
+
+    public function withoutController(): self
+    {
+        return new self(
+            $this->routeName,
+            $this->locale,
+            $this->path,
+            $this->canonicalStyle,
+            $this->trailingSlash,
+            $this->aliasMode,
+            $this->enabled,
+            null,
+            $this->id,
+        );
+    }
 }

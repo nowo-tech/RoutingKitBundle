@@ -12,6 +12,8 @@ use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_unique;
+use function array_values;
 use function count;
 use function implode;
 use function sprintf;
@@ -54,41 +56,9 @@ final class RoutePathManager
 
     public function save(RoutePathDefinition $definition, bool $invalidateCache = true): RoutePathDefinition
     {
-        $controller = $definition->controller;
-        if (!$this->allowControllerOverride) {
-            $controller = null;
-            $definition = new RoutePathDefinition(
-                routeName: $definition->routeName,
-                locale: $definition->locale,
-                path: $definition->path,
-                canonicalStyle: $definition->canonicalStyle,
-                trailingSlash: $definition->trailingSlash,
-                aliasMode: $definition->aliasMode,
-                enabled: $definition->enabled,
-                id: $definition->id,
-            );
-        }
-
-        $errors = $this->validator->validate(
-            $definition->routeName,
-            $definition->path,
-            $definition->locale,
-            $controller,
-        );
-        if ($errors !== []) {
-            throw new RuntimeException('Invalid route path: ' . implode(' ', $errors));
-        }
-
-        if ($definition->id === null && count($this->storage->all()) >= $this->maxDefinitions) {
-            throw new RuntimeException(sprintf('Maximum number of route path definitions reached (%d).', $this->maxDefinitions));
-        }
-
-        if ($this->rejectConflicts) {
-            $conflicts = $this->conflictDetector->conflictsFor($definition);
-            if ($conflicts !== []) {
-                throw new RuntimeException('Path conflicts: ' . implode(' ', $conflicts));
-            }
-        }
+        $definition = $this->prepareDefinition($definition);
+        $this->assertWithinLimit($definition);
+        $this->assertNoConflicts([$definition], replaceAll: false);
 
         $saved = $this->storage->save($definition);
         $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
@@ -98,6 +68,55 @@ final class RoutePathManager
         }
 
         return $saved;
+    }
+
+    /**
+     * Import definitions through the same validation / limits / conflict rules as panel saves.
+     *
+     * @param list<RoutePathDefinition> $definitions
+     */
+    public function import(array $definitions, bool $replaceAll = false): int
+    {
+        $prepared = [];
+        foreach ($definitions as $definition) {
+            $prepared[] = $this->prepareDefinition($definition);
+        }
+
+        if ($replaceAll) {
+            if (count($prepared) > $this->maxDefinitions) {
+                throw new RuntimeException(sprintf('Maximum number of route path definitions reached (%d).', $this->maxDefinitions));
+            }
+        } else {
+            $extra = 0;
+            foreach ($prepared as $definition) {
+                if ($definition->id === null || !$this->storage->findById($definition->id) instanceof RoutePathDefinition) {
+                    ++$extra;
+                }
+            }
+            if (count($this->storage->all()) + $extra > $this->maxDefinitions) {
+                throw new RuntimeException(sprintf('Maximum number of route path definitions reached (%d).', $this->maxDefinitions));
+            }
+        }
+
+        $this->assertNoConflicts($prepared, $replaceAll);
+
+        if ($replaceAll) {
+            $savedRows = $this->storage->replaceAll($prepared);
+            foreach ($savedRows as $saved) {
+                $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+            }
+        } else {
+            foreach ($prepared as $definition) {
+                $saved = $this->storage->save($definition);
+                $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+            }
+        }
+
+        if ($this->autoInvalidateCache) {
+            $this->cacheInvalidator->invalidate();
+        }
+
+        return count($prepared);
     }
 
     public function delete(string $id, bool $invalidateCache = true): void
@@ -116,5 +135,55 @@ final class RoutePathManager
     public function clearCache(): void
     {
         $this->cacheInvalidator->invalidate();
+    }
+
+    private function prepareDefinition(RoutePathDefinition $definition): RoutePathDefinition
+    {
+        if (!$this->allowControllerOverride) {
+            $definition = $definition->withoutController();
+        }
+
+        $errors = $this->validator->validate(
+            $definition->routeName,
+            $definition->path,
+            $definition->locale,
+            $definition->controller,
+        );
+        if ($errors !== []) {
+            throw new RuntimeException('Invalid route path: ' . implode(' ', $errors));
+        }
+
+        return $definition;
+    }
+
+    private function assertWithinLimit(RoutePathDefinition $definition): void
+    {
+        if ($definition->id === null && count($this->storage->all()) >= $this->maxDefinitions) {
+            throw new RuntimeException(sprintf('Maximum number of route path definitions reached (%d).', $this->maxDefinitions));
+        }
+    }
+
+    /**
+     * @param list<RoutePathDefinition> $definitions
+     */
+    private function assertNoConflicts(array $definitions, bool $replaceAll): void
+    {
+        if (!$this->rejectConflicts) {
+            return;
+        }
+
+        $messages = $this->conflictDetector->conflictsWithin($definitions);
+        if (!$replaceAll) {
+            foreach ($definitions as $definition) {
+                foreach ($this->conflictDetector->conflictsFor($definition) as $message) {
+                    $messages[] = $message;
+                }
+            }
+        }
+
+        $messages = array_values(array_unique($messages));
+        if ($messages !== []) {
+            throw new RuntimeException('Path conflicts: ' . implode(' ', $messages));
+        }
     }
 }

@@ -196,6 +196,73 @@ PHP);
         self::assertSame(0, $router->warmUpCalls);
     }
 
+    public function testImportReplaceAllEnforcesMaxAndInvalidatesCache(): void
+    {
+        $storage    = new InMemoryRoutePathStorage();
+        $router     = new WarmableRouterSpy();
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnArgument(0);
+
+        $manager = new RoutePathManager(
+            $storage,
+            $this->createValidator(),
+            new RouteCacheInvalidator($router, $this->cacheDir),
+            $dispatcher,
+            $this->createConflictDetector($storage),
+            autoInvalidateCache: true,
+            maxDefinitions: 1,
+            rejectConflicts: false,
+        );
+
+        self::assertSame(1, $manager->import([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
+        ], replaceAll: true));
+        self::assertSame(1, $router->warmUpCalls);
+
+        $this->expectException(RuntimeException::class);
+        $manager->import([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
+            new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
+        ], replaceAll: true);
+    }
+
+    public function testImportMergeEnforcesMaxDefinitions(): void
+    {
+        $storage = new InMemoryRoutePathStorage([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1'),
+        ]);
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnArgument(0);
+
+        $manager = new RoutePathManager(
+            $storage,
+            $this->createValidator(),
+            new RouteCacheInvalidator(new WarmableRouterSpy(), $this->cacheDir),
+            $dispatcher,
+            $this->createConflictDetector($storage),
+            autoInvalidateCache: false,
+            maxDefinitions: 1,
+            rejectConflicts: false,
+        );
+
+        $this->expectException(RuntimeException::class);
+        $manager->import([
+            new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
+        ]);
+    }
+
+    public function testConflictsWithinDetectsBatchCollisions(): void
+    {
+        $storage  = new InMemoryRoutePathStorage();
+        $detector = $this->createConflictDetector($storage);
+        $msgs     = $detector->conflictsWithin([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
+            new RoutePathDefinition('app_article_show', 'es', '/articles/{slug}'),
+        ]);
+        // es path /articles/{slug} prefixed is /es/articles/{slug}; en occupies fallback /es/articles/{slug}
+        self::assertNotSame([], $msgs);
+    }
+
     private function createValidator(): RoutePathValidator
     {
         return new RoutePathValidator(
@@ -273,6 +340,19 @@ final class InMemoryRoutePathStorage implements RoutePathStorageInterface
     public function delete(string $id): void
     {
         unset($this->items[$id]);
+    }
+
+    public function replaceAll(array $definitions): array
+    {
+        $items = [];
+        foreach ($definitions as $definition) {
+            $id         = $definition->id ?? ('rk_' . count($items));
+            $saved      = $definition->withId($id);
+            $items[$id] = $saved;
+        }
+        $this->items = $items;
+
+        return array_values($items);
     }
 }
 

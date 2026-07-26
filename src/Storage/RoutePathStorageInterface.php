@@ -25,4 +25,13 @@ interface RoutePathStorageInterface
     public function save(RoutePathDefinition $definition): RoutePathDefinition;
 
     public function delete(string $id): void;
+
+    /**
+     * Atomically replace the entire store (validate callers must prepare rows first).
+     *
+     * @param list<RoutePathDefinition> $definitions
+     *
+     * @return list<RoutePathDefinition>
+     */
+    public function replaceAll(array $definitions): array;
 }

@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 use function implode;
+use function is_array;
 use function is_string;
 use function preg_quote;
 use function sprintf;
@@ -26,6 +27,8 @@ use function sprintf;
  *
  * Default locale uses the unprefixed path when {@see $registerUnprefixedDefault} is true;
  * other locales use `/{locale}{path}`.
+ *
+ * Stored `controller` overrides are applied only when {@see $allowControllerOverride} is true.
  */
 final class DbRouteLoader extends Loader
 {
@@ -37,6 +40,7 @@ final class DbRouteLoader extends Loader
         private readonly PublicPathResolver $pathResolver,
         private readonly RoutableControllerDiscovery $discovery,
         private readonly bool $registerUnprefixedDefault = true,
+        private readonly bool $allowControllerOverride = false,
         ?string $env = null,
     ) {
         parent::__construct($env);
@@ -62,7 +66,7 @@ final class DbRouteLoader extends Loader
 
         foreach ($byRoute as $routeName => $localeMap) {
             /** @var array<string, RoutePathDefinition> $localeMap */
-            $discovered = $this->discovery->findByRouteName($routeName);
+            $discovered = $this->discovery->findByRouteName($routeName) ?? [];
             $controller = null;
             if (is_string($discovered['controller'] ?? null)) {
                 $controller = $discovered['controller'];
@@ -80,10 +84,14 @@ final class DbRouteLoader extends Loader
                     continue;
                 }
 
-                if ($definition->controller !== null && $definition->controller !== '') {
-                    $controller = $definition->controller;
+                $resolvedController = $controller;
+                if ($this->allowControllerOverride
+                    && $definition->controller !== null
+                    && $definition->controller !== ''
+                ) {
+                    $resolvedController = $definition->controller;
                 }
-                if ($controller === null) {
+                if ($resolvedController === null) {
                     continue;
                 }
 
@@ -96,11 +104,11 @@ final class DbRouteLoader extends Loader
                     new Route(
                         path: $path,
                         defaults: [
-                            '_controller'      => $controller,
+                            '_controller'      => $resolvedController,
                             '_locale'          => $locale,
                             '_canonical_route' => $routeName,
                         ],
-                        requirements: $requirements + ['_locale' => preg_quote($locale, '')],
+                        requirements: $requirements,
                     ),
                 );
             }
@@ -119,12 +127,31 @@ final class DbRouteLoader extends Loader
      */
     private function buildRequirements(string $routeName): array
     {
+        $discovered = $this->discovery->findByRouteName($routeName) ?? [];
+        $params     = $discovered['params'] ?? [];
+        if ($params === []) {
+            return [];
+        }
+
         $requirements = [];
-        foreach ($this->discovery->paramsForRoute($routeName) as $param) {
-            if ($param->requirement !== null && $param->requirement !== '') {
-                $requirements[$param->name] = $param->requirement;
-            } elseif ($param->enum !== null && $param->enum !== []) {
-                $requirements[$param->name] = implode('|', $param->enum);
+        foreach ($params as $param) {
+            $name = $param['name'] ?? null;
+            if (!is_string($name)) {
+                continue; // @codeCoverageIgnore
+            }
+            if ($name === '') {
+                continue; // @codeCoverageIgnore
+            }
+            if (isset($param['requirement']) && is_string($param['requirement']) && $param['requirement'] !== '') {
+                $requirements[$name] = $param['requirement'];
+            } elseif (isset($param['enum']) && is_array($param['enum']) && $param['enum'] !== []) {
+                $quoted = [];
+                foreach ($param['enum'] as $value) {
+                    if (is_string($value)) {
+                        $quoted[] = preg_quote($value, '#');
+                    }
+                }
+                $requirements[$name] = implode('|', $quoted);
             }
         }
 

@@ -16,6 +16,8 @@ final class SafePublicPathTest extends TestCase
         self::assertFalse(SafePublicPath::isSafeStoredPath('//evil.example'));
         self::assertFalse(SafePublicPath::isSafeStoredPath('/http://evil.example'));
         self::assertFalse(SafePublicPath::isSafeStoredPath("/about\n"));
+        self::assertFalse(SafePublicPath::isSafeStoredPath("/about\t"));
+        self::assertFalse(SafePublicPath::isSafeStoredPath('/%2f%2fevil'));
         self::assertFalse(SafePublicPath::isSafeRedirectTarget('//evil'));
     }
 }

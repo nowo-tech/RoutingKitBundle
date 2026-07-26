@@ -96,6 +96,27 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
         $this->persist($items);
     }
 
+    public function replaceAll(array $definitions): array
+    {
+        $items = [];
+        $seen  = [];
+
+        foreach ($definitions as $definition) {
+            $id = $definition->id ?? uniqid('rk_', true);
+            $rl = $definition->routeName . "\0" . $definition->locale;
+            if (isset($seen[$rl])) {
+                throw new RuntimeException(sprintf('A path already exists for route "%s" and locale "%s".', $definition->routeName, $definition->locale));
+            }
+            $seen[$rl]  = true;
+            $saved      = $definition->withId($id);
+            $items[$id] = $saved;
+        }
+
+        $this->persist($items);
+
+        return array_values($items);
+    }
+
     /**
      * @return array<string, RoutePathDefinition>
      */

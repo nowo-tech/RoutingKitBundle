@@ -58,6 +58,33 @@ final class FilesystemRoutePathStorageTest extends TestCase
         $storage->save(new RoutePathDefinition('app_home', 'en', '/home'));
     }
 
+    public function testReplaceAllIsAtomicAndAssignsIds(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $storage->save(new RoutePathDefinition('app_home', 'en', '/old'));
+
+        $saved = $storage->replaceAll([
+            new RoutePathDefinition('app_home', 'en', '/'),
+            new RoutePathDefinition('app_home', 'es', '/inicio'),
+        ]);
+
+        self::assertCount(2, $saved);
+        self::assertCount(2, $storage->all());
+        self::assertSame('/', $storage->find('app_home', 'en')?->path);
+        self::assertNotNull($saved[0]->id);
+    }
+
+    public function testReplaceAllRejectsDuplicateRouteLocale(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+
+        $this->expectException(RuntimeException::class);
+        $storage->replaceAll([
+            new RoutePathDefinition('app_home', 'en', '/'),
+            new RoutePathDefinition('app_home', 'en', '/other'),
+        ]);
+    }
+
     public function testAllReturnsEmptyForEmptyCorruptOrUnreadableContent(): void
     {
         file_put_contents($this->file, '');

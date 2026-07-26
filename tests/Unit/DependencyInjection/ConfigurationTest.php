@@ -6,6 +6,7 @@ namespace Nowo\RoutingKitBundle\Tests\Unit\DependencyInjection;
 
 use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 final class ConfigurationTest extends TestCase
@@ -98,5 +99,20 @@ final class ConfigurationTest extends TestCase
         self::assertTrue($config['auto_invalidate_cache']);
         self::assertTrue($config['register_unprefixed_default']);
         self::assertTrue($config['seo_kit_bridge']);
+    }
+
+    public function testRejectsUnsafePathPrefix(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        foreach (['javascript:alert(1)', '//evil', '/http://x', '/bad space'] as $prefix) {
+            try {
+                $processor->processConfiguration($configuration, [['panel' => ['path_prefix' => $prefix]]]);
+                self::fail('expected invalid prefix: ' . $prefix);
+            } catch (InvalidConfigurationException $e) {
+                self::assertStringContainsString('path_prefix', $e->getMessage());
+            }
+        }
     }
 }

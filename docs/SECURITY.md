@@ -8,21 +8,23 @@
 - DB loader registers `{name}.{locale}` with `_canonical_route`.
 - Canonical / root redirect subscribers (open-redirect hardened).
 
-## Built-in controls (1.1+)
+## Built-in controls (1.1.1+)
 
 | Control | Behaviour |
 | --- | --- |
 | CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
 | `panel.role` | Default `ROLE_ADMIN` via `AuthorizationCheckerInterface`. Set `null` only if the firewall alone is enough. |
-| Route / locale allowlist | Saves must use a `#[Routable]` route name and a configured locale. |
-| Controller override | Off by default; when on, only discovery controllers are accepted. |
-| Path safety | Rejects `//…`, schemes, control characters; redirects only to safe targets. |
+| Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |
+| Controller override | Off by default; when on, only discovery controllers are accepted. Loader ignores stored overrides when off. |
+| Path safety | Rejects `//…`, schemes, control characters, tabs, `%2f%2f`; redirects only to safe targets. |
 | Trailing slash | Applies only to paths managed by that definition (not site-wide). |
 | `enabled: false` | Unregisters panel, DB loader, and redirect subscribers. |
-| Conflicts | `reject_conflicts` blocks colliding public paths. |
-| Max rows | `panel.max_definitions` (default 500). |
+| Conflicts | `reject_conflicts` blocks colliding public paths (incl. locale fallbacks and disabled rows). |
+| Max rows | `panel.max_definitions` (default 500); enforced on import too. |
 | Audit | `RoutePathAuditSubscriber` logs saves/deletes with user id when a token exists. |
-| Export/import | HMAC-SHA256 signed JSON (`panel.export_signing_key` or `kernel.secret`). |
+| Export/import | HMAC-SHA256 signed JSON; **import** reuses manager validation; controller stripped unless override enabled; `replace_all` is atomic. |
+| Export HTTP | POST + CSRF only. |
+| `path_prefix` | Restricted to `/[A-Za-z0-9/_-]+`. |
 
 ## Application checklist
 

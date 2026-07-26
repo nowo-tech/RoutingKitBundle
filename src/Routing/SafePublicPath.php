@@ -27,7 +27,9 @@ final class SafePublicPath
             || str_contains($path, "\0")
             || str_contains($path, "\r")
             || str_contains($path, "\n")
+            || str_contains($path, "\t")
             || str_contains($path, '://')
+            || str_contains(strtolower($path), '%2f%2f')
         ) {
             return false;
         }

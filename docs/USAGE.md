@@ -44,6 +44,7 @@ Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` 
 
 - List / create / edit / delete at `/_routing` (configurable).
 - **Clear routing cache** button; saves/deletes also invalidate when `auto_invalidate_cache: true`.
+- Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows).
 
 ## SeoKitBundle
 

@@ -15,6 +15,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
+use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -85,7 +86,7 @@ PHP);
         (new PanelAccessGuard($checker, 'ROLE_ADMIN'))->assertGranted();
     }
 
-    public function testConflictDetectorFindsCollisions(): void
+    public function testConflictDetectorFindsCollisionsIncludingFallbackLocale(): void
     {
         $storage  = new FilesystemRoutePathStorage($this->storageFile);
         $locales  = new ConfigurableLocaleProvider('en', ['en', 'es']);
@@ -98,12 +99,15 @@ PHP);
 
         $same = $detector->conflictsFor(new RoutePathDefinition('app_about', 'en', '/about', id: $a->id));
         self::assertSame([], $same);
+
+        $fallback = $detector->conflictsFor(new RoutePathDefinition('app_contact', 'es', '/about'));
+        self::assertNotSame([], $fallback);
     }
 
     public function testImportExportRejectsInvalidEnvelope(): void
     {
         $storage = new FilesystemRoutePathStorage($this->storageFile);
-        $export  = new RoutePathImportExport($storage, 'key');
+        $export  = $this->createImportExport($storage);
         self::assertStringContainsString('hmac-sha256', $export->describeKeySource());
 
         $this->expectException(RuntimeException::class);
@@ -114,13 +118,13 @@ PHP);
     {
         $storage = new FilesystemRoutePathStorage($this->storageFile);
         $storage->save(new RoutePathDefinition('app_about', 'en', '/about'));
-        $export   = new RoutePathImportExport($storage, 'key');
+        $export   = $this->createImportExport($storage);
         $envelope = $export->export();
 
         $otherFile = sys_get_temp_dir() . '/rk_sec_other_' . uniqid('', true) . '.json';
         $other     = new FilesystemRoutePathStorage($otherFile);
         $other->save(new RoutePathDefinition('app_blog', 'en', '/blog/{slug}'));
-        $importer = new RoutePathImportExport($other, 'key');
+        $importer = $this->createImportExport($other);
         self::assertSame(1, $importer->import($envelope, replaceAll: true));
         self::assertCount(1, $other->all());
         self::assertSame('app_about', $other->all()[0]->routeName);
@@ -129,6 +133,27 @@ PHP);
         $envelope['signature'] = 'deadbeef';
         $this->expectException(RuntimeException::class);
         $importer->import($envelope);
+    }
+
+    public function testImportRejectsControllerInjectionWhenOverrideOff(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->storageFile);
+        $payload = [[
+            'route_name' => 'app_about',
+            'locale'     => 'en',
+            'path'       => '/about',
+            'controller' => 'Evil\\Controller::hack',
+        ]];
+        $json     = json_encode($payload, JSON_THROW_ON_ERROR);
+        $envelope = [
+            'version'   => 1,
+            'payload'   => $payload,
+            'signature' => hash_hmac('sha256', $json, 'key'),
+        ];
+
+        $importer = $this->createImportExport($storage, allowOverride: false);
+        self::assertSame(1, $importer->import($envelope, replaceAll: true));
+        self::assertNull($storage->all()[0]->controller);
     }
 
     public function testManagerMaxDefinitionsConflictsAndControllerOverride(): void
@@ -177,7 +202,8 @@ PHP);
     {
         $controller = $this->createPanel(role: null, allowOverride: true);
 
-        $export = $controller->export(Request::create('/export', 'GET'));
+        self::assertSame(405, $controller->export(Request::create('/export', 'GET'))->getStatusCode());
+        $export = $controller->export(Request::create('/export', 'POST', ['_csrf_token' => 'token-value']));
         self::assertSame(200, $export->getStatusCode());
         $payload = (string) $export->getContent();
         self::assertSame(302, $controller->import(Request::create('/import', 'POST', [
@@ -228,13 +254,13 @@ PHP);
         $this->createPanel(role: 'ROLE_ADMIN')->index();
     }
 
-    public function testConflictDisabledAndDuplicateLocale(): void
+    public function testConflictIncludesDisabledRowsAndDuplicateLocale(): void
     {
         $storage  = new FilesystemRoutePathStorage($this->storageFile);
         $locales  = new ConfigurableLocaleProvider('en', ['en', 'es']);
         $detector = new RoutePathConflictDetector($storage, new PublicPathResolver($storage, $locales));
         $storage->save(new RoutePathDefinition('app_about', 'en', '/about', enabled: false));
-        self::assertSame([], $detector->conflictsFor(new RoutePathDefinition('app_contact', 'en', '/about')));
+        self::assertNotSame([], $detector->conflictsFor(new RoutePathDefinition('app_contact', 'en', '/about')));
 
         $existing = $storage->save(new RoutePathDefinition('app_about', 'es', '/about-es'));
         $msgs     = $detector->conflictsFor(new RoutePathDefinition('app_about', 'es', '/other', id: 'different-id'));
@@ -274,7 +300,7 @@ PHP);
     public function testImportRejectsNonArrayRow(): void
     {
         $storage  = new FilesystemRoutePathStorage($this->storageFile);
-        $service  = new RoutePathImportExport($storage, 'key');
+        $service  = $this->createImportExport($storage);
         $payload  = ['not-an-array'];
         $json     = json_encode($payload, JSON_THROW_ON_ERROR);
         $envelope = [
@@ -284,6 +310,27 @@ PHP);
         ];
         $this->expectException(RuntimeException::class);
         $service->decodeAndVerify($envelope);
+    }
+
+    private function createImportExport(
+        RoutePathStorageInterface $storage,
+        bool $allowOverride = false,
+    ): RoutePathImportExport {
+        $locales    = new ConfigurableLocaleProvider('en', ['en', 'es']);
+        $discovery  = new RoutableControllerDiscovery([$this->controllerDir]);
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnArgument(0);
+        $manager = new RoutePathManager(
+            $storage,
+            new RoutePathValidator($discovery, $locales),
+            new RouteCacheInvalidator($this->createRouter(), $this->cacheDir),
+            $dispatcher,
+            new RoutePathConflictDetector($storage, new PublicPathResolver($storage, $locales)),
+            autoInvalidateCache: false,
+            allowControllerOverride: $allowOverride,
+        );
+
+        return new RoutePathImportExport($manager, 'key');
     }
 
     private function createPanelWithCsrf(bool $valid): RoutingPanelController
@@ -314,7 +361,7 @@ PHP);
             $twig,
             $csrf,
             new PanelAccessGuard(null, null),
-            new RoutePathImportExport($storage, 'key'),
+            new RoutePathImportExport($manager, 'key'),
             '/_routing',
             false,
         );
@@ -350,7 +397,7 @@ PHP);
             $twig,
             $csrf,
             new PanelAccessGuard(null, $role),
-            new RoutePathImportExport($storage, 'key'),
+            new RoutePathImportExport($manager, 'key'),
             '/_routing',
             $allowOverride,
         );

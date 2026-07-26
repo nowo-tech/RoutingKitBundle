@@ -8,6 +8,8 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
+use function is_string;
+
 final class Configuration implements ConfigurationInterface
 {
     public const ALIAS = 'nowo_routing_kit';
@@ -61,7 +63,23 @@ final class Configuration implements ConfigurationInterface
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('enabled')->defaultTrue()->end()
-                        ->scalarNode('path_prefix')->defaultValue('/_routing')->cannotBeEmpty()->end()
+                        ->scalarNode('path_prefix')
+                            ->defaultValue('/_routing')
+                            ->cannotBeEmpty()
+                            ->validate()
+                                ->ifTrue(static function (mixed $v): bool {
+                                    if (!is_string($v)) {
+                                        return true; // @codeCoverageIgnore
+                                    }
+
+                                    return str_contains($v, '//')
+                                        || str_contains($v, '\\')
+                                        || str_contains($v, '://')
+                                        || preg_match('#^/[A-Za-z0-9/_-]+$#', $v) !== 1;
+                                })
+                                ->thenInvalid('panel.path_prefix must look like /_routing (letters, digits, /, _, - only; no schemes or //).')
+                            ->end()
+                        ->end()
                         ->variableNode('role')
                             ->info('Required security role for the panel. null disables the in-bundle check (firewall still recommended).')
                             ->defaultValue('ROLE_ADMIN')

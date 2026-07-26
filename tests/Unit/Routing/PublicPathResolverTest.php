@@ -118,4 +118,24 @@ final class PublicPathResolverTest extends TestCase
 
         self::assertNull($resolver->resolveDefinition('app_missing', 'es'));
     }
+
+    public function testOccupiedPublicPathsIncludesRootAndFallbackLocales(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $storage->save(new RoutePathDefinition(
+            routeName: 'app_about',
+            locale: 'en',
+            path: '/',
+            canonicalStyle: CanonicalStyle::WithoutPrefix,
+        ));
+
+        $resolver = new PublicPathResolver(
+            $storage,
+            new ConfigurableLocaleProvider('en', ['en', 'es']),
+        );
+
+        $paths = $resolver->occupiedPublicPaths($storage->all()[0]);
+        self::assertContains('/', $paths);
+        self::assertContains('/es/', $paths);
+    }
 }

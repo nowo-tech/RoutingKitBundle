@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-26
+
+### Security
+
+- Import goes through `RoutePathManager` (validator, allowlists, conflicts, `max_definitions`); stored `_controller` is stripped when `allow_controller_override` is false.
+- `DbRouteLoader` ignores stored controller overrides unless `allow_controller_override` is true (defense in depth).
+- `replace_all` import uses atomic `RoutePathStorageInterface::replaceAll()`.
+- Export is **POST + CSRF** only (no GET download link).
+- `panel.path_prefix` must match `^/[A-Za-z0-9/_-]+$` (blocks `javascript:` / `//`).
+- Conflict detector includes default-locale fallback paths, trailing-slash variants, and disabled rows.
+- `SafePublicPath` also rejects tab and `%2f%2f`.
+
+### Changed
+
+- Custom `RoutePathStorageInterface` implementations must add `replaceAll(array $definitions): array`.
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+- **BC notes:** export is POST-only; custom storages need `replaceAll()`; invalid `path_prefix` values are rejected at compile time.
+
 ## [1.1.0] - 2026-07-26
 
 ### Security
@@ -126,7 +147,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.1...v1.0.2

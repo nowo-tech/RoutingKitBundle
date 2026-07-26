@@ -118,7 +118,7 @@ PHP);
         $locales   = new ConfigurableLocaleProvider('en', ['en', 'es']);
         $resolver  = new PublicPathResolver($storage, $locales);
         $discovery = new RoutableControllerDiscovery([$this->dir]);
-        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery, false);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery, false, true);
 
         $collection = $loader->load('.', 'nowo_routing_kit');
 
@@ -192,6 +192,29 @@ PHP);
         self::assertNull($collection->get('app_about.en'));
         self::assertNotNull($collection->get('app_about.es'));
         self::assertSame('/es/sobre/{slug}', $collection->get('app_about.es')->getPath());
+    }
+
+    public function testIgnoresStoredControllerWhenOverrideDisabled(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $storage->save(new RoutePathDefinition(
+            routeName: 'app_home',
+            locale: 'en',
+            path: '/',
+            controller: 'App\\Controller\\OverrideController::__invoke',
+        ));
+
+        $locales   = new ConfigurableLocaleProvider('en', ['en']);
+        $resolver  = new PublicPathResolver($storage, $locales);
+        $discovery = new RoutableControllerDiscovery([$this->dir]);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery, true, false);
+
+        $collection = $loader->load('.', 'nowo_routing_kit');
+
+        self::assertSame(
+            'App\\Controller\\HomeController::index',
+            $collection->get('app_home.en')?->getDefault('_controller'),
+        );
     }
 
     public function testAlwaysPrefixesWhenUnprefixedDefaultDisabled(): void

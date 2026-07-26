@@ -11,6 +11,9 @@ use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 
+use function array_unique;
+use function array_values;
+use function ltrim;
 use function rtrim;
 
 /**
@@ -90,6 +93,59 @@ final class PublicPathResolver
     public function shouldRedirectAlias(RoutePathDefinition $definition): bool
     {
         return $definition->aliasMode === AliasMode::Redirect;
+    }
+
+    /**
+     * Public paths this stored row can occupy once loaded (incl. default-locale fallbacks).
+     *
+     * @return list<string>
+     */
+    public function occupiedPublicPaths(RoutePathDefinition $definition): array
+    {
+        $paths = [
+            ...$this->pathVariants($this->unprefixedPath($definition)),
+            ...$this->pathVariants($this->prefixedPath($definition)),
+        ];
+
+        $defaultLocale = $this->locales->getDefaultLocale();
+        if ($definition->locale === $defaultLocale) {
+            foreach ($this->locales->getLocales() as $locale) {
+                if ($locale === $defaultLocale) {
+                    continue;
+                }
+
+                $fallback = new RoutePathDefinition(
+                    routeName: $definition->routeName,
+                    locale: $locale,
+                    path: $definition->path,
+                    canonicalStyle: CanonicalStyle::WithPrefix,
+                    trailingSlash: $definition->trailingSlash,
+                    aliasMode: $definition->aliasMode,
+                    enabled: true,
+                    controller: $definition->controller,
+                    id: $definition->id,
+                );
+                foreach ($this->pathVariants($this->prefixedPath($fallback)) as $variant) {
+                    $paths[] = $variant;
+                }
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function pathVariants(string $path): array
+    {
+        if ($path === '/') {
+            return ['/'];
+        }
+
+        $trimmed = rtrim($path, '/');
+
+        return [$trimmed, $trimmed . '/'];
     }
 
     private function normalizePath(string $path): string

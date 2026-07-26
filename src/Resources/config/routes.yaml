@@ -30,7 +30,7 @@ nowo_routing_kit_panel_clear_cache:
 nowo_routing_kit_panel_export:
     path: '%nowo.routing_kit.panel.path_prefix%/export'
     controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::export
-    methods: [GET, POST]
+    methods: [POST]
 
 nowo_routing_kit_panel_import:
     path: '%nowo.routing_kit.panel.path_prefix%/import'

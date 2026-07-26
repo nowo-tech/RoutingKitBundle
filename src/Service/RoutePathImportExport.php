@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Service;
 
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
-use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use RuntimeException;
 
-use function count;
 use function hash_equals;
 use function hash_hmac;
 use function is_array;
@@ -21,11 +19,13 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Signed export/import of path definitions (HMAC-SHA256 with panel signing key / kernel.secret).
+ *
+ * Import always goes through {@see RoutePathManager} (validator, allowlists, conflicts, max rows).
  */
 final class RoutePathImportExport
 {
     public function __construct(
-        private readonly RoutePathStorageInterface $storage,
+        private readonly RoutePathManager $manager,
         private readonly string $signingKey,
     ) {
     }
@@ -36,7 +36,7 @@ final class RoutePathImportExport
     public function export(): array
     {
         $payload = [];
-        foreach ($this->storage->all() as $definition) {
+        foreach ($this->manager->all() as $definition) {
             $payload[] = $definition->toArray();
         }
 
@@ -89,19 +89,7 @@ final class RoutePathImportExport
     {
         $definitions = $this->decodeAndVerify($envelope);
 
-        if ($replaceAll) {
-            foreach ($this->storage->all() as $existing) {
-                if ($existing->id !== null) {
-                    $this->storage->delete($existing->id);
-                }
-            }
-        }
-
-        foreach ($definitions as $definition) {
-            $this->storage->save($definition);
-        }
-
-        return count($definitions);
+        return $this->manager->import($definitions, $replaceAll);
     }
 
     public function describeKeySource(): string

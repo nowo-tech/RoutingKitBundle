@@ -9,10 +9,10 @@ Root key: `nowo_routing_kit`.
 | `locales` | `[en]` | All locales |
 | `locale_provider` | `null` | Service id for `LocaleProviderInterface` (overrides YAML locales) |
 | `storage.paths_file` | `%kernel.project_dir%/var/routing_kit/paths.json` | JSON storage path |
-| `storage.path_storage` | `null` | Custom `RoutePathStorageInterface` service id |
+| `storage.path_storage` | `null` | Custom `RoutePathStorageInterface` service id (must implement `replaceAll`) |
 | `discovery.scan_dirs` | `[%kernel.project_dir%/src/Controller]` | Controllers scanned for `#[Routable]` |
 | `panel.enabled` | `true` | Twig CRUD panel |
-| `panel.path_prefix` | `/_routing` | Panel URL prefix |
+| `panel.path_prefix` | `/_routing` | Panel URL prefix (`/^/[A-Za-z0-9/_-]+$/`) |
 | `panel.role` | `ROLE_ADMIN` | In-bundle `AuthorizationChecker` gate (`null` = disabled; still firewall the prefix) |
 | `panel.allow_controller_override` | `false` | Allow selecting a discovery controller override (never free-form) |
 | `panel.max_definitions` | `500` | Soft cap on stored path rows |

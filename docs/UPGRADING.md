@@ -1,5 +1,37 @@
 # Upgrading
 
+## To 1.1.1
+
+Import/export hardening follow-up to 1.1.0.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.1
+php bin/console cache:clear
+```
+
+### Behaviour / security
+
+- Signed **import** now runs through `RoutePathManager` (same allowlists, conflicts, and `max_definitions` as panel saves). Invalid rows fail the whole import.
+- With `allow_controller_override: false` (default), imported `controller` fields are stripped and the DB loader ignores any leftover stored override.
+- **Export** is POST + CSRF only (update any bookmarks/scripts that used GET `/_routing/export`).
+- Invalid `panel.path_prefix` values (e.g. `javascript:…`) are rejected at config compile time.
+- Conflict detection covers default-locale fallback paths, trailing-slash variants, and disabled rows.
+
+### Breaking / migration
+
+| Topic | Before (1.1.0) | 1.1.1 |
+| --- | --- | --- |
+| Export | GET or POST | **POST + CSRF** only |
+| Custom storage | `save` / `delete` | Must implement `replaceAll(array $definitions): array` |
+| `path_prefix` | Any non-empty scalar | Must match `^/[A-Za-z0-9/_-]+$` |
+| Import | HMAC only; wrote storage directly | HMAC + full manager validation |
+
+No YAML key renames. Prefer a dedicated `panel.export_signing_key` over a weak `kernel.secret`.
+
+---
+
 ## To 1.1.0
 
 Security hardening release: CSRF fail-closed, panel role gate, allowlists, path safety, trailing-slash fix, and signed export/import.

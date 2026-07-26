@@ -154,6 +154,7 @@ final class RoutingKitExtension extends Extension
     {
         $container->getDefinition(DbRouteLoader::class)
             ->setArgument('$registerUnprefixedDefault', (bool) $config['register_unprefixed_default'])
+            ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
             ->addTag('routing.loader');
     }
 

@@ -110,7 +110,10 @@ final class RoutingPanelController
     {
         $this->accessGuard->assertGranted();
 
-        if ($request->isMethod('POST') && !$this->isCsrfValid($request)) {
+        if (!$request->isMethod('POST')) {
+            return new Response('Method Not Allowed', Response::HTTP_METHOD_NOT_ALLOWED);
+        }
+        if (!$this->isCsrfValid($request)) {
             return new Response('Invalid CSRF token.', 403);
         }
 
