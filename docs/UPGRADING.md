@@ -1,5 +1,33 @@
 # Upgrading
 
+## To 1.0.2
+
+Patch release: restores Symfony 8 Composer constraints (broken in 1.0.1) and fixes locale URL generation via `_canonical_route`.
+
+### Requirements
+
+Same as 1.0.0 / 1.0.1:
+
+- **PHP** `>=8.2` and `<8.6`. Symfony **8.x** requires **PHP 8.4+**.
+- **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
+- **Twig** for the routing CRUD panel templates.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.0.2
+php bin/console cache:clear
+```
+
+### Behavior notes
+
+- Loaded routes are named `{route}.{locale}` with `_canonical_route` set. Prefer `path('app_home', { _locale: 'en' })` / `generate('app_home', ['_locale' => 'en'])`.
+- With `register_unprefixed_default: true`, the default locale has no `/{locale}` prefix; other locales keep the prefix.
+
+### Breaking changes
+
+None beyond 1.0.1 (`#[Routable]` without `label`).
+
 ## To 1.0.1
 
 Patch release: the CRUD panel lists routes by **`name`** only; the optional `label` argument on `#[Routable]` is removed.

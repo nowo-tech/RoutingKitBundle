@@ -6,7 +6,6 @@ namespace Nowo\RoutingKitBundle\Routing;
 
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
-use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use RuntimeException;
@@ -16,11 +15,17 @@ use Symfony\Component\Routing\RouteCollection;
 
 use function implode;
 use function is_string;
+use function preg_quote;
 use function sprintf;
-use function strlen;
 
 /**
  * Loads DB/filesystem path definitions as Symfony routes (overwrites same names when imported last).
+ *
+ * Registers one route per locale as `{name}.{locale}` with `_canonical_route` set so
+ * `UrlGenerator::generate('name', ['_locale' => 'en'])` and Twig `path()` work.
+ *
+ * Default locale uses the unprefixed path when {@see $registerUnprefixedDefault} is true;
+ * other locales use `/{locale}{path}`.
  */
 final class DbRouteLoader extends Loader
 {
@@ -46,7 +51,6 @@ final class DbRouteLoader extends Loader
 
         $collection    = new RouteCollection();
         $defaultLocale = $this->locales->getDefaultLocale();
-        $localePattern = implode('|', $this->locales->getLocales());
 
         $byRoute = [];
         foreach ($this->storage->all() as $definition) {
@@ -63,6 +67,8 @@ final class DbRouteLoader extends Loader
             if (is_string($discovered['controller'] ?? null)) {
                 $controller = $discovered['controller'];
             }
+
+            $requirements = $this->buildRequirements($routeName);
 
             foreach ($this->locales->getLocales() as $locale) {
                 $definition = $localeMap[$locale]
@@ -81,68 +87,22 @@ final class DbRouteLoader extends Loader
                     continue;
                 }
 
-                $requirements = $this->buildRequirements($routeName);
-                $defaults     = [
-                    '_controller' => $controller,
-                    '_locale'     => $locale,
-                ];
+                $path = ($locale === $defaultLocale && $this->registerUnprefixedDefault)
+                    ? $this->pathResolver->unprefixedPath($definition)
+                    : $this->pathResolver->prefixedPath($definition);
 
-                $prefixed = $this->pathResolver->prefixedPath($definition);
                 $collection->add(
-                    $this->routeKey($routeName, $locale, true),
+                    sprintf('%s.%s', $routeName, $locale),
                     new Route(
-                        path: $this->toRoutePath($prefixed, $locale),
-                        defaults: $defaults,
-                        requirements: $requirements + ['_locale' => $localePattern],
+                        path: $path,
+                        defaults: [
+                            '_controller'      => $controller,
+                            '_locale'          => $locale,
+                            '_canonical_route' => $routeName,
+                        ],
+                        requirements: $requirements + ['_locale' => preg_quote($locale, '')],
                     ),
                 );
-
-                // Unprefixed only meaningful for default locale (or when canonical is without_prefix)
-                if ($this->registerUnprefixedDefault && $locale === $defaultLocale) {
-                    $unprefixed = $this->pathResolver->unprefixedPath($definition);
-                    $collection->add(
-                        $routeName,
-                        new Route(
-                            path: $unprefixed,
-                            defaults: $defaults,
-                            requirements: $requirements,
-                        ),
-                    );
-                } elseif ($definition->canonicalStyle === CanonicalStyle::WithoutPrefix && $locale === $defaultLocale) {
-                    $collection->add(
-                        $routeName,
-                        new Route(
-                            path: $this->pathResolver->unprefixedPath($definition),
-                            defaults: $defaults,
-                            requirements: $requirements,
-                        ),
-                    );
-                }
-
-                // Also expose primary name for non-default when only prefixed exists
-                if ($locale !== $defaultLocale && !$collection->get($routeName)) {
-                    // Keep first-seen default; for non-default locales use dotted name only
-                }
-            }
-
-            // Ensure $routeName points at default-locale canonical when we have a default row
-            if (isset($localeMap[$defaultLocale]) || $this->pathResolver->resolveDefinition($routeName, $defaultLocale)) {
-                $def = $this->pathResolver->resolveDefinition($routeName, $defaultLocale);
-                if ($def instanceof RoutePathDefinition) {
-                    $ctrl = $def->controller ?? $controller;
-                    if ($ctrl !== null) {
-                        $requirements = $this->buildRequirements($routeName);
-                        $canonical    = $this->pathResolver->canonicalPath($def);
-                        $collection->add($routeName, new Route(
-                            path: $canonical,
-                            defaults: [
-                                '_controller' => $ctrl,
-                                '_locale'     => $defaultLocale,
-                            ],
-                            requirements: $requirements,
-                        ));
-                    }
-                }
             }
         }
 
@@ -169,27 +129,5 @@ final class DbRouteLoader extends Loader
         }
 
         return $requirements;
-    }
-
-    private function routeKey(string $routeName, string $locale, bool $prefixed): string
-    {
-        return $prefixed ? sprintf('%s.%s', $routeName, $locale) : $routeName;
-    }
-
-    /**
-     * Prefixed public path like /es/about → /{_locale}/about for the Route object.
-     */
-    private function toRoutePath(string $prefixedPublicPath, string $locale): string
-    {
-        $prefix = '/' . $locale;
-        if ($prefixedPublicPath === $prefix || $prefixedPublicPath === $prefix . '/') {
-            return '/{_locale}/';
-        }
-
-        if (str_starts_with($prefixedPublicPath, $prefix . '/')) {
-            return '/{_locale}/' . ltrim(substr($prefixedPublicPath, strlen($prefix)), '/');
-        }
-
-        return '/{_locale}' . $prefixedPublicPath;
     }
 }

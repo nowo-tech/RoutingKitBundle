@@ -13,7 +13,6 @@ use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use RuntimeException;
 
 final class DbRouteLoaderTest extends TestCase
@@ -64,7 +63,7 @@ PHP);
         @rmdir($this->dir);
     }
 
-    public function testLoadsPrefixedAndUnprefixedRoutes(): void
+    public function testLoadsCanonicalLocaleRoutes(): void
     {
         $storage = new FilesystemRoutePathStorage($this->file);
         $storage->save(new RoutePathDefinition(
@@ -82,12 +81,15 @@ PHP);
         self::assertTrue($loader->supports('.', 'nowo_routing_kit'));
         $collection = $loader->load('.', 'nowo_routing_kit');
 
-        self::assertNotNull($collection->get('app_about'));
-        self::assertSame('/about', $collection->get('app_about')->getPath());
+        self::assertNull($collection->get('app_about'));
         self::assertNotNull($collection->get('app_about.en'));
-        self::assertSame('/{_locale}/about', $collection->get('app_about.en')->getPath());
-        self::assertSame('[a-z0-9-]+', $collection->get('app_about')->getRequirement('slug'));
-        self::assertSame('html|json', $collection->get('app_about')->getRequirement('format'));
+        self::assertSame('/about', $collection->get('app_about.en')->getPath());
+        self::assertSame('app_about', $collection->get('app_about.en')->getDefault('_canonical_route'));
+        self::assertSame('en', $collection->get('app_about.en')->getDefault('_locale'));
+        self::assertNotNull($collection->get('app_about.es'));
+        self::assertSame('/es/about', $collection->get('app_about.es')->getPath());
+        self::assertSame('[a-z0-9-]+', $collection->get('app_about.en')->getRequirement('slug'));
+        self::assertSame('html|json', $collection->get('app_about.en')->getRequirement('format'));
     }
 
     public function testSupportsReturnsFalseForOtherTypes(): void
@@ -101,16 +103,16 @@ PHP);
         self::assertFalse($loader->supports('.', 'yaml'));
     }
 
-    public function testUsesControllerOverrideAndRootLocaleRoutePath(): void
+    public function testUsesControllerOverrideAndPrefixedRootWhenUnprefixedDisabled(): void
     {
         $storage = new FilesystemRoutePathStorage($this->file);
         $storage->save(new RoutePathDefinition(
             routeName: 'app_home',
             locale: 'en',
             path: '/',
+            controller: 'App\\Controller\\OverrideController::__invoke',
             canonicalStyle: CanonicalStyle::WithPrefix,
             trailingSlash: TrailingSlashStyle::Keep,
-            controller: 'App\\Controller\\OverrideController::__invoke',
         ));
 
         $locales   = new ConfigurableLocaleProvider('en', ['en', 'es']);
@@ -121,10 +123,10 @@ PHP);
         $collection = $loader->load('.', 'nowo_routing_kit');
 
         self::assertNotNull($collection->get('app_home.en'));
-        self::assertNotNull($collection->get('app_home'));
-        self::assertSame('/{_locale}/', $collection->get('app_home.en')->getPath());
-        self::assertSame('/en/', $collection->get('app_home')->getPath());
-        self::assertSame('App\\Controller\\OverrideController::__invoke', $collection->get('app_home')->getDefault('_controller'));
+        self::assertNull($collection->get('app_home'));
+        self::assertSame('/en/', $collection->get('app_home.en')->getPath());
+        self::assertSame('App\\Controller\\OverrideController::__invoke', $collection->get('app_home.en')->getDefault('_controller'));
+        self::assertSame('app_home', $collection->get('app_home.en')->getDefault('_canonical_route'));
     }
 
     public function testLoadCannotRunTwice(): void
@@ -167,8 +169,8 @@ PHP);
 
         $collection = $loader->load('.', 'nowo_routing_kit');
 
-        self::assertNull($collection->get('app_disabled'));
-        self::assertNull($collection->get('app_missing_controller'));
+        self::assertNull($collection->get('app_disabled.en'));
+        self::assertNull($collection->get('app_missing_controller.en'));
     }
 
     public function testSkipsLocalesWithoutResolvableDefinition(): void
@@ -187,11 +189,12 @@ PHP);
 
         $collection = $loader->load('.', 'nowo_routing_kit');
 
-        self::assertNull($collection->get('app_about'));
+        self::assertNull($collection->get('app_about.en'));
         self::assertNotNull($collection->get('app_about.es'));
+        self::assertSame('/es/sobre/{slug}', $collection->get('app_about.es')->getPath());
     }
 
-    public function testAddsUnprefixedRouteWhenDefaultLocaleIsCanonicalWithoutPrefixEvenIfDisabledGlobally(): void
+    public function testAlwaysPrefixesWhenUnprefixedDefaultDisabled(): void
     {
         $storage = new FilesystemRoutePathStorage($this->file);
         $storage->save(new RoutePathDefinition(
@@ -208,20 +211,7 @@ PHP);
 
         $collection = $loader->load('.', 'nowo_routing_kit');
 
-        self::assertSame('/about', $collection->get('app_about')?->getPath());
-    }
-
-    public function testToRoutePathFallsBackWhenPrefixDoesNotMatchLocale(): void
-    {
-        $storage   = new FilesystemRoutePathStorage($this->file);
-        $locales   = new ConfigurableLocaleProvider('en', ['en']);
-        $resolver  = new PublicPathResolver($storage, $locales);
-        $discovery = new RoutableControllerDiscovery([$this->dir]);
-        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery);
-
-        $method = new ReflectionMethod($loader, 'toRoutePath');
-        $method->setAccessible(true);
-
-        self::assertSame('/{_locale}/custom', $method->invoke($loader, '/custom', 'en'));
+        self::assertSame('/en/about', $collection->get('app_about.en')?->getPath());
+        self::assertNull($collection->get('app_about'));
     }
 }

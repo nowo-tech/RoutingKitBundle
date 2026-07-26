@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-07-26
+
+### Fixed
+
+- Restored Symfony **8.x** constraints in `composer.json` (`|| ^8.0`) that were dropped in 1.0.1, so the package installs on Symfony 8.0 / 8.1 again.
+- `DbRouteLoader` now registers `{name}.{locale}` routes with `_canonical_route`, so `generate('route', ['_locale' => 'en'])` and Twig `path()` resolve correctly.
+
+### Changed
+
+- Default-locale paths are unprefixed when `register_unprefixed_default` is true; other locales use `/{locale}{path}` (no bare `{name}` duplicate without canonical metadata).
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+
 ## [1.0.1] - 2026-07-26
 
 ### Removed
