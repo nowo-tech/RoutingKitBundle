@@ -1,0 +1,13 @@
+# Panel first, then app attribute routes, then DB loader last (overwrites by name).
+nowo_routing_kit_panel:
+    resource: '@NowoRoutingKitBundle/Resources/config/routes.yaml'
+
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+nowo_routing_kit_db:
+    resource: .
+    type: nowo_routing_kit

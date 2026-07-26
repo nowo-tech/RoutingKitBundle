@@ -1,0 +1,2 @@
+nowo_routing_kit_panel:
+    resource: '@NowoRoutingKitBundle/Resources/config/routes.yaml'

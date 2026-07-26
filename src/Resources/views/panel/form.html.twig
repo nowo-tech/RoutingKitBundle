@@ -1,0 +1,67 @@
+{% extends '@NowoRoutingKitBundle/panel/layout.html.twig' %}
+
+{% block body %}
+<header>
+    <h1>{{ definition and definition.id ? 'panel.edit_title'|trans({}, 'NowoRoutingKitBundle') : 'panel.create_title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
+    <p class="muted">{{ 'panel.form_hint'|trans({}, 'NowoRoutingKitBundle') }}</p>
+</header>
+<main>
+    {% if errors %}
+        <div class="errors">
+            {% for error in errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+    {% endif %}
+    <form method="post">
+        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
+        <label for="route_name">{{ 'panel.col.route'|trans({}, 'NowoRoutingKitBundle') }}</label>
+        <select id="route_name" name="route_name" required>
+            {% for item in routables %}
+                <option value="{{ item.route_name }}" {% if definition and definition.routeName == item.route_name %}selected{% endif %}>
+                    {{ item.label ? item.label ~ ' (' ~ item.route_name ~ ')' : item.route_name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="locale">{{ 'panel.col.locale'|trans({}, 'NowoRoutingKitBundle') }}</label>
+        <select id="locale" name="locale" required>
+            {% for loc in locales %}
+                <option value="{{ loc }}" {% if definition and definition.locale == loc %}selected{% endif %}>{{ loc }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="path">{{ 'panel.col.path'|trans({}, 'NowoRoutingKitBundle') }}</label>
+        <input id="path" name="path" required value="{{ definition ? definition.path : '/' }}" placeholder="/about">
+
+        <label for="canonical_style">{{ 'panel.col.canonical'|trans({}, 'NowoRoutingKitBundle') }}</label>
+        <select id="canonical_style" name="canonical_style">
+            {% for style in canonical_styles %}
+                <option value="{{ style.value }}" {% if definition and definition.canonicalStyle == style %}selected{% endif %}>{{ style.value }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="trailing_slash">trailing_slash</label>
+        <select id="trailing_slash" name="trailing_slash">
+            {% for style in trailing_styles %}
+                <option value="{{ style.value }}" {% if definition and definition.trailingSlash == style %}selected{% endif %}>{{ style.value }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="alias_mode">alias_mode</label>
+        <select id="alias_mode" name="alias_mode">
+            {% for mode in alias_modes %}
+                <option value="{{ mode.value }}" {% if definition and definition.aliasMode == mode %}selected{% endif %}>{{ mode.value }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="controller">controller (optional override)</label>
+        <input id="controller" name="controller" value="{{ definition and definition.controller ? definition.controller : '' }}" placeholder="App\Controller\AboutController::index">
+
+        <label><input type="checkbox" name="enabled" value="1" {% if definition is null or definition.enabled %}checked{% endif %}> enabled</label>
+
+        <div class="actions">
+            <button type="submit">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
+            <a class="button secondary" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
+        </div>
+    </form>
+</main>
+{% endblock %}

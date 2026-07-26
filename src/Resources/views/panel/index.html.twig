@@ -1,0 +1,49 @@
+{% extends '@NowoRoutingKitBundle/panel/layout.html.twig' %}
+
+{% block body %}
+<header>
+    <h1>{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
+    <p class="muted">{{ 'panel.subtitle'|trans({'%default%': default}, 'NowoRoutingKitBundle') }}</p>
+    <div class="actions">
+        <a class="button" href="{{ path_prefix }}/new">{{ 'panel.new'|trans({}, 'NowoRoutingKitBundle') }}</a>
+                    <form method="post" action="{{ path_prefix }}/clear-cache" style="display:inline">
+                        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
+                        <button type="submit" class="secondary">{{ 'panel.clear_cache'|trans({}, 'NowoRoutingKitBundle') }}</button>
+                    </form>
+    </div>
+</header>
+<main>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ 'panel.col.route'|trans({}, 'NowoRoutingKitBundle') }}</th>
+                <th>{{ 'panel.col.locale'|trans({}, 'NowoRoutingKitBundle') }}</th>
+                <th>{{ 'panel.col.path'|trans({}, 'NowoRoutingKitBundle') }}</th>
+                <th>{{ 'panel.col.canonical'|trans({}, 'NowoRoutingKitBundle') }}</th>
+                <th>{{ 'panel.col.enabled'|trans({}, 'NowoRoutingKitBundle') }}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in definitions %}
+            <tr>
+                <td><code>{{ row.routeName }}</code></td>
+                <td>{{ row.locale }}</td>
+                <td><code>{{ row.path }}</code></td>
+                <td>{{ row.canonicalStyle.value }}</td>
+                <td>{{ row.enabled ? 'yes' : 'no' }}</td>
+                <td>
+                    <a href="{{ path_prefix }}/edit/{{ row.id }}">{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}</a>
+                    <form method="post" action="{{ path_prefix }}/delete/{{ row.id }}" style="display:inline" onsubmit="return confirm('Delete?');">
+                        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
+                        <button type="submit" class="secondary">{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">{{ 'panel.empty'|trans({}, 'NowoRoutingKitBundle') }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</main>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Routing Kit Bundle Demo{% endblock %}
+
+{% block body %}
+    <h1>Routing Kit Bundle</h1>
+    <p>FrankenPHP demo for <code>nowo-tech/routing-kit-bundle</code> — locale paths, canonical styles, and CRUD panel.</p>
+
+    <div class="card">
+        <h2>Admin</h2>
+        <ul>
+            <li><a href="/_routing">Routing panel</a> (<code>/_routing</code>)</li>
+        </ul>
+        <p>Mark controllers with <code>#[Routable]</code>, then create <code>(route, locale)</code> path rows. Paths are stored without <code>{_locale}</code>; the loader always applies <code>/{_locale}/…</code>.</p>
+    </div>
+
+    <div class="card">
+        <h2>Sample pages</h2>
+        <ul>
+            <li><a href="/about">About</a> (<code>app_about</code>)</li>
+            <li><a href="/blog/hello-world">Blog post</a> (<code>app_blog_show</code>)</li>
+            <li><a href="/health">Health</a></li>
+        </ul>
+    </div>
+{% endblock %}

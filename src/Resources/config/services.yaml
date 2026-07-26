@@ -1,0 +1,40 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Nowo\RoutingKitBundle\:
+        resource: '../../*'
+        exclude:
+            - '../../DependencyInjection/'
+            - '../../Model/'
+            - '../../Event/'
+            - '../../Attribute/'
+            - '../../Resources/'
+            - '../../Seo/RoutingKitSeoPathBuilderDecorator.php'
+            - '../../NowoRoutingKitBundle.php'
+
+    Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider: ~
+
+    Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage:
+        arguments:
+            $filePath: '%nowo.routing_kit.storage.paths_file%'
+
+    Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery:
+        arguments:
+            $scanDirs: '%nowo.routing_kit.discovery.scan_dirs%'
+
+    Nowo\RoutingKitBundle\Validation\RoutePathValidator: ~
+    Nowo\RoutingKitBundle\Routing\PublicPathResolver: ~
+    Nowo\RoutingKitBundle\Routing\DbRouteLoader: ~
+    Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator: ~
+    Nowo\RoutingKitBundle\Service\RoutePathManager: ~
+    Nowo\RoutingKitBundle\Seo\RoutingKitSeoPathProvider: ~
+
+    Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber: ~
+    Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber: ~
+
+    Nowo\RoutingKitBundle\Controller\RoutingPanelController:
+        public: true
+        tags: ['controller.service_arguments']

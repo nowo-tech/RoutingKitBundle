@@ -1,0 +1,17 @@
+panel.title: Routing Kit
+panel.subtitle: 'Manage locale paths (default: %default%). Paths are stored without {_locale}; the loader always applies /{_locale}/…'
+panel.new: New path
+panel.clear_cache: Clear routing cache
+panel.edit: Edit
+panel.delete: Delete
+panel.empty: No path definitions yet.
+panel.col.route: Route
+panel.col.locale: Locale
+panel.col.path: Path
+panel.col.canonical: Canonical
+panel.col.enabled: Enabled
+panel.edit_title: Edit path
+panel.create_title: Create path
+panel.form_hint: 'Define path as /about or /blog/{slug}. Do not include {_locale}.'
+panel.save: Save
+panel.cancel: Cancel

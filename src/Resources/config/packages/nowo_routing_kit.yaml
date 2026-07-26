@@ -1,0 +1,25 @@
+# Default configuration reference for RoutingKitBundle
+nowo_routing_kit:
+    enabled: true
+    default_locale: en
+    locales: [en, es, fr, de, it, pt, nl]
+    # locale_provider: App\Locale\DatabaseLocaleProvider
+    storage:
+        paths_file: '%kernel.project_dir%/var/routing_kit/paths.json'
+        # path_storage: App\Routing\DoctrineRoutePathStorage
+    discovery:
+        scan_dirs:
+            - '%kernel.project_dir%/src/Controller'
+    panel:
+        enabled: true
+        path_prefix: '/_routing'
+    redirects:
+        canonical_enabled: true
+        canonical_status: 301
+        root_enabled: false
+        root_canonical_style: without_prefix
+        root_home_path: /
+        root_status: 302
+    auto_invalidate_cache: true
+    register_unprefixed_default: true
+    seo_kit_bridge: true

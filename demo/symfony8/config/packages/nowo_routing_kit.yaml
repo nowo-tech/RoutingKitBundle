@@ -1,0 +1,22 @@
+# Default demo configuration for RoutingKitBundle
+nowo_routing_kit:
+    enabled: true
+    default_locale: en
+    locales: [en, es]
+    storage:
+        paths_file: '%kernel.project_dir%/var/routing_kit/paths.json'
+    discovery:
+        scan_dirs:
+            - '%kernel.project_dir%/src/Controller'
+    panel:
+        enabled: true
+        path_prefix: '/_routing'
+    redirects:
+        canonical_enabled: true
+        canonical_status: 301
+        root_enabled: false
+        root_canonical_style: without_prefix
+        root_home_path: /
+    auto_invalidate_cache: true
+    register_unprefixed_default: true
+    seo_kit_bridge: true

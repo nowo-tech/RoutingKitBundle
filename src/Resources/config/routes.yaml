@@ -1,0 +1,28 @@
+nowo_routing_kit_panel:
+    path: '%nowo.routing_kit.panel.path_prefix%/'
+    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::index
+    methods: [GET]
+
+nowo_routing_kit_panel_create:
+    path: '%nowo.routing_kit.panel.path_prefix%/new'
+    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::create
+    methods: [GET, POST]
+
+nowo_routing_kit_panel_edit:
+    path: '%nowo.routing_kit.panel.path_prefix%/edit/{id}'
+    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::edit
+    methods: [GET, POST]
+    requirements:
+        id: '[^/]+'
+
+nowo_routing_kit_panel_delete:
+    path: '%nowo.routing_kit.panel.path_prefix%/delete/{id}'
+    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::delete
+    methods: [POST]
+    requirements:
+        id: '[^/]+'
+
+nowo_routing_kit_panel_clear_cache:
+    path: '%nowo.routing_kit.panel.path_prefix%/clear-cache'
+    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::clearCache
+    methods: [POST]
