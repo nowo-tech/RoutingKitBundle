@@ -6,6 +6,7 @@ namespace Nowo\RoutingKitBundle\EventSubscriber;
 
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
+use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -47,10 +48,18 @@ final class RootRedirectSubscriber implements EventSubscriberInterface
             return;
         }
 
+        if (!SafePublicPath::isSafeStoredPath($this->homePath)) {
+            return;
+        }
+
         $target = match ($this->homeCanonicalStyle) {
             CanonicalStyle::WithPrefix    => '/' . $this->locales->getDefaultLocale() . $this->homePath,
             CanonicalStyle::WithoutPrefix => $this->homePath,
         };
+
+        if (!SafePublicPath::isSafeRedirectTarget($target)) {
+            return;
+        }
 
         $event->setResponse(new RedirectResponse($target, $this->redirectStatus));
     }

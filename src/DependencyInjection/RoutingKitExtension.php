@@ -8,14 +8,18 @@ use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
+use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -39,6 +43,7 @@ final class RoutingKitExtension extends Extension
         $container->setParameter('nowo.routing_kit.discovery.scan_dirs', $config['discovery']['scan_dirs']);
         $container->setParameter('nowo.routing_kit.panel.enabled', $config['panel']['enabled']);
         $container->setParameter('nowo.routing_kit.panel.path_prefix', $config['panel']['path_prefix']);
+        $container->setParameter('nowo.routing_kit.panel.role', $config['panel']['role']);
         $container->setParameter('nowo.routing_kit.auto_invalidate_cache', $config['auto_invalidate_cache']);
         $container->setParameter('nowo.routing_kit.register_unprefixed_default', $config['register_unprefixed_default']);
         $container->setParameter('nowo.routing_kit.redirects', $config['redirects']);
@@ -47,19 +52,39 @@ final class RoutingKitExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
 
+        if (!$config['enabled']) {
+            $this->disableBundle($container);
+
+            return;
+        }
+
         $this->configureLocales($container, $config);
         $this->configureStorage($container, $config);
         $this->configureDiscovery($container, $config);
+        $this->configureValidator($container);
         $this->configureManager($container, $config);
         $this->configureLoader($container, $config);
         $this->configureSubscribers($container, $config);
         $this->configurePanel($container, $config);
+        $this->configureImportExport($container, $config);
         $this->configureCacheInvalidator($container);
+        $this->configureAudit($container);
     }
 
     public function getAlias(): string
     {
         return Configuration::ALIAS;
+    }
+
+    private function disableBundle(ContainerBuilder $container): void
+    {
+        $container->removeDefinition(RoutingPanelController::class);
+        $container->removeDefinition(DbRouteLoader::class);
+        $container->removeDefinition(CanonicalRedirectSubscriber::class);
+        $container->removeDefinition(RootRedirectSubscriber::class);
+        $container->removeDefinition(RoutePathAuditSubscriber::class);
+        $container->removeDefinition(PanelAccessGuard::class);
+        $container->removeDefinition(RoutePathImportExport::class);
     }
 
     /**
@@ -104,13 +129,22 @@ final class RoutingKitExtension extends Extension
             ->setArgument('$scanDirs', $config['discovery']['scan_dirs']);
     }
 
+    private function configureValidator(ContainerBuilder $container): void
+    {
+        $container->getDefinition(RoutePathValidator::class)
+            ->setArgument('$locales', new Reference(LocaleProviderInterface::class));
+    }
+
     /**
      * @param array<string, mixed> $config
      */
     private function configureManager(ContainerBuilder $container, array $config): void
     {
         $container->getDefinition(RoutePathManager::class)
-            ->setArgument('$autoInvalidateCache', (bool) $config['auto_invalidate_cache']);
+            ->setArgument('$autoInvalidateCache', (bool) $config['auto_invalidate_cache'])
+            ->setArgument('$maxDefinitions', (int) $config['panel']['max_definitions'])
+            ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
+            ->setArgument('$rejectConflicts', (bool) $config['panel']['reject_conflicts']);
     }
 
     /**
@@ -150,14 +184,48 @@ final class RoutingKitExtension extends Extension
     {
         if (!$config['panel']['enabled']) {
             $container->removeDefinition(RoutingPanelController::class);
+            $container->removeDefinition(PanelAccessGuard::class);
 
             return;
         }
 
+        $role = $config['panel']['role'];
+        $role = is_string($role) && $role !== '' ? $role : null;
+
+        $guard = $container->getDefinition(PanelAccessGuard::class)
+            ->setArgument('$requiredRole', $role);
+        if ($container->hasDefinition('security.authorization_checker') || $container->hasAlias('security.authorization_checker')) {
+            $guard->setArgument('$authorizationChecker', new Reference('security.authorization_checker'));
+        } else {
+            $guard->setArgument('$authorizationChecker', null);
+        }
+
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
+            ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function configureImportExport(ContainerBuilder $container, array $config): void
+    {
+        if (!$config['panel']['enabled']) {
+            $container->removeDefinition(RoutePathImportExport::class);
+
+            return;
+        }
+
+        $key = $config['panel']['export_signing_key'] ?? null;
+        if (is_string($key) && $key !== '') {
+            $container->getDefinition(RoutePathImportExport::class)
+                ->setArgument('$signingKey', $key);
+        } else {
+            $container->getDefinition(RoutePathImportExport::class)
+                ->setArgument('$signingKey', '%kernel.secret%');
+        }
     }
 
     private function configureCacheInvalidator(ContainerBuilder $container): void
@@ -165,5 +233,20 @@ final class RoutingKitExtension extends Extension
         $container->getDefinition(RouteCacheInvalidator::class)
             ->setArgument('$router', new Reference('router'))
             ->setArgument('$cacheDir', '%kernel.cache_dir%');
+    }
+
+    private function configureAudit(ContainerBuilder $container): void
+    {
+        $def = $container->getDefinition(RoutePathAuditSubscriber::class);
+        if ($container->hasDefinition('logger') || $container->hasAlias('logger')) {
+            $def->setArgument('$logger', new Reference('logger'));
+        } else {
+            $def->setArgument('$logger', null);
+        }
+        if ($container->hasDefinition('security.token_storage') || $container->hasAlias('security.token_storage')) {
+            $def->setArgument('$tokenStorage', new Reference('security.token_storage'));
+        } else {
+            $def->setArgument('$tokenStorage', null);
+        }
     }
 }

@@ -8,6 +8,7 @@ use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
+use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -51,7 +52,6 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            // Expand fallback locales
             foreach ($this->locales->getLocales() as $locale) {
                 $definition = $this->paths->resolveDefinition($stored->routeName, $locale);
                 if (!$definition instanceof RoutePathDefinition) {
@@ -61,15 +61,25 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface
                 $canonical = $this->paths->canonicalPath($definition);
                 $alias     = $this->paths->aliasPath($definition);
 
-                if ($this->paths->shouldRedirectAlias($definition) && $this->pathEquals($pathInfo, $alias) && !$this->pathEquals($pathInfo, $canonical)) {
+                if ($this->paths->shouldRedirectAlias($definition)
+                    && $this->pathEquals($pathInfo, $alias)
+                    && !$this->pathEquals($pathInfo, $canonical)
+                    && SafePublicPath::isSafeRedirectTarget($canonical)
+                ) {
                     $event->setResponse(new RedirectResponse($canonical, $this->redirectStatus));
 
                     return;
                 }
 
-                // Trailing slash redirects
+                if (!$this->isManagedPath($pathInfo, $canonical, $alias)) {
+                    continue;
+                }
+
                 $slashTarget = $this->trailingSlashTarget($pathInfo, $definition->trailingSlash);
-                if ($slashTarget !== null && $slashTarget !== $pathInfo) {
+                if ($slashTarget !== null
+                    && $slashTarget !== $pathInfo
+                    && SafePublicPath::isSafeRedirectTarget($slashTarget)
+                ) {
                     $event->setResponse(new RedirectResponse($slashTarget, $this->redirectStatus));
 
                     return;
@@ -78,9 +88,26 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface
         }
     }
 
+    private function isManagedPath(string $pathInfo, string $canonical, string $alias): bool
+    {
+        return $this->pathEquals($pathInfo, $canonical)
+            || $this->pathEquals($pathInfo, $alias)
+            || $this->pathEquals($this->stripTrailingSlash($pathInfo), $this->stripTrailingSlash($canonical))
+            || $this->pathEquals($this->stripTrailingSlash($pathInfo), $this->stripTrailingSlash($alias));
+    }
+
     private function pathEquals(string $a, string $b): bool
     {
         return rtrim($a, '/') === rtrim($b, '/') || $a === $b;
+    }
+
+    private function stripTrailingSlash(string $path): string
+    {
+        if ($path === '/') {
+            return '/';
+        }
+
+        return rtrim($path, '/') ?: '/';
     }
 
     private function trailingSlashTarget(string $pathInfo, TrailingSlashStyle $style): ?string

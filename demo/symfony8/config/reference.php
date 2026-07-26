@@ -779,6 +779,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     panel?: array{
  *         enabled?: bool|Param, // Default: true
  *         path_prefix?: scalar|Param|null, // Default: "/_routing"
+ *         role?: mixed, // Required security role for the panel. null disables the in-bundle check (firewall still recommended). // Default: "ROLE_ADMIN"
+ *         allow_controller_override?: bool|Param, // When false (default), panel cannot set a free-form _controller; discovery controller is used. // Default: false
+ *         max_definitions?: int|Param, // Default: 500
+ *         reject_conflicts?: bool|Param, // Default: true
+ *         export_signing_key?: scalar|Param|null, // HMAC key for signed export/import. null = kernel.secret. // Default: null
  *     },
  *     redirects?: array{
  *         canonical_enabled?: bool|Param, // Default: true

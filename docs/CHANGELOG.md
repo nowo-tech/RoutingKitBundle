@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-26
+
+### Security
+
+- CSRF is **fail-closed** and `symfony/security-csrf` is a hard requirement.
+- `panel.role` (default `ROLE_ADMIN`) gates the panel via `AuthorizationCheckerInterface`.
+- `route_name` must be `#[Routable]`; `locale` must be configured; free-form `_controller` overrides are disabled by default (discovery allowlist only).
+- Path safety rejects `//…` / schemes / control characters; redirect subscribers only emit safe `Location` targets.
+- Trailing-slash redirects apply only to paths managed by that definition (fixes global redirect bug).
+- `enabled: false` unregisters panel, DB loader, and redirect subscribers.
+
+### Added
+
+- Conflict detection / rejection (`panel.reject_conflicts`), `panel.max_definitions`.
+- Signed export/import (HMAC) and conflict preview endpoint.
+- `RoutePathAuditSubscriber` (logs user when a security token is present).
+- Recipe `access_control` example and panel security defaults.
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+- **BC notes:** CSRF manager required; `panel.role` defaults to `ROLE_ADMIN` (set `null` to restore pre-1.1 behaviour without in-bundle gate); controller override field removed unless `allow_controller_override: true`.
+
 ## [1.0.3] - 2026-07-26
 
 ### Fixed
@@ -103,7 +126,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.0...v1.0.1

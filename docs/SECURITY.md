@@ -2,25 +2,48 @@
 
 ## Attack surface
 
-- Twig CRUD panel under a configurable prefix (default `/_routing`) — **must be protected** by the application firewall (`access_control` / `IsGranted`). The bundle does **not** ship authentication or authorization.
-- Optional **controller override** field on path rows is high privilege: a panel writer can point a public path at any Symfony `_controller` callable. Restrict panel access accordingly (or leave the field empty and rely on `#[Routable]` discovery).
-- Filesystem JSON storage under `var/routing_kit/` — ensure the web server cannot serve `var/`.
-- DB loader registers `{name}.{locale}` routes with `_canonical_route` (import **after** app routes). Treat panel write access as routing-admin privilege.
+- Twig CRUD panel under `panel.path_prefix` (default `/_routing`).
+- Optional controller override (disabled by default; allowlist = `#[Routable]` discovery only).
+- Filesystem JSON under `var/routing_kit/` — must not be web-accessible.
+- DB loader registers `{name}.{locale}` with `_canonical_route`.
+- Canonical / root redirect subscribers (open-redirect hardened).
 
-## Mitigations
+## Built-in controls (1.1+)
 
-- No secrets in config examples.
-- Input validation on path placeholders via `RoutePathValidator` + `#[Routable]` constraints (paths must start with `/`; placeholders must match declared params).
-- CSRF: when `CsrfTokenManagerInterface` is available, panel POSTs validate token `nowo_routing_kit_panel`. Install `symfony/security-csrf` (or Security Bundle) in production apps; without a manager, CSRF checks are skipped.
-- Twig auto-escaping on panel templates.
-- Delete and clear-cache actions accept **POST** only.
+| Control | Behaviour |
+| --- | --- |
+| CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
+| `panel.role` | Default `ROLE_ADMIN` via `AuthorizationCheckerInterface`. Set `null` only if the firewall alone is enough. |
+| Route / locale allowlist | Saves must use a `#[Routable]` route name and a configured locale. |
+| Controller override | Off by default; when on, only discovery controllers are accepted. |
+| Path safety | Rejects `//…`, schemes, control characters; redirects only to safe targets. |
+| Trailing slash | Applies only to paths managed by that definition (not site-wide). |
+| `enabled: false` | Unregisters panel, DB loader, and redirect subscribers. |
+| Conflicts | `reject_conflicts` blocks colliding public paths. |
+| Max rows | `panel.max_definitions` (default 500). |
+| Audit | `RoutePathAuditSubscriber` logs saves/deletes with user id when a token exists. |
+| Export/import | HMAC-SHA256 signed JSON (`panel.export_signing_key` or `kernel.secret`). |
 
 ## Application checklist
 
-1. Firewall / role gate on `panel.path_prefix` (e.g. `ROLE_ADMIN`).
-2. Ensure `var/` is not web-accessible.
-3. Prefer leaving the panel controller override empty unless you need it.
-4. Keep `seo_kit_bridge` aligned with trusted panel operators (canonical paths come from storage).
+```yaml
+# config/packages/security.yaml
+security:
+    access_control:
+        - { path: ^/_routing, roles: ROLE_ADMIN }
+```
+
+```yaml
+nowo_routing_kit:
+    panel:
+        role: ROLE_ADMIN
+        allow_controller_override: false
+```
+
+1. Firewall the panel prefix.
+2. Keep `var/` off the web root.
+3. Prefer `allow_controller_override: false`.
+4. Treat panel operators as routing admins (SeoKit bridge inherits storage paths).
 
 ## Release security checklist (12.4.1)
 
@@ -29,13 +52,12 @@
 | SECURITY.md (this file) | yes |
 | `.env` in `.gitignore` | yes |
 | No secrets in repo | yes |
-| Safe config/recipe | yes (panel still enabled by default — protect in app) |
-| Input validation | path + params validated |
+| Safe config/recipe | yes (`ROLE_ADMIN` + access_control example) |
+| Input validation | path safety + params + allowlists |
 | Output escaping | Twig auto-escape |
 | `composer audit` | run before release |
-| No-secret logs | cache invalidation only |
-| Cryptography | N/A |
-| Permissions / exposure | document panel firewall |
-| Limits / DoS | storage file size app-managed |
+| CSRF | fail-closed |
+| Permissions / exposure | firewall + in-bundle role |
+| Limits / DoS | `max_definitions` |
 
 See also [`.github/SECURITY.md`](../.github/SECURITY.md).

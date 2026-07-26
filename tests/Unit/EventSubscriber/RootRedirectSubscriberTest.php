@@ -111,6 +111,35 @@ final class RootRedirectSubscriberTest extends TestCase
         self::assertSame('/landing', $event->getResponse()?->headers->get('Location'));
     }
 
+    public function testSkipsUnsafeHomePath(): void
+    {
+        $subscriber = new RootRedirectSubscriber(
+            $this->createLocales(),
+            enabled: true,
+            homeCanonicalStyle: CanonicalStyle::WithoutPrefix,
+            homePath: '//evil.example',
+        );
+        $event = $this->createEvent('/');
+        $subscriber->onKernelRequest($event);
+        self::assertNull($event->getResponse());
+    }
+
+    public function testSkipsWhenPrefixedTargetIsUnsafe(): void
+    {
+        $locales = $this->createMock(LocaleProviderInterface::class);
+        $locales->method('getDefaultLocale')->willReturn('http:');
+
+        $subscriber = new RootRedirectSubscriber(
+            $locales,
+            enabled: true,
+            homeCanonicalStyle: CanonicalStyle::WithPrefix,
+            homePath: '/home',
+        );
+        $event = $this->createEvent('/');
+        $subscriber->onKernelRequest($event);
+        self::assertNull($event->getResponse());
+    }
+
     private function createEvent(string $path, int $requestType = HttpKernelInterface::MAIN_REQUEST): RequestEvent
     {
         $kernel = $this->createMock(HttpKernelInterface::class);

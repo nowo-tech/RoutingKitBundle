@@ -2,4 +2,12 @@
   * Configure config/packages/nowo_routing_kit.yaml
   * Panel routes imported via config/routes/nowo_routing_kit.yaml (default prefix /_routing)
   * Import the DB route loader AFTER application routes (type: nowo_routing_kit) — see docs/INSTALLATION.md
-  * Protect /_routing with your security firewall
+  * Protect /_routing with your security firewall, e.g.:
+
+        # config/packages/security.yaml
+        security:
+            access_control:
+                - { path: ^/_routing, roles: ROLE_ADMIN }
+
+  * panel.role defaults to ROLE_ADMIN (in-bundle AuthorizationChecker gate). Set panel.role: null only if the firewall alone is enough.
+  * CSRF is required (symfony/security-csrf).

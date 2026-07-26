@@ -9,11 +9,14 @@ use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
 use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
+use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
@@ -117,6 +120,34 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertSame('app.path_storage', (string) $container->getAlias(RoutePathStorageInterface::class));
     }
 
+    public function testLoadWiresLoggerTokenStorageAndExportKey(): void
+    {
+        $container = $this->createContainer();
+        $container->setDefinition('logger', new Definition());
+        $container->setDefinition('security.token_storage', new Definition());
+        $container->setDefinition('security.authorization_checker', new Definition());
+
+        $extension = new RoutingKitExtension();
+        $extension->load([[
+            'panel' => [
+                'enabled'            => true,
+                'role'               => 'ROLE_ADMIN',
+                'export_signing_key' => 'explicit-key',
+            ],
+        ]], $container);
+
+        $guard = $container->getDefinition(PanelAccessGuard::class);
+        self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
+        self::assertSame('ROLE_ADMIN', $guard->getArgument('$requiredRole'));
+
+        $export = $container->getDefinition(RoutePathImportExport::class);
+        self::assertSame('explicit-key', $export->getArgument('$signingKey'));
+
+        $audit = $container->getDefinition(RoutePathAuditSubscriber::class);
+        self::assertEquals(new Reference('logger'), $audit->getArgument('$logger'));
+        self::assertEquals(new Reference('security.token_storage'), $audit->getArgument('$tokenStorage'));
+    }
+
     public function testLoadRemovesPanelControllerWhenPanelIsDisabled(): void
     {
         $container = $this->createContainer();
@@ -129,11 +160,25 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertFalse($container->hasDefinition(RoutingPanelController::class));
     }
 
+    public function testLoadDisablesBundleWhenEnabledFalse(): void
+    {
+        $container = $this->createContainer();
+        $extension = new RoutingKitExtension();
+
+        $extension->load([['enabled' => false]], $container);
+
+        self::assertFalse($container->hasDefinition(RoutingPanelController::class));
+        self::assertFalse($container->hasDefinition(DbRouteLoader::class));
+        self::assertFalse($container->hasDefinition(CanonicalRedirectSubscriber::class));
+        self::assertFalse($container->hasDefinition(RootRedirectSubscriber::class));
+    }
+
     private function createContainer(): ContainerBuilder
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.project_dir', '/tmp/project');
         $container->setParameter('kernel.cache_dir', '/tmp/cache');
+        $container->setParameter('kernel.secret', 'test-secret');
 
         return $container;
     }

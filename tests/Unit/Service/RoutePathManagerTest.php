@@ -6,8 +6,11 @@ namespace Nowo\RoutingKitBundle\Tests\Unit\Service;
 
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
+use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
+use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
@@ -85,6 +88,7 @@ PHP);
             $this->createValidator(),
             new RouteCacheInvalidator($router, $this->cacheDir),
             $dispatcher,
+            $this->createConflictDetector($storage),
         );
 
         $saved = $manager->save(new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'));
@@ -108,6 +112,7 @@ PHP);
             $this->createValidator(),
             new RouteCacheInvalidator(new WarmableRouterSpy(), $this->cacheDir),
             $dispatcher,
+            $this->createConflictDetector($storage),
         );
 
         $this->expectException(RuntimeException::class);
@@ -137,6 +142,7 @@ PHP);
             $this->createValidator(),
             new RouteCacheInvalidator($router, $this->cacheDir),
             $dispatcher,
+            $this->createConflictDetector($storage),
         );
 
         $manager->delete('rk_existing');
@@ -152,12 +158,14 @@ PHP);
     {
         $router     = new WarmableRouterSpy();
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $storage    = new InMemoryRoutePathStorage();
 
         $manager = new RoutePathManager(
-            new InMemoryRoutePathStorage(),
+            $storage,
             $this->createValidator(),
             new RouteCacheInvalidator($router, $this->cacheDir),
             $dispatcher,
+            $this->createConflictDetector($storage),
         );
 
         $manager->clearCache();
@@ -178,6 +186,7 @@ PHP);
             $this->createValidator(),
             new RouteCacheInvalidator($router, $this->cacheDir),
             $dispatcher,
+            $this->createConflictDetector($storage),
             autoInvalidateCache: false,
         );
 
@@ -189,7 +198,20 @@ PHP);
 
     private function createValidator(): RoutePathValidator
     {
-        return new RoutePathValidator(new RoutableControllerDiscovery([$this->controllerDir]));
+        return new RoutePathValidator(
+            new RoutableControllerDiscovery([$this->controllerDir]),
+            new ConfigurableLocaleProvider('en', ['en', 'es']),
+        );
+    }
+
+    private function createConflictDetector(RoutePathStorageInterface $storage): RoutePathConflictDetector
+    {
+        $locales = new ConfigurableLocaleProvider('en', ['en', 'es']);
+
+        return new RoutePathConflictDetector(
+            $storage,
+            new PublicPathResolver($storage, $locales),
+        );
     }
 }
 

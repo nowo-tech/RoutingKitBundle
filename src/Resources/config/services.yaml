@@ -27,13 +27,18 @@ services:
 
     Nowo\RoutingKitBundle\Validation\RoutePathValidator: ~
     Nowo\RoutingKitBundle\Routing\PublicPathResolver: ~
+    Nowo\RoutingKitBundle\Routing\SafePublicPath: ~
     Nowo\RoutingKitBundle\Routing\DbRouteLoader: ~
     Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator: ~
+    Nowo\RoutingKitBundle\Service\RoutePathConflictDetector: ~
     Nowo\RoutingKitBundle\Service\RoutePathManager: ~
+    Nowo\RoutingKitBundle\Service\RoutePathImportExport: ~
     Nowo\RoutingKitBundle\Seo\RoutingKitSeoPathProvider: ~
+    Nowo\RoutingKitBundle\Security\PanelAccessGuard: ~
 
     Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber: ~
+    Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber: ~
 
     Nowo\RoutingKitBundle\Controller\RoutingPanelController:
         public: true

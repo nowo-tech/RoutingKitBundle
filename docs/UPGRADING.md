@@ -1,5 +1,54 @@
 # Upgrading
 
+## To 1.1.0
+
+Security hardening release: CSRF fail-closed, panel role gate, allowlists, path safety, trailing-slash fix, and signed export/import.
+
+### Requirements
+
+Same PHP/Symfony ranges as 1.0.x, plus **`symfony/security-csrf`** (now required).
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1
+php bin/console cache:clear
+```
+
+### Breaking / migration
+
+| Topic | Before | 1.1.0 |
+| --- | --- | --- |
+| CSRF | Optional (fail-open without manager) | Required; invalid token rejected |
+| `panel.role` | n/a | Default `ROLE_ADMIN` (needs Security Bundle checker, or set `null`) |
+| Controller override | Free-form text field | Off by default; allowlist only when enabled |
+| `route_name` / `locale` | Weakly validated | Must be `#[Routable]` + configured locale |
+| Paths | Only “starts with `/`” | Rejects `//`, schemes, control chars |
+
+Recommended app security:
+
+```yaml
+# config/packages/security.yaml
+security:
+    access_control:
+        - { path: ^/_routing, roles: ROLE_ADMIN }
+
+# config/packages/nowo_routing_kit.yaml
+nowo_routing_kit:
+    panel:
+        role: ROLE_ADMIN
+        allow_controller_override: false
+```
+
+Demo apps without Security Bundle should set `panel.role: null` **and** keep the panel off public networks.
+
+### Behaviour notes
+
+- Export/import uses HMAC (`panel.export_signing_key` or `kernel.secret`).
+- `enabled: false` fully disables panel + loader + redirect subscribers.
+
+---
+
 ## To 1.0.3
 
 Patch release: restores Symfony 8 Composer constraints again (narrowed on `main` after `v1.0.2` by the CI code-style job) and refreshes security / routing docs.

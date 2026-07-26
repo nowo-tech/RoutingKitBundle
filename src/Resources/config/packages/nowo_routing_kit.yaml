@@ -13,6 +13,11 @@ nowo_routing_kit:
     panel:
         enabled: true
         path_prefix: '/_routing'
+        role: ROLE_ADMIN
+        allow_controller_override: false
+        max_definitions: 500
+        reject_conflicts: true
+        # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'
     redirects:
         canonical_enabled: true
         canonical_status: 301

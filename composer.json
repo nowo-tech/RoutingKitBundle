@@ -41,6 +41,7 @@
         "symfony/http-kernel": "^7.4 || ^8.0",
         "symfony/routing": "^7.0 || ^8.0",
         "symfony/security-core": "^7.4 || ^8.0",
+        "symfony/security-csrf": "^7.0 || ^8.0",
         "symfony/yaml": "^7.0 || ^8.0"
     },
     "require-dev": {
@@ -53,14 +54,13 @@
         "phpunit/phpunit": "^10.0",
         "rector/rector": "^2.0",
         "symfony/framework-bundle": "^7.0 || ^8.0",
-        "symfony/security-csrf": "^7.0 || ^8.0",
         "symfony/twig-bundle": "^7.0 || ^8.0",
         "twig/twig": "^3.12"
     },
     "suggest": {
         "symfony/twig-bundle": "Required to render the routing CRUD panel",
         "symfony/translation": "Required for |trans in panel templates",
-        "symfony/security-csrf": "CSRF protection for the Twig CRUD panel",
+        "symfony/security-bundle": "Recommended: firewall + ROLE_ADMIN for /_routing",
         "nowo-tech/seo-kit-bundle": "Bridge: RoutingKit paths feed SeoKit canonical/hreflang (requires SeoPathBuilderInterface)",
         "doctrine/orm": "Implement RoutePathStorageInterface against Doctrine entities"
     },

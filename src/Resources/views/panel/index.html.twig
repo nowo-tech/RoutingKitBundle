@@ -6,10 +6,11 @@
     <p class="muted">{{ 'panel.subtitle'|trans({'%default%': default}, 'NowoRoutingKitBundle') }}</p>
     <div class="actions">
         <a class="button" href="{{ path_prefix }}/new">{{ 'panel.new'|trans({}, 'NowoRoutingKitBundle') }}</a>
-                    <form method="post" action="{{ path_prefix }}/clear-cache" style="display:inline">
-                        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
-                        <button type="submit" class="secondary">{{ 'panel.clear_cache'|trans({}, 'NowoRoutingKitBundle') }}</button>
-                    </form>
+        <a class="button secondary" href="{{ path_prefix }}/export">Export</a>
+        <form method="post" action="{{ path_prefix }}/clear-cache" style="display:inline">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="secondary">{{ 'panel.clear_cache'|trans({}, 'NowoRoutingKitBundle') }}</button>
+        </form>
     </div>
 </header>
 <main>
@@ -35,7 +36,7 @@
                 <td>
                     <a href="{{ path_prefix }}/edit/{{ row.id }}">{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}</a>
                     <form method="post" action="{{ path_prefix }}/delete/{{ row.id }}" style="display:inline" onsubmit="return confirm('Delete?');">
-                        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                         <button type="submit" class="secondary">{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</button>
                     </form>
                 </td>
@@ -45,5 +46,16 @@
         {% endfor %}
         </tbody>
     </table>
+
+    <h2>Import (signed JSON)</h2>
+    <form method="post" action="{{ path_prefix }}/import">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <label for="payload_json">payload JSON</label>
+        <textarea id="payload_json" name="payload_json" rows="6" required placeholder='{"version":1,"payload":[],"signature":"..."}'></textarea>
+        <label><input type="checkbox" name="replace_all" value="1"> replace all existing rows</label>
+        <div class="actions">
+            <button type="submit" class="secondary">Import</button>
+        </div>
+    </form>
 </main>
 {% endblock %}

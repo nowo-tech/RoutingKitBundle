@@ -62,8 +62,19 @@ PHP);
             'Do not include {_locale} in the stored path; it is always applied by the loader.',
             $validator->validate('app_blog_show', '/{_locale}/blog/{slug}'),
         );
-        self::assertContains('Path must be absolute and start with "/".', $validator->validate('app_blog_show', 'blog/{slug}'));
-        self::assertContains('Path must be absolute and start with "/".', $validator->validate('app_blog_show', ''));
+        self::assertContains(
+            'Path must be an absolute public path starting with "/" (no "//", schemes, or control characters).',
+            $validator->validate('app_blog_show', 'blog/{slug}'),
+        );
+        self::assertContains(
+            'Path must be an absolute public path starting with "/" (no "//", schemes, or control characters).',
+            $validator->validate('app_blog_show', ''),
+        );
+        self::assertContains(
+            'Path must be an absolute public path starting with "/" (no "//", schemes, or control characters).',
+            $validator->validate('app_blog_show', '//evil.example/path'),
+        );
+        self::assertContains('Route "unknown_route" is not marked #[Routable].', $validator->validate('unknown_route', '/x'));
     }
 
     public function testValidateValuesChecksRequiredEnumAndRequirement(): void

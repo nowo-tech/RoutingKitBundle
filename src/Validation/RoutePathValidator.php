@@ -6,6 +6,8 @@ namespace Nowo\RoutingKitBundle\Validation;
 
 use Nowo\RoutingKitBundle\Attribute\RouteParam;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
+use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
+use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 
 use function array_key_exists;
 use function array_unique;
@@ -14,7 +16,7 @@ use function in_array;
 use function preg_match;
 use function preg_match_all;
 use function sprintf;
-use function str_starts_with;
+use function str_contains;
 
 /**
  * Validates stored path patterns against #[Routable] parameter declarations.
@@ -23,22 +25,55 @@ final class RoutePathValidator
 {
     public function __construct(
         private readonly RoutableControllerDiscovery $discovery,
+        private readonly ?LocaleProviderInterface $locales = null,
     ) {
     }
 
     /**
      * @return list<string> Validation error messages (empty = valid)
      */
-    public function validate(string $routeName, string $path): array
+    public function validate(string $routeName, string $path, ?string $locale = null, ?string $controller = null): array
     {
         $errors = [];
 
-        if ($path === '' || !str_starts_with($path, '/')) {
-            $errors[] = 'Path must be absolute and start with "/".';
+        if ($routeName === '') {
+            $errors[] = 'Route name is required.';
+        } elseif ($this->discovery->findByRouteName($routeName) === null) {
+            $errors[] = sprintf('Route "%s" is not marked #[Routable].', $routeName);
+        }
+
+        if ($locale !== null) {
+            if ($locale === '') {
+                $errors[] = 'Locale is required.';
+            } elseif ($this->locales instanceof LocaleProviderInterface
+                && !in_array($locale, $this->locales->getLocales(), true)
+            ) {
+                $errors[] = sprintf('Locale "%s" is not in configured locales.', $locale);
+            }
+        }
+
+        if (!SafePublicPath::isSafeStoredPath($path)) {
+            $errors[] = 'Path must be an absolute public path starting with "/" (no "//", schemes, or control characters).';
         }
 
         if (str_contains($path, '{_locale}')) {
             $errors[] = 'Do not include {_locale} in the stored path; it is always applied by the loader.';
+        }
+
+        if ($controller !== null && $controller !== '') {
+            $allowed = $this->allowedControllersFor($routeName);
+            if ($allowed === [] || !in_array($controller, $allowed, true)) {
+                $errors[] = sprintf(
+                    'Controller override "%s" is not allowed; use the #[Routable] controller for "%s".',
+                    $controller,
+                    $routeName,
+                );
+            }
+        }
+
+        if ($errors !== [] && !SafePublicPath::isSafeStoredPath($path)) {
+            // Still check placeholders when path shape is otherwise ok — skip if unsafe.
+            return $errors;
         }
 
         $placeholders = $this->extractPlaceholders($path);
@@ -62,8 +97,6 @@ final class RoutePathValidator
                 $errors[] = sprintf('Required parameter "{%s}" is missing from path.', $name);
             }
         }
-
-        // Static segments: if a param has enum/requirement and appears as fixed value — skip (path uses placeholders)
 
         return $errors;
     }
@@ -91,6 +124,19 @@ final class RoutePathValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedControllersFor(string $routeName): array
+    {
+        $item = $this->discovery->findByRouteName($routeName);
+        if ($item === null) {
+            return [];
+        }
+
+        return [(string) $item['controller']];
     }
 
     /**

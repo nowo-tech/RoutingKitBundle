@@ -6,5 +6,9 @@ nowo_routing_kit:
     panel:
         enabled: true
         path_prefix: '/_routing'
+        role: ROLE_ADMIN
+        allow_controller_override: false
+        max_definitions: 500
+        reject_conflicts: true
     auto_invalidate_cache: true
     seo_kit_bridge: true

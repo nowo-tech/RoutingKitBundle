@@ -12,7 +12,9 @@ use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function count;
 use function implode;
+use function sprintf;
 
 final class RoutePathManager
 {
@@ -21,7 +23,11 @@ final class RoutePathManager
         private readonly RoutePathValidator $validator,
         private readonly RouteCacheInvalidator $cacheInvalidator,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly RoutePathConflictDetector $conflictDetector,
         private readonly bool $autoInvalidateCache = true,
+        private readonly int $maxDefinitions = 500,
+        private readonly bool $allowControllerOverride = false,
+        private readonly bool $rejectConflicts = true,
     ) {
     }
 
@@ -38,11 +44,50 @@ final class RoutePathManager
         return $this->storage->findById($id);
     }
 
+    /**
+     * @return list<string>
+     */
+    public function previewConflicts(RoutePathDefinition $definition): array
+    {
+        return $this->conflictDetector->conflictsFor($definition);
+    }
+
     public function save(RoutePathDefinition $definition, bool $invalidateCache = true): RoutePathDefinition
     {
-        $errors = $this->validator->validate($definition->routeName, $definition->path);
+        $controller = $definition->controller;
+        if (!$this->allowControllerOverride) {
+            $controller = null;
+            $definition = new RoutePathDefinition(
+                routeName: $definition->routeName,
+                locale: $definition->locale,
+                path: $definition->path,
+                canonicalStyle: $definition->canonicalStyle,
+                trailingSlash: $definition->trailingSlash,
+                aliasMode: $definition->aliasMode,
+                enabled: $definition->enabled,
+                id: $definition->id,
+            );
+        }
+
+        $errors = $this->validator->validate(
+            $definition->routeName,
+            $definition->path,
+            $definition->locale,
+            $controller,
+        );
         if ($errors !== []) {
             throw new RuntimeException('Invalid route path: ' . implode(' ', $errors));
+        }
+
+        if ($definition->id === null && count($this->storage->all()) >= $this->maxDefinitions) {
+            throw new RuntimeException(sprintf('Maximum number of route path definitions reached (%d).', $this->maxDefinitions));
+        }
+
+        if ($this->rejectConflicts) {
+            $conflicts = $this->conflictDetector->conflictsFor($definition);
+            if ($conflicts !== []) {
+                throw new RuntimeException('Path conflicts: ' . implode(' ', $conflicts));
+            }
         }
 
         $saved = $this->storage->save($definition);

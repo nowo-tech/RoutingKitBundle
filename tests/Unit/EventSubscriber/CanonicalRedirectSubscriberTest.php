@@ -146,6 +146,41 @@ final class CanonicalRedirectSubscriberTest extends TestCase
         self::assertNull($event->getResponse());
     }
 
+    public function testDoesNotRedirectUnrelatedPathsForTrailingSlashRules(): void
+    {
+        $subscriber = $this->createSubscriber([
+            new RoutePathDefinition(
+                routeName: 'app_about',
+                locale: 'en',
+                path: '/about',
+                canonicalStyle: CanonicalStyle::WithoutPrefix,
+                trailingSlash: TrailingSlashStyle::RedirectToKeep,
+                aliasMode: AliasMode::Alias,
+            ),
+        ]);
+
+        $event = $this->createEvent('/totally-unrelated');
+        $subscriber->onKernelRequest($event);
+
+        self::assertNull($event->getResponse());
+    }
+
+    public function testStripTrailingSlashOnRootViaManagedPathCheck(): void
+    {
+        $subscriber = $this->createSubscriber([
+            new RoutePathDefinition(
+                routeName: 'app_about',
+                locale: 'en',
+                path: '/about',
+                trailingSlash: TrailingSlashStyle::RedirectToKeep,
+                aliasMode: AliasMode::Alias,
+            ),
+        ]);
+        $event = $this->createEvent('/');
+        $subscriber->onKernelRequest($event);
+        self::assertNull($event->getResponse());
+    }
+
     /**
      * @param list<RoutePathDefinition> $definitions
      */

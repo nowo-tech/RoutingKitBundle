@@ -11,6 +11,12 @@ nowo_routing_kit:
     panel:
         enabled: true
         path_prefix: '/_routing'
+        # Demo has no Security Bundle by default — disable in-bundle role gate.
+        # For production, use ROLE_ADMIN + access_control (see docs/SECURITY.md).
+        role: null
+        allow_controller_override: false
+        max_definitions: 500
+        reject_conflicts: true
     redirects:
         canonical_enabled: true
         canonical_status: 301

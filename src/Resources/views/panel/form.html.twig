@@ -11,8 +11,13 @@
             {% for error in errors %}<div>{{ error }}</div>{% endfor %}
         </div>
     {% endif %}
+    {% if conflicts %}
+        <div class="errors">
+            {% for conflict in conflicts %}<div>{{ conflict }}</div>{% endfor %}
+        </div>
+    {% endif %}
     <form method="post">
-        {% if csrf_token %}<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{% endif %}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <label for="route_name">{{ 'panel.col.route'|trans({}, 'NowoRoutingKitBundle') }}</label>
         <select id="route_name" name="route_name" required>
             {% for item in routables %}
@@ -53,8 +58,17 @@
             {% endfor %}
         </select>
 
-        <label for="controller">controller (optional override)</label>
-        <input id="controller" name="controller" value="{{ definition and definition.controller ? definition.controller : '' }}" placeholder="App\Controller\AboutController::index">
+        {% if allow_controller_override %}
+            <label for="controller">controller (allowlist override)</label>
+            <select id="controller" name="controller">
+                <option value="">— discovery default —</option>
+                {% for item in routables %}
+                    {% if definition is null or definition.routeName == item.route_name or item.route_name == (definition ? definition.routeName : '') %}
+                        <option value="{{ item.controller }}" {% if definition and definition.controller == item.controller %}selected{% endif %}>{{ item.controller }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        {% endif %}
 
         <label><input type="checkbox" name="enabled" value="1" {% if definition is null or definition.enabled %}checked{% endif %}> enabled</label>
 

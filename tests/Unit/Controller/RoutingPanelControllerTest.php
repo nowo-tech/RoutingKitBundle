@@ -8,7 +8,11 @@ use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
+use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
+use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
+use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
@@ -115,6 +119,7 @@ PHP);
         [$controller, $storage] = $this->createController();
 
         $response = $controller->create(Request::create('/_routing-kit/create', 'POST', [
+            '_csrf_token'     => 'token-value',
             'route_name'      => 'app_article_show',
             'locale'          => 'en',
             'path'            => '/articles/{slug}',
@@ -142,9 +147,10 @@ PHP);
         );
 
         $response = $controller->create(Request::create('/_routing-kit/create', 'POST', [
-            'route_name' => 'app_article_show',
-            'locale'     => 'en',
-            'path'       => '/articles',
+            '_csrf_token' => 'token-value',
+            'route_name'  => 'app_article_show',
+            'locale'      => 'en',
+            'path'        => '/articles',
         ]));
 
         self::assertSame('<html>error</html>', $response->getContent());
@@ -197,10 +203,11 @@ PHP);
 
         $getResponse  = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'GET'), 'rk_1');
         $postResponse = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', [
-            'route_name' => 'app_article_show',
-            'locale'     => 'en',
-            'path'       => '/stories/{slug}',
-            'enabled'    => '1',
+            '_csrf_token' => 'token-value',
+            'route_name'  => 'app_article_show',
+            'locale'      => 'en',
+            'path'        => '/stories/{slug}',
+            'enabled'     => '1',
         ]), 'rk_1');
 
         self::assertSame('<html>edit</html>', $getResponse->getContent());
@@ -224,9 +231,10 @@ PHP);
         );
 
         $response = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', [
-            'route_name' => 'app_article_show',
-            'locale'     => 'en',
-            'path'       => '/broken',
+            '_csrf_token' => 'token-value',
+            'route_name'  => 'app_article_show',
+            'locale'      => 'en',
+            'path'        => '/broken',
         ]), 'rk_1');
 
         self::assertSame('<html>edit-error</html>', $response->getContent());
@@ -253,15 +261,20 @@ PHP);
         self::assertSame(0, $router->warmUpCalls);
     }
 
-    public function testDeleteAndClearCacheWorkWithoutCsrfManager(): void
+    public function testDeleteAndClearCacheSucceedWithValidCsrf(): void
     {
         $existing                        = new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1');
         [$controller, $storage, $router] = $this->createController(
             definitions: [$existing],
+            csrfTokenManager: $this->createCsrfManager(valid: true),
         );
 
-        $deleteResponse = $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'POST'), 'rk_1');
-        $clearResponse  = $controller->clearCache(Request::create('/_routing-kit/clear-cache', 'POST'));
+        $deleteResponse = $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'POST', [
+            '_csrf_token' => 'token-value',
+        ]), 'rk_1');
+        $clearResponse = $controller->clearCache(Request::create('/_routing-kit/clear-cache', 'POST', [
+            '_csrf_token' => 'token-value',
+        ]));
 
         self::assertSame('/_routing-kit/', $deleteResponse->headers->get('Location'));
         self::assertSame('/_routing-kit/', $clearResponse->headers->get('Location'));
@@ -287,22 +300,31 @@ PHP);
         $router     = new WarmableRouterForPanel();
         $dispatcher = $this->createMock(EventDispatcherInterface::class);
         $dispatcher->method('dispatch')->willReturnArgument(0);
+        $locales   = new ConfigurableLocaleProvider('en', ['en', 'es']);
+        $discovery = new RoutableControllerDiscovery([$this->controllerDir]);
+        $paths     = new PublicPathResolver($storage, $locales);
 
         $manager = new RoutePathManager(
             $storage,
-            new RoutePathValidator(new RoutableControllerDiscovery([$this->controllerDir])),
+            new RoutePathValidator($discovery, $locales),
             new RouteCacheInvalidator($router, $this->cacheDir),
             $dispatcher,
+            new RoutePathConflictDetector($storage, $paths),
         );
+
+        $csrf = $csrfTokenManager ?? $this->createCsrfManager(valid: true);
 
         return [
             new RoutingPanelController(
                 $manager,
-                new RoutableControllerDiscovery([$this->controllerDir]),
-                new ConfigurableLocaleProvider('en', ['en', 'es']),
+                $discovery,
+                $locales,
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
+                $csrf,
+                new PanelAccessGuard(null, null),
+                new RoutePathImportExport($storage, 'test-signing-key'),
                 '/_routing-kit',
-                $csrfTokenManager,
+                false,
             ),
             $storage,
             $router,

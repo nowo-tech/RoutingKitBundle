@@ -82,6 +82,11 @@ final class ConfigurationTest extends TestCase
         self::assertSame(['%kernel.project_dir%/src/Controller'], $config['discovery']['scan_dirs']);
         self::assertTrue($config['panel']['enabled']);
         self::assertSame('/_routing', $config['panel']['path_prefix']);
+        self::assertSame('ROLE_ADMIN', $config['panel']['role']);
+        self::assertFalse($config['panel']['allow_controller_override']);
+        self::assertSame(500, $config['panel']['max_definitions']);
+        self::assertTrue($config['panel']['reject_conflicts']);
+        self::assertNull($config['panel']['export_signing_key']);
         self::assertSame([
             'canonical_enabled'    => true,
             'canonical_status'     => 301,
