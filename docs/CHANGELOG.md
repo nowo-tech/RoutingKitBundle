@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-26
+
+### Security
+
+- Filesystem storage fails closed on corrupt JSON (no silent wipe on next save).
+- Exclusive `flock` on `{paths}.lock` for read-modify-write mutations.
+- Export/import signing key must be ≥32 characters (`panel.export_signing_key` validated; runtime check also covers `kernel.secret`).
+- Panel shows an **UNSAFE** banner when `panel.role` is null; demo home page warns similarly.
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+- **BC notes:** weak signing keys (<32 chars) now fail export/import; corrupt `paths.json` throws instead of loading as empty.
+
 ## [1.1.1] - 2026-07-26
 
 ### Security
@@ -147,7 +161,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.2...v1.0.3

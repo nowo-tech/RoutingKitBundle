@@ -1,5 +1,29 @@
 # Upgrading
 
+## To 1.1.2
+
+Storage / HMAC / demo hardening follow-up.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.2
+php bin/console cache:clear
+```
+
+### Behaviour / security
+
+- Corrupt `paths.json` throws instead of returning an empty set (prevents accidental wipe).
+- Filesystem storage uses an exclusive lock file during mutations.
+- Signing keys shorter than **32** characters are rejected (config + runtime). Strengthen `kernel.secret` or set `panel.export_signing_key`.
+- UI warning when `panel.role` is null.
+
+### Migration
+
+Ensure `APP_SECRET` / `panel.export_signing_key` is at least 32 characters before using export/import. Backup `paths.json` before upgrade if it might be corrupt (the bundle will refuse to load it rather than overwrite).
+
+---
+
 ## To 1.1.1
 
 Import/export hardening follow-up to 1.1.0.

@@ -24,6 +24,8 @@ use const JSON_THROW_ON_ERROR;
  */
 final class RoutePathImportExport
 {
+    public const MIN_SIGNING_KEY_LENGTH = 32;
+
     public function __construct(
         private readonly RoutePathManager $manager,
         private readonly string $signingKey,
@@ -35,6 +37,8 @@ final class RoutePathImportExport
      */
     public function export(): array
     {
+        $this->assertSigningKeyStrength();
+
         $payload = [];
         foreach ($this->manager->all() as $definition) {
             $payload[] = $definition->toArray();
@@ -56,6 +60,8 @@ final class RoutePathImportExport
      */
     public function decodeAndVerify(array $envelope): array
     {
+        $this->assertSigningKeyStrength();
+
         $payload   = $envelope['payload'] ?? null;
         $signature = $envelope['signature'] ?? null;
         if (!is_array($payload) || !is_string($signature) || $signature === '') {
@@ -95,5 +101,12 @@ final class RoutePathImportExport
     public function describeKeySource(): string
     {
         return sprintf('hmac-sha256 (key length %d)', strlen($this->signingKey));
+    }
+
+    private function assertSigningKeyStrength(): void
+    {
+        if (strlen($this->signingKey) < self::MIN_SIGNING_KEY_LENGTH) {
+            throw new RuntimeException(sprintf('Export/import signing key must be at least %d characters (got %d). Set panel.export_signing_key or strengthen kernel.secret.', self::MIN_SIGNING_KEY_LENGTH, strlen($this->signingKey)));
+        }
     }
 }

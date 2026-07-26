@@ -85,20 +85,34 @@ final class FilesystemRoutePathStorageTest extends TestCase
         ]);
     }
 
-    public function testAllReturnsEmptyForEmptyCorruptOrUnreadableContent(): void
+    public function testEmptyFileIsEmptyStoreButCorruptJsonFailsClosed(): void
     {
         file_put_contents($this->file, '');
         $storage = new FilesystemRoutePathStorage($this->file);
         self::assertSame([], $storage->all());
 
         file_put_contents($this->file, '{invalid json');
-        self::assertSame([], $storage->all());
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Corrupt route path storage');
+        $storage->all();
+    }
 
+    public function testDirectoryPathIsTreatedAsMissingFile(): void
+    {
         $directoryPath = $this->dir . '/as-directory';
         mkdir($directoryPath);
         $directoryStorage = new FilesystemRoutePathStorage($directoryPath);
         self::assertSame([], $directoryStorage->all());
         rmdir($directoryPath);
+    }
+
+    public function testRejectsNonArrayJsonDocument(): void
+    {
+        file_put_contents($this->file, '"not-an-array"');
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('expected a JSON array');
+        $storage->all();
     }
 
     public function testLoadSkipsRowsWithoutIds(): void

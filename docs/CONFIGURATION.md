@@ -17,7 +17,7 @@ Root key: `nowo_routing_kit`.
 | `panel.allow_controller_override` | `false` | Allow selecting a discovery controller override (never free-form) |
 | `panel.max_definitions` | `500` | Soft cap on stored path rows |
 | `panel.reject_conflicts` | `true` | Block saves that collide on public paths |
-| `panel.export_signing_key` | `null` | HMAC key for signed export/import (`null` → `%kernel.secret%`) |
+| `panel.export_signing_key` | `null` | HMAC key for signed export/import (`null` → `%kernel.secret%`; min **32** chars when set or when used) |
 | `redirects.canonical_enabled` | `true` | Redirect non-canonical twins |
 | `redirects.canonical_status` | `301` | Redirect status |
 | `redirects.root_enabled` | `false` | Redirect `/` to default-locale home |

@@ -43,6 +43,7 @@ final class RoutingPanelController
         private readonly RoutePathImportExport $importExport,
         private readonly string $pathPrefix = '/_routing',
         private readonly bool $allowControllerOverride = false,
+        private readonly bool $roleGateDisabled = false,
     ) {
     }
 
@@ -51,11 +52,12 @@ final class RoutingPanelController
         $this->accessGuard->assertGranted();
 
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
-            'definitions' => $this->manager->all(),
-            'path_prefix' => $this->pathPrefix,
-            'locales'     => $this->locales->getLocales(),
-            'default'     => $this->locales->getDefaultLocale(),
-            'csrf_token'  => $this->csrfToken(),
+            'definitions'        => $this->manager->all(),
+            'path_prefix'        => $this->pathPrefix,
+            'locales'            => $this->locales->getLocales(),
+            'default'            => $this->locales->getDefaultLocale(),
+            'csrf_token'         => $this->csrfToken(),
+            'role_gate_disabled' => $this->roleGateDisabled,
         ]));
     }
 
@@ -237,6 +239,7 @@ final class RoutingPanelController
             'alias_modes'               => AliasMode::cases(),
             'csrf_token'                => $this->csrfToken(),
             'allow_controller_override' => $this->allowControllerOverride,
+            'role_gate_disabled'        => $this->roleGateDisabled,
         ]));
     }
 

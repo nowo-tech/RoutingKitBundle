@@ -783,7 +783,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         allow_controller_override?: bool|Param, // When false (default), panel cannot set a free-form _controller; discovery controller is used. // Default: false
  *         max_definitions?: int|Param, // Default: 500
  *         reject_conflicts?: bool|Param, // Default: true
- *         export_signing_key?: scalar|Param|null, // HMAC key for signed export/import. null = kernel.secret. // Default: null
+ *         export_signing_key?: scalar|Param|null, // HMAC key for signed export/import. null = kernel.secret. When set, must be at least 32 characters. // Default: null
  *     },
  *     redirects?: array{
  *         canonical_enabled?: bool|Param, // Default: true

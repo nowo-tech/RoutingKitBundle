@@ -204,6 +204,7 @@ final class RoutingKitExtension extends Extension
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
             ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
+            ->setArgument('$roleGateDisabled', $role === null)
             ->setPublic(true)
             ->addTag('controller.service_arguments');
     }

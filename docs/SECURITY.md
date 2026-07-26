@@ -22,9 +22,11 @@
 | Conflicts | `reject_conflicts` blocks colliding public paths (incl. locale fallbacks and disabled rows). |
 | Max rows | `panel.max_definitions` (default 500); enforced on import too. |
 | Audit | `RoutePathAuditSubscriber` logs saves/deletes with user id when a token exists. |
-| Export/import | HMAC-SHA256 signed JSON; **import** reuses manager validation; controller stripped unless override enabled; `replace_all` is atomic. |
+| Export/import | HMAC-SHA256 signed JSON; **import** reuses manager validation; controller stripped unless override enabled; `replace_all` is atomic; signing key ≥32 chars. |
 | Export HTTP | POST + CSRF only. |
 | `path_prefix` | Restricted to `/[A-Za-z0-9/_-]+`. |
+| Storage | Corrupt JSON fails closed; exclusive lock on mutations. |
+| `panel.role: null` | Allowed but panel shows UNSAFE banner; still firewall the prefix. |
 
 ## Application checklist
 

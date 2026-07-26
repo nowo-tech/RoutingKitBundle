@@ -132,7 +132,7 @@ final class RoutingKitExtensionTest extends TestCase
             'panel' => [
                 'enabled'            => true,
                 'role'               => 'ROLE_ADMIN',
-                'export_signing_key' => 'explicit-key',
+                'export_signing_key' => 'routing-kit-test-signing-key-32ch!!',
             ],
         ]], $container);
 
@@ -141,7 +141,7 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertSame('ROLE_ADMIN', $guard->getArgument('$requiredRole'));
 
         $export = $container->getDefinition(RoutePathImportExport::class);
-        self::assertSame('explicit-key', $export->getArgument('$signingKey'));
+        self::assertSame('routing-kit-test-signing-key-32ch!!', $export->getArgument('$signingKey'));
 
         $audit = $container->getDefinition(RoutePathAuditSubscriber::class);
         self::assertEquals(new Reference('logger'), $audit->getArgument('$logger'));

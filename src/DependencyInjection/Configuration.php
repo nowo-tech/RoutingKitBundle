@@ -9,6 +9,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 use function is_string;
+use function strlen;
 
 final class Configuration implements ConfigurationInterface
 {
@@ -96,8 +97,14 @@ final class Configuration implements ConfigurationInterface
                             ->defaultTrue()
                         ->end()
                         ->scalarNode('export_signing_key')
-                            ->info('HMAC key for signed export/import. null = kernel.secret.')
+                            ->info('HMAC key for signed export/import. null = kernel.secret. When set, must be at least 32 characters.')
                             ->defaultNull()
+                            ->validate()
+                                ->ifTrue(static function (mixed $v): bool {
+                                    return is_string($v) && $v !== '' && strlen($v) < 32;
+                                })
+                                ->thenInvalid('panel.export_signing_key must be at least 32 characters (or null to use kernel.secret).')
+                            ->end()
                         ->end()
                     ->end()
                 ->end()

@@ -22,6 +22,14 @@
     </style>
 </head>
 <body>
+{% if role_gate_disabled|default(false) %}
+<header>
+    <div class="errors" role="alert">
+        <strong>UNSAFE:</strong> <code>panel.role</code> is disabled. Anyone who can reach this URL can manage routes.
+        Use only on trusted local demos, or set <code>ROLE_ADMIN</code> and firewall the prefix.
+    </div>
+</header>
+{% endif %}
 {% block body %}{% endblock %}
 </body>
 </html>

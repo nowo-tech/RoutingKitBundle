@@ -148,7 +148,7 @@ PHP);
         $envelope = [
             'version'   => 1,
             'payload'   => $payload,
-            'signature' => hash_hmac('sha256', $json, 'key'),
+            'signature' => hash_hmac('sha256', $json, 'routing-kit-test-signing-key-32ch!!'),
         ];
 
         $importer = $this->createImportExport($storage, allowOverride: false);
@@ -306,7 +306,7 @@ PHP);
         $envelope = [
             'version'   => 1,
             'payload'   => $payload,
-            'signature' => hash_hmac('sha256', $json, 'key'),
+            'signature' => hash_hmac('sha256', $json, 'routing-kit-test-signing-key-32ch!!'),
         ];
         $this->expectException(RuntimeException::class);
         $service->decodeAndVerify($envelope);
@@ -330,7 +330,7 @@ PHP);
             allowControllerOverride: $allowOverride,
         );
 
-        return new RoutePathImportExport($manager, 'key');
+        return new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!');
     }
 
     private function createPanelWithCsrf(bool $valid): RoutingPanelController
@@ -361,7 +361,7 @@ PHP);
             $twig,
             $csrf,
             new PanelAccessGuard(null, null),
-            new RoutePathImportExport($manager, 'key'),
+            new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             false,
         );
@@ -397,7 +397,7 @@ PHP);
             $twig,
             $csrf,
             new PanelAccessGuard(null, $role),
-            new RoutePathImportExport($manager, 'key'),
+            new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             $allowOverride,
         );

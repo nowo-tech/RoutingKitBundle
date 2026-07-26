@@ -121,17 +121,27 @@ PHP);
         $envelope = [
             'version'   => 1,
             'payload'   => $payload,
-            'signature' => hash_hmac('sha256', $json, 'secret-key'),
+            'signature' => hash_hmac('sha256', $json, 'routing-kit-test-signing-key-32ch!!'),
         ];
 
         $this->expectException(RuntimeException::class);
         $service->import($envelope);
     }
 
+    public function testRejectsWeakSigningKey(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $weak    = $this->createService($storage, signingKey: 'short');
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('at least 32 characters');
+        $weak->export();
+    }
+
     private function createService(
         RoutePathStorageInterface $storage,
         bool $allowOverride = false,
         int $maxDefinitions = 500,
+        string $signingKey = 'routing-kit-test-signing-key-32ch!!',
     ): RoutePathImportExport {
         $locales    = new ConfigurableLocaleProvider('en', ['en', 'es']);
         $discovery  = new RoutableControllerDiscovery([$this->controllerDir]);
@@ -148,7 +158,7 @@ PHP);
             allowControllerOverride: $allowOverride,
         );
 
-        return new RoutePathImportExport($manager, 'secret-key');
+        return new RoutePathImportExport($manager, $signingKey);
     }
 
     private function createRouter(): RouterInterface&WarmableInterface

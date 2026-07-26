@@ -322,7 +322,7 @@ PHP);
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
                 $csrf,
                 new PanelAccessGuard(null, null),
-                new RoutePathImportExport($manager, 'test-signing-key'),
+                new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
                 '/_routing-kit',
                 false,
             ),

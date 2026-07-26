@@ -115,4 +115,15 @@ final class ConfigurationTest extends TestCase
             }
         }
     }
+
+    public function testRejectsShortExportSigningKey(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $this->expectException(InvalidConfigurationException::class);
+        $processor->processConfiguration($configuration, [[
+            'panel' => ['export_signing_key' => 'too-short'],
+        ]]);
+    }
 }
