@@ -5,7 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Table of contents
+
+- [[Unreleased]](#unreleased)
+- [[1.1.4] - 2026-07-26](#114---2026-07-26)
+- [[1.1.3] - 2026-07-26](#113---2026-07-26)
+- [[1.1.2] - 2026-07-26](#112---2026-07-26)
+- [[1.1.1] - 2026-07-26](#111---2026-07-26)
+- [[1.1.0] - 2026-07-26](#110---2026-07-26)
+- [[1.0.3] - 2026-07-26](#103---2026-07-26)
+- [[1.0.2] - 2026-07-26](#102---2026-07-26)
+- [[1.0.1] - 2026-07-26](#101---2026-07-26)
+- [[1.0.0] - 2026-07-26](#100---2026-07-26)
+
 ## [Unreleased]
+
+## [1.1.4] - 2026-07-26
+
+### Security
+
+- `SafePublicPath` rejects additional control characters, encoded bypasses (`%5c`, `%00`, `%0d`/`%0a`, `%252f%252f`), and `..` segments.
+- `redirects.root_home_path` is validated at config compile time with `SafePublicPath`.
+- `DbRouteLoader` skips unsafe stored paths and ignores non-allowlisted controller overrides even when `allow_controller_override` is true.
+- Panel `{id}` requirements and manager saves accept only `[A-Za-z0-9_.-]+`.
+- Import rejects payloads larger than 1 MiB (HTTP 413); unexpected import errors no longer echo internal exception messages.
+
+### Docs
+
+- Expanded [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md) (dev/prod, `FRANKENPHP_MODE`, troubleshooting).
+- Added table of contents to USAGE, UPGRADING, CHANGELOG, and GITHUB_CI (REQ-DOCS-005).
+- Demo Symfony 8: `config/packages/dev/twig.yaml` (`cache: false`); longer local `APP_SECRET` in `.env.example` / Compose fallback.
+
+### Changed
+
+- Dev dependency: pin `phpstan/phpstan` to `^2.0 <2.2.6` (Rector incompatibility with PHPStan 2.2.6).
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+- **BC notes (fail-closed):** previously accepted unsafe public paths / `root_home_path` values, non-allowlisted stored controllers (with override on), and non `[A-Za-z0-9_.-]+` definition ids are now rejected or ignored.
 
 ## [1.1.3] - 2026-07-26
 

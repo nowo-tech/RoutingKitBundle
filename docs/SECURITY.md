@@ -8,7 +8,7 @@
 - DB loader registers `{name}.{locale}` with `_canonical_route`.
 - Canonical / root redirect subscribers (open-redirect hardened).
 
-## Built-in controls (1.1.2+)
+## Built-in controls (1.1.4+)
 
 | Control | Behaviour |
 | --- | --- |
@@ -16,7 +16,11 @@
 | `panel.role` | Default `ROLE_ADMIN` via `AuthorizationCheckerInterface`. Set `null` only if the firewall alone is enough. |
 | Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |
 | Controller override | Off by default; when on, only discovery controllers are accepted. Loader ignores stored overrides when off. |
-| Path safety | Rejects `//…`, schemes, control characters, tabs, `%2f%2f`; redirects only to safe targets. |
+| Path safety | Rejects `//…`, schemes, C0/DEL controls, tabs, encoded `//` / `\` / CR-LF / null (`%2f%2f`, `%5c`, `%0d`, `%00`, …), `..` segments; redirects only to safe targets. |
+| Loader defense | `DbRouteLoader` skips unsafe stored paths; controller overrides must match the `#[Routable]` allowlist even when override is enabled. |
+| Panel ids | Definition ids limited to `[A-Za-z0-9_.-]+` (routes + manager). |
+| Import size | Raw import JSON capped at 1 MiB (413 when larger). |
+| `root_home_path` | Validated at config compile time with `SafePublicPath`. |
 | Trailing slash | Applies only to paths managed by that definition (not site-wide). |
 | `enabled: false` | Unregisters panel, DB loader, and redirect subscribers. |
 | Conflicts | `reject_conflicts` blocks colliding public paths (incl. locale fallbacks and disabled rows). |
@@ -63,7 +67,7 @@ nowo_routing_kit:
 | `composer audit` | run before release |
 | CSRF | fail-closed |
 | Permissions / exposure | firewall + in-bundle role + UNSAFE banner if role null |
-| Limits / DoS | `max_definitions` |
+| Limits / DoS | `max_definitions` + import payload ≤ 1 MiB |
 | Storage integrity | corrupt JSON fail-closed + flock |
 | Export HMAC | key length ≥32 |
 

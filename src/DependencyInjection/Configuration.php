@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
+use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 use function is_string;
+use function preg_match;
+use function str_contains;
 use function strlen;
 
 final class Configuration implements ConfigurationInterface
@@ -118,7 +121,15 @@ final class Configuration implements ConfigurationInterface
                             ->values(['without_prefix', 'with_prefix'])
                             ->defaultValue('without_prefix')
                         ->end()
-                        ->scalarNode('root_home_path')->defaultValue('/')->end()
+                        ->scalarNode('root_home_path')
+                            ->defaultValue('/')
+                            ->validate()
+                                ->ifTrue(static function (mixed $v): bool {
+                                    return !is_string($v) || !SafePublicPath::isSafeStoredPath($v);
+                                })
+                                ->thenInvalid('redirects.root_home_path must be a safe absolute public path (same rules as stored paths).')
+                            ->end()
+                        ->end()
                         ->integerNode('root_status')->defaultValue(302)->min(301)->max(308)->end()
                     ->end()
                 ->end()

@@ -16,6 +16,7 @@ use function array_unique;
 use function array_values;
 use function count;
 use function implode;
+use function preg_match;
 use function sprintf;
 
 final class RoutePathManager
@@ -141,6 +142,10 @@ final class RoutePathManager
     {
         if (!$this->allowControllerOverride) {
             $definition = $definition->withoutController();
+        }
+
+        if ($definition->id !== null && $definition->id !== '' && preg_match('/^[A-Za-z0-9_.-]+$/', $definition->id) !== 1) {
+            throw new RuntimeException('Invalid route path id: use only letters, digits, underscore, dot, or hyphen.');
         }
 
         $errors = $this->validator->validate(

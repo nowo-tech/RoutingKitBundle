@@ -14,6 +14,7 @@ use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,12 +27,16 @@ use Twig\Environment;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
 final class RoutingPanelController
 {
     public const CSRF_TOKEN_ID = 'nowo_routing_kit_panel';
+
+    /** Max raw import JSON size (bytes) to limit admin-panel DoS. */
+    private const MAX_IMPORT_PAYLOAD_BYTES = 1_048_576;
 
     public function __construct(
         private readonly RoutePathManager $manager,
@@ -138,6 +143,10 @@ final class RoutingPanelController
         }
 
         $raw = (string) $request->request->get('payload_json', '');
+        if (strlen($raw) > self::MAX_IMPORT_PAYLOAD_BYTES) {
+            return new Response('Import payload too large.', 413);
+        }
+
         try {
             /** @var mixed $decoded */
             $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
@@ -153,7 +162,9 @@ final class RoutingPanelController
             $this->importExport->import($decoded, $request->request->getBoolean('replace_all', false));
             $this->manager->clearCache();
         } catch (Throwable $e) {
-            return new Response($e->getMessage(), 400);
+            $message = $e instanceof RuntimeException ? $e->getMessage() : 'Import failed.';
+
+            return new Response($message, 400);
         }
 
         return new RedirectResponse($this->pathPrefix . '/');

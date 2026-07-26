@@ -13,14 +13,14 @@ nowo_routing_kit_panel_edit:
     controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::edit
     methods: [GET, POST]
     requirements:
-        id: '[^/]+'
+        id: '[A-Za-z0-9_.-]+'
 
 nowo_routing_kit_panel_delete:
     path: '%nowo.routing_kit.panel.path_prefix%/delete/{id}'
     controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::delete
     methods: [POST]
     requirements:
-        id: '[^/]+'
+        id: '[A-Za-z0-9_.-]+'
 
 nowo_routing_kit_panel_clear_cache:
     path: '%nowo.routing_kit.panel.path_prefix%/clear-cache'

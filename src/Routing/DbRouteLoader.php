@@ -84,10 +84,15 @@ final class DbRouteLoader extends Loader
                     continue;
                 }
 
+                if (!SafePublicPath::isSafeStoredPath($definition->path)) {
+                    continue;
+                }
+
                 $resolvedController = $controller;
                 if ($this->allowControllerOverride
                     && $definition->controller !== null
                     && $definition->controller !== ''
+                    && $this->isAllowedControllerOverride($routeName, $definition->controller)
                 ) {
                     $resolvedController = $definition->controller;
                 }
@@ -98,6 +103,10 @@ final class DbRouteLoader extends Loader
                 $path = ($locale === $defaultLocale && $this->registerUnprefixedDefault)
                     ? $this->pathResolver->unprefixedPath($definition)
                     : $this->pathResolver->prefixedPath($definition);
+
+                if (!SafePublicPath::isSafeStoredPath($path)) {
+                    continue;
+                }
 
                 $collection->add(
                     sprintf('%s.%s', $routeName, $locale),
@@ -120,6 +129,18 @@ final class DbRouteLoader extends Loader
     public function supports(mixed $resource, ?string $type = null): bool
     {
         return $type === 'nowo_routing_kit';
+    }
+
+    private function isAllowedControllerOverride(string $routeName, string $controller): bool
+    {
+        $discovered = $this->discovery->findByRouteName($routeName);
+        if ($discovered === null) {
+            return false;
+        }
+
+        $allowed = $discovered['controller'] ?? null;
+
+        return is_string($allowed) && $allowed !== '' && $allowed === $controller;
     }
 
     /**

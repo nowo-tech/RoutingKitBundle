@@ -1,5 +1,81 @@
 # Upgrading
 
+## Table of contents
+
+- [To 1.1.4](#to-114)
+  - [Install / update](#install--update)
+  - [Behaviour / security](#behaviour--security)
+  - [Breaking / migration](#breaking--migration)
+- [To 1.1.3](#to-113)
+- [To 1.1.2](#to-112)
+  - [Install / update](#install--update-1)
+  - [Behaviour / security](#behaviour--security-1)
+  - [Breaking / migration](#breaking--migration-1)
+- [To 1.1.1](#to-111)
+  - [Install / update](#install--update-2)
+  - [Behaviour / security](#behaviour--security-2)
+  - [Breaking / migration](#breaking--migration-2)
+- [To 1.1.0](#to-110)
+  - [Requirements](#requirements)
+  - [Install / update](#install--update-3)
+  - [Breaking / migration](#breaking--migration-3)
+  - [Behaviour notes](#behaviour-notes)
+- [To 1.0.3](#to-103)
+  - [Requirements](#requirements-1)
+  - [Install / update](#install--update-4)
+  - [Behavior notes](#behavior-notes)
+  - [Breaking changes](#breaking-changes)
+- [To 1.0.2](#to-102)
+  - [Requirements](#requirements-2)
+  - [Install / update](#install--update-5)
+  - [Behavior notes](#behavior-notes-1)
+  - [Breaking changes](#breaking-changes-1)
+- [To 1.0.1](#to-101)
+  - [Requirements](#requirements-3)
+  - [Install / update](#install--update-6)
+  - [Breaking changes](#breaking-changes-2)
+  - [Behaviour notes (non-breaking)](#behaviour-notes-non-breaking)
+- [To 1.0.0](#to-100)
+  - [Requirements](#requirements-4)
+  - [Install](#install)
+  - [Routes (order matters)](#routes-order-matters)
+  - [Suggested first-time config](#suggested-first-time-config)
+  - [Security](#security)
+  - [SeoKit](#seokit)
+  - [Storage](#storage)
+
+## To 1.1.4
+
+Security hardening follow-up (path safety, loader defense, panel ids, import limits) plus FrankenPHP / TOC docs.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.4
+php bin/console cache:clear
+```
+
+### Behaviour / security
+
+- Stored / redirect paths reject more open-redirect and injection shapes (C0/DEL controls, encoded `\` / null / CR-LF, double-encoded `//`, `..` segments).
+- `redirects.root_home_path` must already be a safe absolute public path at compile time.
+- With `allow_controller_override: true`, `DbRouteLoader` still applies only the `#[Routable]` discovery controller for that route (tampered storage cannot inject another controller).
+- Definition `id` values must match `[A-Za-z0-9_.-]+` (panel routes and saves/imports).
+- Panel import raw JSON is capped at **1 MiB**.
+
+### Breaking / migration
+
+| Topic | Before (1.1.3) | 1.1.4 |
+| --- | --- | --- |
+| Path / `root_home_path` edge cases | Some encoded / control / `..` shapes accepted | Rejected by `SafePublicPath` / config validation |
+| Stored controller override (override on) | Loader could honor any stored string | Only discovery allowlist for that route name |
+| Definition ids | Mostly unrestricted (`[^/]+` in panel routes) | `[A-Za-z0-9_.-]+` only |
+| Huge import payloads | Limited only by `max_definitions` after decode | Rejected at **1 MiB** before decode |
+
+Default `uniqid('rk_', true)` ids remain valid. Re-save or clean any hand-edited `paths.json` rows with unsafe paths or exotic ids before upgrade.
+
+---
+
 ## To 1.1.3
 
 Documentation alignment with 1.1.2 behaviour. No code or config changes.

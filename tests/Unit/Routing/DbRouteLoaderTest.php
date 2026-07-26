@@ -15,6 +15,8 @@ use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+use const JSON_THROW_ON_ERROR;
+
 final class DbRouteLoaderTest extends TestCase
 {
     private string $file;
@@ -103,7 +105,7 @@ PHP);
         self::assertFalse($loader->supports('.', 'yaml'));
     }
 
-    public function testUsesControllerOverrideAndPrefixedRootWhenUnprefixedDisabled(): void
+    public function testUsesAllowlistedControllerOverrideAndPrefixedRootWhenUnprefixedDisabled(): void
     {
         $storage = new FilesystemRoutePathStorage($this->file);
         $storage->save(new RoutePathDefinition(
@@ -112,7 +114,7 @@ PHP);
             path: '/',
             canonicalStyle: CanonicalStyle::WithPrefix,
             trailingSlash: TrailingSlashStyle::Keep,
-            controller: 'App\\Controller\\OverrideController::__invoke',
+            controller: 'App\\Controller\\HomeController::index',
         ));
 
         $locales   = new ConfigurableLocaleProvider('en', ['en', 'es']);
@@ -125,8 +127,94 @@ PHP);
         self::assertNotNull($collection->get('app_home.en'));
         self::assertNull($collection->get('app_home'));
         self::assertSame('/en/', $collection->get('app_home.en')->getPath());
-        self::assertSame('App\\Controller\\OverrideController::__invoke', $collection->get('app_home.en')->getDefault('_controller'));
+        self::assertSame('App\\Controller\\HomeController::index', $collection->get('app_home.en')->getDefault('_controller'));
         self::assertSame('app_home', $collection->get('app_home.en')->getDefault('_canonical_route'));
+    }
+
+    public function testIgnoresNonAllowlistedControllerOverrideEvenWhenEnabled(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $storage->save(new RoutePathDefinition(
+            routeName: 'app_home',
+            locale: 'en',
+            path: '/',
+            controller: 'App\\Controller\\OverrideController::__invoke',
+        ));
+
+        $locales   = new ConfigurableLocaleProvider('en', ['en']);
+        $resolver  = new PublicPathResolver($storage, $locales);
+        $discovery = new RoutableControllerDiscovery([$this->dir]);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery, true, true);
+
+        $collection = $loader->load('.', 'nowo_routing_kit');
+
+        self::assertSame(
+            'App\\Controller\\HomeController::index',
+            $collection->get('app_home.en')?->getDefault('_controller'),
+        );
+    }
+
+    public function testSkipsUnsafeStoredPaths(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        file_put_contents($this->file, json_encode([[
+            'id'         => 'rk_evil',
+            'route_name' => 'app_home',
+            'locale'     => 'en',
+            'path'       => '//evil.example',
+            'enabled'    => true,
+        ]], JSON_THROW_ON_ERROR));
+
+        $locales   = new ConfigurableLocaleProvider('en', ['en']);
+        $resolver  = new PublicPathResolver($storage, $locales);
+        $discovery = new RoutableControllerDiscovery([$this->dir]);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery);
+
+        $collection = $loader->load('.', 'nowo_routing_kit');
+
+        self::assertNull($collection->get('app_home.en'));
+    }
+
+    public function testSkipsResolvedPathsThatBecomeUnsafe(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $storage->save(new RoutePathDefinition(
+            routeName: 'app_home',
+            locale: 'en',
+            path: '/',
+        ));
+
+        $locales   = new ConfigurableLocaleProvider('en', ['en', '..']);
+        $resolver  = new PublicPathResolver($storage, $locales);
+        $discovery = new RoutableControllerDiscovery([$this->dir]);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery);
+
+        $collection = $loader->load('.', 'nowo_routing_kit');
+
+        self::assertNotNull($collection->get('app_home.en'));
+        self::assertNull($collection->get('app_home...'));
+    }
+
+    public function testIgnoresOverrideWhenRouteIsNotDiscoverable(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        file_put_contents($this->file, json_encode([[
+            'id'         => 'rk_unknown',
+            'route_name' => 'missing_route',
+            'locale'     => 'en',
+            'path'       => '/ghost',
+            'enabled'    => true,
+            'controller' => 'Evil\\Controller::hack',
+        ]], JSON_THROW_ON_ERROR));
+
+        $locales   = new ConfigurableLocaleProvider('en', ['en']);
+        $resolver  = new PublicPathResolver($storage, $locales);
+        $discovery = new RoutableControllerDiscovery([$this->dir]);
+        $loader    = new DbRouteLoader($storage, $locales, $resolver, $discovery, true, true);
+
+        $collection = $loader->load('.', 'nowo_routing_kit');
+
+        self::assertNull($collection->get('missing_route.en'));
     }
 
     public function testLoadCannotRunTwice(): void

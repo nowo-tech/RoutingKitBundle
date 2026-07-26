@@ -121,6 +121,31 @@ PHP);
         $manager->save(new RoutePathDefinition('app_article_show', 'en', '/articles'));
     }
 
+    public function testSaveRejectsUnsafeId(): void
+    {
+        $storage    = new InMemoryRoutePathStorage();
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+
+        $manager = new RoutePathManager(
+            $storage,
+            $this->createValidator(),
+            new RouteCacheInvalidator(new WarmableRouterSpy(), $this->cacheDir),
+            $dispatcher,
+            $this->createConflictDetector($storage),
+            autoInvalidateCache: false,
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid route path id:');
+        $manager->save(new RoutePathDefinition(
+            routeName: 'app_article_show',
+            locale: 'en',
+            path: '/articles/{slug}',
+            id: '../evil',
+        ));
+    }
+
     public function testDeleteDispatchesDeletedEventAndInvalidatesCache(): void
     {
         $existing   = new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_existing');

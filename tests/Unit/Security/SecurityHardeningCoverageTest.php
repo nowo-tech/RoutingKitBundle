@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\Security;
 
+use Error;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
@@ -232,6 +233,25 @@ PHP);
             '_csrf_token'  => 'token-value',
             'payload_json' => '{"payload":[],"signature":"bad"}',
         ]))->getStatusCode());
+        self::assertSame(413, $controller->import(Request::create('/import', 'POST', [
+            '_csrf_token'  => 'token-value',
+            'payload_json' => str_repeat('a', 1_048_577),
+        ]))->getStatusCode());
+
+        $exploding = $this->createPanelWithExplodingImport();
+        $emptyJson = json_encode([], JSON_THROW_ON_ERROR);
+        $envelope  = [
+            'version'   => 1,
+            'payload'   => [],
+            'signature' => hash_hmac('sha256', $emptyJson, 'routing-kit-test-signing-key-32ch!!'),
+        ];
+        $failed = $exploding->import(Request::create('/import', 'POST', [
+            '_csrf_token'  => 'token-value',
+            'payload_json' => json_encode($envelope, JSON_THROW_ON_ERROR),
+            'replace_all'  => '1',
+        ]));
+        self::assertSame(400, $failed->getStatusCode());
+        self::assertSame('Import failed.', $failed->getContent());
 
         $create = $controller->create(Request::create('/new', 'POST', [
             '_csrf_token' => 'token-value',
@@ -331,6 +351,73 @@ PHP);
         );
 
         return new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!');
+    }
+
+    private function createPanelWithExplodingImport(): RoutingPanelController
+    {
+        $storage = new class implements RoutePathStorageInterface {
+            public function all(): array
+            {
+                return [];
+            }
+
+            public function find(string $routeName, string $locale): ?RoutePathDefinition
+            {
+                return null;
+            }
+
+            public function findById(string $id): ?RoutePathDefinition
+            {
+                return null;
+            }
+
+            public function findByRouteName(string $routeName): array
+            {
+                return [];
+            }
+
+            public function save(RoutePathDefinition $definition): RoutePathDefinition
+            {
+                throw new Error('storage boom');
+            }
+
+            public function delete(string $id): void
+            {
+            }
+
+            public function replaceAll(array $definitions): array
+            {
+                throw new Error('storage boom');
+            }
+        };
+        $locales    = new ConfigurableLocaleProvider('en', ['en']);
+        $discovery  = new RoutableControllerDiscovery([$this->controllerDir]);
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $manager    = new RoutePathManager(
+            $storage,
+            new RoutePathValidator($discovery, $locales),
+            new RouteCacheInvalidator($this->createRouter(), $this->cacheDir),
+            $dispatcher,
+            new RoutePathConflictDetector($storage, new PublicPathResolver($storage, $locales)),
+            autoInvalidateCache: false,
+        );
+        $csrf = $this->createMock(CsrfTokenManagerInterface::class);
+        $csrf->method('getToken')->willReturn(new CsrfToken(RoutingPanelController::CSRF_TOKEN_ID, 'token-value'));
+        $csrf->method('isTokenValid')->willReturn(true);
+        $twig = $this->createMock(Environment::class);
+        $twig->method('render')->willReturn('<html/>');
+
+        return new RoutingPanelController(
+            $manager,
+            $discovery,
+            $locales,
+            $twig,
+            $csrf,
+            new PanelAccessGuard(null, null),
+            new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
+            '/_routing',
+            false,
+        );
     }
 
     private function createPanelWithCsrf(bool $valid): RoutingPanelController

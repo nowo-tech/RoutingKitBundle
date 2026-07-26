@@ -7,6 +7,7 @@ namespace Nowo\RoutingKitBundle\Routing;
 use function preg_match;
 use function str_contains;
 use function str_starts_with;
+use function strtolower;
 
 /**
  * Hardens stored / redirect paths against open redirects and control characters.
@@ -23,21 +24,34 @@ final class SafePublicPath
             return false;
         }
 
-        if (str_contains($path, '\\')
-            || str_contains($path, "\0")
-            || str_contains($path, "\r")
-            || str_contains($path, "\n")
-            || str_contains($path, "\t")
-            || str_contains($path, '://')
-            || str_contains(strtolower($path), '%2f%2f')
+        // C0 controls + DEL (header / log injection).
+        if (preg_match('/[\x00-\x1F\x7F]/', $path) === 1) {
+            return false;
+        }
+
+        if (str_contains($path, '\\') || str_contains($path, '://')) {
+            return false;
+        }
+
+        $lower = strtolower($path);
+        if (str_contains($lower, '%2f%2f')
+            || str_contains($lower, '%252f%252f')
+            || str_contains($lower, '%5c')
+            || str_contains($lower, '%00')
+            || str_contains($lower, '%0d')
+            || str_contains($lower, '%0a')
+            || str_contains($lower, '%09')
         ) {
             return false;
         }
 
-        // Reject scheme-relative leftovers and opaque "http:…" segments.
-        return preg_match('#/(?:[a-z][a-z0-9+.-]*):#i', $path) !== 1
+        // Reject scheme-relative leftovers and opaque "http:…" / "javascript:…" segments.
+        if (preg_match('#/(?:[a-z][a-z0-9+.-]*):#i', $path) === 1) {
+            return false;
+        }
 
-        ;
+        // Reject ".." path segments (traversal-shaped public paths).
+        return preg_match('#(?:^|/)\.\.(?:/|$)#', $path) !== 1;
     }
 
     /**

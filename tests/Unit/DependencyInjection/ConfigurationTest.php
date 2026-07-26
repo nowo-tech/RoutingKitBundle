@@ -126,4 +126,15 @@ final class ConfigurationTest extends TestCase
             'panel' => ['export_signing_key' => 'too-short'],
         ]]);
     }
+
+    public function testRejectsUnsafeRootHomePath(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $this->expectException(InvalidConfigurationException::class);
+        $processor->processConfiguration($configuration, [[
+            'redirects' => ['root_home_path' => '//evil.example'],
+        ]]);
+    }
 }

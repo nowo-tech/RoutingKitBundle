@@ -1,5 +1,14 @@
 # Usage
 
+## Table of contents
+
+- [Mark offerable controllers](#mark-offerable-controllers)
+- [Path rows](#path-rows)
+- [Panel](#panel)
+- [SeoKitBundle](#seokitbundle)
+- [Custom storage / locales](#custom-storage--locales)
+- [Overriding templates (REQ-TWIG-001)](#overriding-templates-req-twig-001)
+
 ## Mark offerable controllers
 
 ```php
