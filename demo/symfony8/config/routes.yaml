@@ -1,4 +1,4 @@
-# Panel first, then app attribute routes, then DB loader last (overwrites by name).
+# Panel first, then app attribute routes, then DB loader last ({name}.{locale} + _canonical_route).
 nowo_routing_kit_panel:
     resource: '@NowoRoutingKitBundle/Resources/config/routes.yaml'
 

@@ -18,7 +18,7 @@ This bundle is **FrankenPHP worker mode friendly**.
 - **Styles** — `canonical_style`, trailing slash, alias mode (`redirect` / `alias`).
 - **Fallback** — Missing locale row → default-locale path for that route name.
 - **`#[Routable]`** — Controllers offered in the CRUD; params + constraints validated on save.
-- **Loader** — `type: nowo_routing_kit` overwrites same-named app routes when imported last.
+- **Loader** — `type: nowo_routing_kit` registers `{name}.{locale}` with `_canonical_route` (import last).
 - **Panel** — Twig CRUD under `/_routing` + clear routing cache (auto after save/delete).
 - **SeoKit** — Optional bridge decorates `SeoPathBuilderInterface` for canonical/hreflang paths.
 
@@ -42,6 +42,7 @@ nowo_routing_kit_db:
     type: nowo_routing_kit
 ```
 
+The loader registers `{name}.{locale}` with `_canonical_route`. Protect `/_routing` with your firewall.
 ## Configuration
 
 ```yaml

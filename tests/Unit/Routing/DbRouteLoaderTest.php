@@ -110,9 +110,9 @@ PHP);
             routeName: 'app_home',
             locale: 'en',
             path: '/',
-            controller: 'App\\Controller\\OverrideController::__invoke',
             canonicalStyle: CanonicalStyle::WithPrefix,
             trailingSlash: TrailingSlashStyle::Keep,
+            controller: 'App\\Controller\\OverrideController::__invoke',
         ));
 
         $locales   = new ConfigurableLocaleProvider('en', ['en', 'es']);

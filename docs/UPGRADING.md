@@ -1,5 +1,37 @@
 # Upgrading
 
+## To 1.0.3
+
+Patch release: restores Symfony 8 Composer constraints again (narrowed on `main` after `v1.0.2` by the CI code-style job) and refreshes security / routing docs.
+
+### Requirements
+
+Same as 1.0.2:
+
+- **PHP** `>=8.2` and `<8.6`. Symfony **8.x** requires **PHP 8.4+**.
+- **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
+- **Twig** for the routing CRUD panel templates.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.0.3
+php bin/console cache:clear
+```
+
+If Composer previously resolved only Symfony 7 packages because of the narrowed constraints on `main` between `v1.0.2` and this tag, re-run update so Symfony 8 apps pick up `|| ^8.0`.
+
+### Behavior notes
+
+- Unchanged from 1.0.2: routes are `{name}.{locale}` with `_canonical_route`.
+- Protect `/_routing` (or `panel.path_prefix`) with a firewall — the bundle does not ship authentication. See [SECURITY.md](SECURITY.md).
+
+### Breaking changes
+
+None.
+
+---
+
 ## To 1.0.2
 
 Patch release: restores Symfony 8 Composer constraints (broken in 1.0.1) and fixes locale URL generation via `_canonical_route`.
@@ -27,6 +59,8 @@ php bin/console cache:clear
 ### Breaking changes
 
 None beyond 1.0.1 (`#[Routable]` without `label`).
+
+---
 
 ## To 1.0.1
 
@@ -104,7 +138,7 @@ nowo_routing_kit_db:
     type: nowo_routing_kit
 ```
 
-Import the DB loader **last** so stored paths overwrite same-named app routes.
+Import the DB loader **last** so RoutingKit locale routes (`{name}.{locale}` with `_canonical_route`) are registered after attribute routes.
 
 ### Suggested first-time config
 
@@ -124,7 +158,7 @@ Mark offerable controllers with `#[Routable]` / `RouteParam`, then open `/_routi
 
 ### Security
 
-Protect `/_routing` (or your `panel.path_prefix`) with a Symfony firewall — the bundle does not ship authentication.
+Protect `/_routing` (or your `panel.path_prefix`) with a Symfony firewall — the bundle does not ship authentication. See [SECURITY.md](SECURITY.md).
 
 ### SeoKit
 

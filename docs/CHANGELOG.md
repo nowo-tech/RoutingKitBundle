@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-07-26
+
+### Fixed
+
+- Restored Symfony **8.x** constraints (`|| ^8.0`) again after a post-`v1.0.2` CI code-style job had narrowed several `require` entries to `^7.4` only (that job now restores `composer.json` / `composer.lock` before committing).
+
+### Changed
+
+- Documented real panel security posture (firewall required, CSRF when available, controller-override privilege).
+- Clarified that the DB loader registers `{name}.{locale}` with `_canonical_route` (import last so locale paths compete correctly with app routes).
+- Fixed Keep a Changelog compare links for **1.0.2** / **Unreleased**.
+
+### Compatibility
+
+- PHP `>=8.2`, `<8.6`; Symfony `^7.4 || ^8.0` (CI minors **7.4**, **8.0**, **8.1**).
+
 ## [1.0.2] - 2026-07-26
 
 ### Fixed
@@ -53,7 +69,7 @@ First stable release of **Routing Kit Bundle**.
 - Public styles: `canonical_style` (`without_prefix` / `with_prefix`), `alias_mode` (`redirect` / `alias`), trailing-slash variants.
 - Dual access: `/foo` and `/{locale}/foo` with admin-defined canonical URL.
 - Optional root `/` redirect to the default-locale home.
-- Symfony route loader `type: nowo_routing_kit` (import **after** app routes so DB paths overwrite).
+- Symfony route loader `type: nowo_routing_kit` (import **after** app routes so DB/locale paths take effect).
 
 #### Controllers & validation
 
@@ -87,6 +103,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.0.0

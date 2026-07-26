@@ -19,7 +19,7 @@ return [
 
 ## Routes
 
-Import the **panel** routes and the **DB loader** (loader must come **after** application routes so DB paths overwrite):
+Import the **panel** routes and the **DB loader** (loader must come **after** application routes). The loader registers `{name}.{locale}` routes with `_canonical_route` so `path('name', {_locale: 'en'})` works:
 
 ```yaml
 # config/routes.yaml

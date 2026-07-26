@@ -34,6 +34,12 @@ Each row is `(route_name, locale)`:
 
 If locale `es` has no row, the **default locale** path is reused under `/es/…`.
 
+Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` set to `route_name`. Prefer:
+
+```twig
+{{ path('app_blog_show', { _locale: 'en', slug: 'hello' }) }}
+```
+
 ## Panel
 
 - List / create / edit / delete at `/_routing` (configurable).

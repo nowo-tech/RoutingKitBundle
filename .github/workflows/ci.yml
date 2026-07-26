@@ -110,6 +110,8 @@ jobs:
         run: |
           composer require symfony/config:^7.4 symfony/dependency-injection:^7.4 symfony/http-kernel:^7.4 symfony/http-foundation:^7.4 symfony/security-core:^7.4 --no-interaction --no-update
           composer update "symfony/*" --with-all-dependencies --no-interaction --prefer-dist --no-progress
+          # Do not let the temporary ^7.4 pins leak into the committed composer.json / lock.
+          git checkout -- composer.json composer.lock
 
       - name: Fix code style
         run: composer cs-fix
@@ -117,7 +119,7 @@ jobs:
       - name: Check for changes
         id: verify-changed-files
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
+          if [ -n "$(git status --porcelain -- '*.php' '*.twig' '*.yaml' '*.yml' '*.xml')" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -128,8 +130,8 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add -A
-          git commit -m "Apply PHP CS Fixer fixes [skip ci]"
+          git add -u -- '*.php' '*.twig' '*.yaml' '*.yml' '*.xml'
+          git diff --cached --quiet || git commit -m "Apply PHP CS Fixer fixes [skip ci]"
           git push
 
   code-style-check:
