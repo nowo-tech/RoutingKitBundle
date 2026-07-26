@@ -44,7 +44,8 @@ Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` 
 
 - List / create / edit / delete at `/_routing` (configurable).
 - **Clear routing cache** button; saves/deletes also invalidate when `auto_invalidate_cache: true`.
-- Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows).
+- Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows). Signing key must be ≥32 characters (`panel.export_signing_key` or `kernel.secret`).
+- If `panel.role` is `null`, the panel shows an **UNSAFE** banner (demo / trusted networks only).
 
 ## SeoKitBundle
 
@@ -69,7 +70,7 @@ nowo_routing_kit:
         path_storage: App\Routing\DoctrineRoutePathStorage
 ```
 
-Implement `LocaleProviderInterface` and `RoutePathStorageInterface`.
+Implement `LocaleProviderInterface` and `RoutePathStorageInterface` (including `replaceAll()` since 1.1.1).
 
 ## Overriding templates (REQ-TWIG-001)
 

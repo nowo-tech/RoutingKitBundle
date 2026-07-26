@@ -17,7 +17,7 @@ nowo_routing_kit:
         allow_controller_override: false
         max_definitions: 500
         reject_conflicts: true
-        # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'
+        # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'  # min 32 chars when set; null → kernel.secret (also ≥32 at export/import)
     redirects:
         canonical_enabled: true
         canonical_status: 301

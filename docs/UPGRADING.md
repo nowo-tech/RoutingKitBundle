@@ -1,5 +1,15 @@
 # Upgrading
 
+## To 1.1.3
+
+Documentation alignment with 1.1.2 behaviour. No code or config changes.
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.3
+```
+
+---
+
 ## To 1.1.2
 
 Storage / HMAC / demo hardening follow-up.
@@ -14,13 +24,20 @@ php bin/console cache:clear
 ### Behaviour / security
 
 - Corrupt `paths.json` throws instead of returning an empty set (prevents accidental wipe).
-- Filesystem storage uses an exclusive lock file during mutations.
+- Filesystem storage uses an exclusive lock file (`paths.json.lock`) during mutations.
 - Signing keys shorter than **32** characters are rejected (config + runtime). Strengthen `kernel.secret` or set `panel.export_signing_key`.
 - UI warning when `panel.role` is null.
 
-### Migration
+### Breaking / migration
 
-Ensure `APP_SECRET` / `panel.export_signing_key` is at least 32 characters before using export/import. Backup `paths.json` before upgrade if it might be corrupt (the bundle will refuse to load it rather than overwrite).
+| Topic | Before (1.1.1) | 1.1.2 |
+| --- | --- | --- |
+| Corrupt `paths.json` | Loaded as empty → next save could wipe | Throws; fix or restore the file |
+| Signing key | Any length | ≥ **32** characters |
+| Concurrent writes | Last-write-wins without lock | Exclusive flock on `.lock` |
+| `panel.role: null` | Silent | Panel (+ demo) shows **UNSAFE** banner |
+
+Ensure `APP_SECRET` / `panel.export_signing_key` is at least 32 characters before using export/import. Backup `paths.json` before upgrade if it might be corrupt.
 
 ---
 

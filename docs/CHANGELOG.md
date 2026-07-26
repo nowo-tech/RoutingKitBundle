@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-26
+
+### Docs
+
+- Aligned SECURITY / UPGRADING / USAGE with **1.1.2** behaviour (controls header `1.1.2+`, migration table, signing-key checklist, `replaceAll` note, config comment).
+
 ## [1.1.2] - 2026-07-26
 
 ### Security
@@ -161,7 +167,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.0.3...v1.1.0

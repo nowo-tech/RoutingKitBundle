@@ -8,7 +8,7 @@
 - DB loader registers `{name}.{locale}` with `_canonical_route`.
 - Canonical / root redirect subscribers (open-redirect hardened).
 
-## Built-in controls (1.1.1+)
+## Built-in controls (1.1.2+)
 
 | Control | Behaviour |
 | --- | --- |
@@ -45,9 +45,10 @@ nowo_routing_kit:
 ```
 
 1. Firewall the panel prefix.
-2. Keep `var/` off the web root.
+2. Keep `var/` (and `paths.json` / `.lock`) off the web root.
 3. Prefer `allow_controller_override: false`.
-4. Treat panel operators as routing admins (SeoKit bridge inherits storage paths).
+4. Use a signing key ≥32 characters (`panel.export_signing_key` or a strong `kernel.secret`) before export/import.
+5. Treat panel operators as routing admins (SeoKit bridge inherits storage paths).
 
 ## Release security checklist (12.4.1)
 
@@ -61,7 +62,9 @@ nowo_routing_kit:
 | Output escaping | Twig auto-escape |
 | `composer audit` | run before release |
 | CSRF | fail-closed |
-| Permissions / exposure | firewall + in-bundle role |
+| Permissions / exposure | firewall + in-bundle role + UNSAFE banner if role null |
 | Limits / DoS | `max_definitions` |
+| Storage integrity | corrupt JSON fail-closed + flock |
+| Export HMAC | key length ≥32 |
 
 See also [`.github/SECURITY.md`](../.github/SECURITY.md).
