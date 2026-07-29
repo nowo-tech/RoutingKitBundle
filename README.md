@@ -43,6 +43,12 @@ nowo_routing_kit_db:
 ```
 
 The loader registers `{name}.{locale}` with `_canonical_route`. Protect `/_routing` with your firewall.
+## Requirements
+
+- PHP `>=8.2` (<8.6); **Symfony 8.0** and **8.1** require **PHP 8.4+**
+- Symfony **7.4**, **8.0**, or **8.1**
+- Twig for the CRUD panel templates
+
 ## Configuration
 
 ```yaml
@@ -73,32 +79,6 @@ public function show(string $slug): Response { … }
 
 Open `/_routing` to manage paths. See [docs/USAGE.md](docs/USAGE.md).
 
-## Documentation
-
-- [Installation](docs/INSTALLATION.md)
-- [Configuration](docs/CONFIGURATION.md)
-- [Usage](docs/USAGE.md)
-- [Contributing](docs/CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Changelog](docs/CHANGELOG.md)
-- [Upgrading](docs/UPGRADING.md)
-- [Release](docs/RELEASE.md)
-- [Security](docs/SECURITY.md)
-- [Engram](docs/ENGRAM.md)
-- [Spec-driven development](docs/SPEC-DRIVEN-DEVELOPMENT.md)
-- [GitHub Spec Kit](docs/SPEC-KIT.md)
-
-### Additional documentation
-
-- [Demo (FrankenPHP)](docs/DEMO-FRANKENPHP.md)
-- [GitHub Actions CI requirements](docs/GITHUB_CI.md)
-
-## Requirements
-
-- PHP `>=8.2` (<8.6); **Symfony 8.0** and **8.1** require **PHP 8.4+**
-- Symfony **7.4**, **8.0**, or **8.1**
-- Twig for the CRUD panel templates
-
 ## Development
 
 ```bash
@@ -119,6 +99,26 @@ make -C demo up-symfony8
 ```
 
 Open http://localhost:8058 — panel at `/_routing`. FrankenPHP mode is controlled by `FRANKENPHP_MODE` (`classic` \| `worker`, default **worker**) in the demo `.env`.
+
+## Documentation
+
+- [Installation](docs/INSTALLATION.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Usage](docs/USAGE.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Upgrading](docs/UPGRADING.md)
+- [Release](docs/RELEASE.md)
+- [Security](docs/SECURITY.md)
+- [Engram](docs/ENGRAM.md)
+- [Spec-driven development](docs/SPEC-DRIVEN-DEVELOPMENT.md)
+- [GitHub Spec Kit](docs/SPEC-KIT.md)
+
+### Additional documentation
+
+- [Demo (FrankenPHP)](docs/DEMO-FRANKENPHP.md)
+- [GitHub Actions CI requirements](docs/GITHUB_CI.md)
 
 ## Tests and coverage
 
