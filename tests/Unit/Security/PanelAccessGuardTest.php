@@ -13,14 +13,14 @@ final class PanelAccessGuardTest extends TestCase
 {
     public function testAllowsWhenRoleIsNull(): void
     {
-        $guard = new PanelAccessGuard(null, null);
+        $guard = new PanelAccessGuard(null, []);
         $guard->assertGranted();
         self::assertSame(403, $guard->deniedResponse()->getStatusCode());
     }
 
     public function testDeniesWhenRoleSetWithoutAuthorizationChecker(): void
     {
-        $guard = new PanelAccessGuard(null, 'ROLE_ADMIN');
+        $guard = new PanelAccessGuard(null, ['ROLE_ADMIN']);
         $this->expectException(AccessDeniedHttpException::class);
         $guard->assertGranted();
     }
@@ -30,6 +30,6 @@ final class PanelAccessGuardTest extends TestCase
         $checker = $this->createMock(AuthorizationCheckerInterface::class);
         $checker->expects(self::once())->method('isGranted')->with('ROLE_ADMIN')->willReturn(true);
 
-        (new PanelAccessGuard($checker, 'ROLE_ADMIN'))->assertGranted();
+        (new PanelAccessGuard($checker, ['ROLE_ADMIN']))->assertGranted();
     }
 }

@@ -13,11 +13,21 @@ nowo_routing_kit:
     panel:
         enabled: true
         path_prefix: '/_routing'
+        # panel.role is a BC alias — prefer security.access_roles
         role: ROLE_ADMIN
         allow_controller_override: false
         max_definitions: 500
+        list_page_size: 50
         reject_conflicts: true
-        # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'  # min 32 chars when set; null → kernel.secret (also ≥32 at export/import)
+        # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'  # min 32 chars when set; null → kernel.secret
+    web_ui:
+        enabled: true
+        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
+        css_framework: custom
+        icon_set: none
+    security:
+        access_roles: [ROLE_ADMIN]
+        allow_unauthenticated: false
     redirects:
         canonical_enabled: true
         canonical_status: 301

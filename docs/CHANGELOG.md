@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.1.5] - 2026-07-29](#115---2026-07-29)
 - [[1.1.4] - 2026-07-26](#114---2026-07-26)
 - [[1.1.3] - 2026-07-26](#113---2026-07-26)
 - [[1.1.2] - 2026-07-26](#112---2026-07-26)
@@ -19,6 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.1.5] - 2026-07-29
+
+### Added
+
+- `make check-open-prs` / `demo-smoke`; `release-check` fails on unresolved GitHub PRs (REQ-REL-003 / REQ-MAKE-002).
+- `SYMFONY_DEPRECATIONS_HELPER=max[direct]=0` in PHPUnit + CI (REQ-SF-005).
+- Panel `#[Route]` attributes (REQ-SF-004); `web_ui.*` + `security.access_roles` (REQ-UI-001 / REQ-UI-002).
+- `RoutingKitTwigExtension` globals for panel layout / CSS / icon set.
+- Panel index pagination via `panel.list_page_size` (REQ-PERF-001).
+
+### Changed
+
+- `panel.role` is a BC alias for `security.access_roles` (documented in UPGRADING / CONFIGURATION / SECURITY).
+- Panel templates use `nowo-ui-*` markup hooks for host theming.
+
+### Documentation
+
+- [UPGRADING.md](UPGRADING.md) section **To 1.1.5**; CONFIGURATION / SECURITY updated for the UI/security contract.
 
 ## [1.1.4] - 2026-07-26
 
@@ -205,7 +225,9 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.5...HEAD
+[1.1.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.0...v1.1.1

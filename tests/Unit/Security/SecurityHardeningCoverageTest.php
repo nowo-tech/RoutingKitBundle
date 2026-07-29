@@ -78,13 +78,13 @@ PHP);
 
     public function testPanelAccessGuardDeniedResponseAndRoleDenied(): void
     {
-        $guard = new PanelAccessGuard(null, null);
+        $guard = new PanelAccessGuard(null, []);
         self::assertSame(403, $guard->deniedResponse()->getStatusCode());
 
         $checker = $this->createMock(AuthorizationCheckerInterface::class);
         $checker->method('isGranted')->willReturn(false);
         $this->expectException(AccessDeniedHttpException::class);
-        (new PanelAccessGuard($checker, 'ROLE_ADMIN'))->assertGranted();
+        (new PanelAccessGuard($checker, ['ROLE_ADMIN']))->assertGranted();
     }
 
     public function testConflictDetectorFindsCollisionsIncludingFallbackLocale(): void
@@ -271,7 +271,7 @@ PHP);
         ]))->getStatusCode());
 
         $this->expectException(AccessDeniedHttpException::class);
-        $this->createPanel(role: 'ROLE_ADMIN')->index();
+        $this->createPanel(role: 'ROLE_ADMIN')->index(Request::create('/_routing/', 'GET'));
     }
 
     public function testConflictIncludesDisabledRowsAndDuplicateLocale(): void
@@ -413,7 +413,7 @@ PHP);
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, null),
+            new PanelAccessGuard(null, []),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             false,
@@ -447,7 +447,7 @@ PHP);
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, null),
+            new PanelAccessGuard(null, []),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             false,
@@ -483,10 +483,12 @@ PHP);
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, $role),
+            new PanelAccessGuard(null, $role === null || $role === '' ? [] : [$role]),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             $allowOverride,
+            $role === null || $role === '',
+            50,
         );
     }
 

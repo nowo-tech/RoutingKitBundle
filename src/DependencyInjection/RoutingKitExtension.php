@@ -19,6 +19,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -44,6 +45,15 @@ final class RoutingKitExtension extends Extension
         $container->setParameter('nowo.routing_kit.panel.enabled', $config['panel']['enabled']);
         $container->setParameter('nowo.routing_kit.panel.path_prefix', $config['panel']['path_prefix']);
         $container->setParameter('nowo.routing_kit.panel.role', $config['panel']['role']);
+        $container->setParameter('nowo.routing_kit.panel.list_page_size', (int) $config['panel']['list_page_size']);
+        $container->setParameter('nowo.routing_kit.web_ui', $config['web_ui']);
+        $container->setParameter('nowo.routing_kit.web_ui.enabled', (bool) $config['web_ui']['enabled']);
+        $container->setParameter('nowo.routing_kit.web_ui.layout_template', $config['web_ui']['layout_template']);
+        $container->setParameter('nowo.routing_kit.web_ui.css_framework', $config['web_ui']['css_framework']);
+        $container->setParameter('nowo.routing_kit.web_ui.icon_set', $config['web_ui']['icon_set']);
+        $container->setParameter('nowo.routing_kit.security', $config['security']);
+        $container->setParameter('nowo.routing_kit.security.access_roles', array_values($config['security']['access_roles']));
+        $container->setParameter('nowo.routing_kit.security.allow_unauthenticated', (bool) $config['security']['allow_unauthenticated']);
         $container->setParameter('nowo.routing_kit.auto_invalidate_cache', $config['auto_invalidate_cache']);
         $container->setParameter('nowo.routing_kit.register_unprefixed_default', $config['register_unprefixed_default']);
         $container->setParameter('nowo.routing_kit.redirects', $config['redirects']);
@@ -66,6 +76,7 @@ final class RoutingKitExtension extends Extension
         $this->configureLoader($container, $config);
         $this->configureSubscribers($container, $config);
         $this->configurePanel($container, $config);
+        $this->configureWebUi($container, $config);
         $this->configureImportExport($container, $config);
         $this->configureCacheInvalidator($container);
         $this->configureAudit($container);
@@ -85,6 +96,9 @@ final class RoutingKitExtension extends Extension
         $container->removeDefinition(RoutePathAuditSubscriber::class);
         $container->removeDefinition(PanelAccessGuard::class);
         $container->removeDefinition(RoutePathImportExport::class);
+        if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
+            $container->removeDefinition(RoutingKitTwigExtension::class);
+        }
     }
 
     /**
@@ -180,6 +194,27 @@ final class RoutingKitExtension extends Extension
 
     /**
      * @param array<string, mixed> $config
+     *
+     * @return list<string>
+     */
+    private function resolveAccessRoles(array $config): array
+    {
+        if ((bool) $config['security']['allow_unauthenticated']) {
+            return [];
+        }
+
+        $roles = [];
+        foreach ($config['security']['access_roles'] as $role) {
+            if (is_string($role) && $role !== '') {
+                $roles[] = $role;
+            }
+        }
+
+        return $roles;
+    }
+
+    /**
+     * @param array<string, mixed> $config
      */
     private function configurePanel(ContainerBuilder $container, array $config): void
     {
@@ -190,11 +225,10 @@ final class RoutingKitExtension extends Extension
             return;
         }
 
-        $role = $config['panel']['role'];
-        $role = is_string($role) && $role !== '' ? $role : null;
+        $accessRoles = $this->resolveAccessRoles($config);
 
         $guard = $container->getDefinition(PanelAccessGuard::class)
-            ->setArgument('$requiredRole', $role);
+            ->setArgument('$accessRoles', $accessRoles);
         if ($container->hasDefinition('security.authorization_checker') || $container->hasAlias('security.authorization_checker')) {
             $guard->setArgument('$authorizationChecker', new Reference('security.authorization_checker'));
         } else {
@@ -204,9 +238,30 @@ final class RoutingKitExtension extends Extension
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
             ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
-            ->setArgument('$roleGateDisabled', $role === null)
+            ->setArgument('$roleGateDisabled', $accessRoles === [])
+            ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function configureWebUi(ContainerBuilder $container, array $config): void
+    {
+        if (!$config['panel']['enabled'] || !$container->hasDefinition(RoutingKitTwigExtension::class)) {
+            if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
+                $container->removeDefinition(RoutingKitTwigExtension::class);
+            }
+
+            return;
+        }
+
+        $webUi = $config['web_ui'];
+        $container->getDefinition(RoutingKitTwigExtension::class)
+            ->setArgument('$layoutTemplate', $webUi['layout_template'])
+            ->setArgument('$cssFramework', $webUi['css_framework'])
+            ->setArgument('$iconSet', $webUi['icon_set']);
     }
 
     /**

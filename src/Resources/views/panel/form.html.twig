@@ -1,22 +1,24 @@
-{% extends '@NowoRoutingKitBundle/panel/layout.html.twig' %}
+{% extends layout|default(nowo_routing_kit_layout_template) %}
+
+{% block title %}{{ definition and definition.id ? 'panel.edit_title'|trans({}, 'NowoRoutingKitBundle') : 'panel.create_title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
 
 {% block body %}
-<header>
+<header class="nowo-ui-page-header">
     <h1>{{ definition and definition.id ? 'panel.edit_title'|trans({}, 'NowoRoutingKitBundle') : 'panel.create_title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
-    <p class="muted">{{ 'panel.form_hint'|trans({}, 'NowoRoutingKitBundle') }}</p>
+    <p class="nowo-ui-muted muted">{{ 'panel.form_hint'|trans({}, 'NowoRoutingKitBundle') }}</p>
 </header>
 <main>
     {% if errors %}
-        <div class="errors">
+        <div class="nowo-ui-error errors">
             {% for error in errors %}<div>{{ error }}</div>{% endfor %}
         </div>
     {% endif %}
     {% if conflicts %}
-        <div class="errors">
+        <div class="nowo-ui-error errors">
             {% for conflict in conflicts %}<div>{{ conflict }}</div>{% endfor %}
         </div>
     {% endif %}
-    <form method="post">
+    <form method="post" class="nowo-ui-form">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <label for="route_name">{{ 'panel.col.route'|trans({}, 'NowoRoutingKitBundle') }}</label>
         <select id="route_name" name="route_name" required>
@@ -72,9 +74,9 @@
 
         <label><input type="checkbox" name="enabled" value="1" {% if definition is null or definition.enabled %}checked{% endif %}> enabled</label>
 
-        <div class="actions">
-            <button type="submit">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
-            <a class="button secondary" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
+        <div class="nowo-ui-actions actions">
+            <button type="submit" class="nowo-ui-btn">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
+            <a class="nowo-ui-btn nowo-ui-btn--secondary button secondary" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
         </div>
     </form>
 </main>

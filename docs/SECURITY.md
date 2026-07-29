@@ -13,7 +13,8 @@
 | Control | Behaviour |
 | --- | --- |
 | CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
-| `panel.role` | Default `ROLE_ADMIN` via `AuthorizationCheckerInterface`. Set `null` only if the firewall alone is enough. |
+| `security.access_roles` | Default `[ROLE_ADMIN]` via `AuthorizationCheckerInterface`. Empty list / `allow_unauthenticated: true` disables the in-bundle gate (firewall still required). |
+| `panel.role` | BC alias for `security.access_roles` (`null` → empty roles). Prefer `security.access_roles`. |
 | Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |
 | Controller override | Off by default; when on, only discovery controllers are accepted. Loader ignores stored overrides when off. |
 | Path safety | Rejects `//…`, schemes, C0/DEL controls, tabs, encoded `//` / `\` / CR-LF / null (`%2f%2f`, `%5c`, `%0d`, `%00`, …), `..` segments; redirects only to safe targets. |
@@ -30,7 +31,8 @@
 | Export HTTP | POST + CSRF only. |
 | `path_prefix` | Restricted to `/[A-Za-z0-9/_-]+`. |
 | Storage | Corrupt JSON fails closed; exclusive lock on mutations. |
-| `panel.role: null` | Allowed but panel shows UNSAFE banner; still firewall the prefix. |
+| List pagination | `panel.list_page_size` (default 50) on the index; storage hard-capped by `max_definitions`. |
+| `security.access_roles: []` / `panel.role: null` | Allowed but panel shows UNSAFE banner; still firewall the prefix. |
 
 ## Application checklist
 
@@ -43,8 +45,9 @@ security:
 
 ```yaml
 nowo_routing_kit:
+    security:
+        access_roles: [ROLE_ADMIN]
     panel:
-        role: ROLE_ADMIN
         allow_controller_override: false
 ```
 

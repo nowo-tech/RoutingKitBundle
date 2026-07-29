@@ -6,9 +6,17 @@ nowo_routing_kit:
     panel:
         enabled: true
         path_prefix: '/_routing'
-        role: ROLE_ADMIN
         allow_controller_override: false
         max_definitions: 500
+        list_page_size: 50
         reject_conflicts: true
+    web_ui:
+        enabled: true
+        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
+        css_framework: custom
+        icon_set: none
+    security:
+        access_roles: [ROLE_ADMIN]
+        allow_unauthenticated: false
     auto_invalidate_cache: true
     seo_kit_bridge: true

@@ -12,13 +12,22 @@ nowo_routing_kit:
         enabled: true
         path_prefix: '/_routing'
         # Demo has no Security Bundle by default — disable in-bundle role gate.
-        # UNSAFE for public networks. Production: ROLE_ADMIN + access_control.
+        # UNSAFE for public networks. Production: security.access_roles + access_control.
         role: null
         allow_controller_override: false
         max_definitions: 500
+        list_page_size: 50
         reject_conflicts: true
         # Dedicated HMAC key (≥32 chars). Do not reuse in production.
         export_signing_key: 'demo-only-routing-kit-hmac-key-32b!!'
+    web_ui:
+        enabled: true
+        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
+        css_framework: custom
+        icon_set: none
+    security:
+        access_roles: []
+        allow_unauthenticated: true
     redirects:
         canonical_enabled: true
         canonical_status: 301

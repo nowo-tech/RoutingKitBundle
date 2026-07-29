@@ -86,8 +86,16 @@ final class ConfigurationTest extends TestCase
         self::assertSame('ROLE_ADMIN', $config['panel']['role']);
         self::assertFalse($config['panel']['allow_controller_override']);
         self::assertSame(500, $config['panel']['max_definitions']);
+        self::assertSame(50, $config['panel']['list_page_size']);
         self::assertTrue($config['panel']['reject_conflicts']);
         self::assertNull($config['panel']['export_signing_key']);
+        self::assertTrue($config['web_ui']['enabled']);
+        self::assertSame('@NowoRoutingKitBundle/panel/layout.html.twig', $config['web_ui']['layout_template']);
+        self::assertSame('custom', $config['web_ui']['css_framework']);
+        self::assertSame('none', $config['web_ui']['icon_set']);
+        self::assertSame(['ROLE_ADMIN'], $config['security']['access_roles']);
+        self::assertFalse($config['security']['allow_unauthenticated']);
+        self::assertNull($config['security']['access_checker']);
         self::assertSame([
             'canonical_enabled'    => true,
             'canonical_status'     => 301,
@@ -99,6 +107,80 @@ final class ConfigurationTest extends TestCase
         self::assertTrue($config['auto_invalidate_cache']);
         self::assertTrue($config['register_unprefixed_default']);
         self::assertTrue($config['seo_kit_bridge']);
+    }
+
+    public function testMapsNullPanelRoleToEmptyAccessRoles(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'panel' => ['role' => null],
+        ]]);
+
+        self::assertSame([], $config['security']['access_roles']);
+        self::assertNull($config['panel']['role']);
+    }
+
+    public function testMapsEmptyStringPanelRoleToEmptyAccessRoles(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'panel' => ['role' => ''],
+        ]]);
+
+        self::assertSame([], $config['security']['access_roles']);
+    }
+
+    public function testMapsArrayPanelRoleToAccessRoles(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'panel' => ['role' => ['ROLE_A', '', 'ROLE_B']],
+        ]]);
+
+        self::assertSame(['ROLE_A', 'ROLE_B'], $config['security']['access_roles']);
+    }
+
+    public function testMirrorsAccessRolesToPanelRole(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'security' => ['access_roles' => ['ROLE_EDITOR']],
+        ]]);
+
+        self::assertSame('ROLE_EDITOR', $config['panel']['role']);
+    }
+
+    public function testMirrorsEmptyAccessRolesToNullPanelRole(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'security' => ['access_roles' => []],
+        ]]);
+
+        self::assertNull($config['panel']['role']);
+    }
+
+    public function testSecurityAccessRolesPreferredOverPanelRole(): void
+    {
+        $processor     = new Processor();
+        $configuration = new Configuration();
+
+        $config = $processor->processConfiguration($configuration, [[
+            'panel'    => ['role' => 'ROLE_OLD'],
+            'security' => ['access_roles' => ['ROLE_NEW']],
+        ]]);
+
+        self::assertSame(['ROLE_NEW'], $config['security']['access_roles']);
     }
 
     public function testRejectsUnsafePathPrefix(): void

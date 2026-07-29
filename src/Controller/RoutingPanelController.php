@@ -19,18 +19,25 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Throwable;
 use Twig\Environment;
 
+use function array_slice;
+use function ceil;
+use function count;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function max;
 use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
+#[AsController]
 final class RoutingPanelController
 {
     public const CSRF_TOKEN_ID = 'nowo_routing_kit_panel';
@@ -49,23 +56,37 @@ final class RoutingPanelController
         private readonly string $pathPrefix = '/_routing',
         private readonly bool $allowControllerOverride = false,
         private readonly bool $roleGateDisabled = false,
+        private readonly int $listPageSize = 50,
     ) {
     }
 
-    public function index(): Response
+    #[Route('/', name: 'nowo_routing_kit_panel', methods: ['GET'])]
+    public function index(Request $request): Response
     {
         $this->accessGuard->assertGranted();
 
+        $all      = $this->manager->all();
+        $total    = count($all);
+        $pageSize = max(1, $this->listPageSize);
+        $pages    = max(1, (int) ceil($total / $pageSize));
+        $page     = max(1, min($pages, $request->query->getInt('page', 1)));
+        $offset   = ($page - 1) * $pageSize;
+
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
-            'definitions'        => $this->manager->all(),
+            'definitions'        => array_slice($all, $offset, $pageSize),
             'path_prefix'        => $this->pathPrefix,
             'locales'            => $this->locales->getLocales(),
             'default'            => $this->locales->getDefaultLocale(),
             'csrf_token'         => $this->csrfToken(),
             'role_gate_disabled' => $this->roleGateDisabled,
+            'page'               => $page,
+            'pages'              => $pages,
+            'total'              => $total,
+            'page_size'          => $pageSize,
         ]));
     }
 
+    #[Route('/new', name: 'nowo_routing_kit_panel_create', methods: ['GET', 'POST'])]
     public function create(Request $request): Response
     {
         $this->accessGuard->assertGranted();
@@ -73,6 +94,7 @@ final class RoutingPanelController
         return $this->form($request, null);
     }
 
+    #[Route('/edit/{id}', name: 'nowo_routing_kit_panel_edit', methods: ['GET', 'POST'], requirements: ['id' => '[A-Za-z0-9_.-]+'])]
     public function edit(Request $request, string $id): Response
     {
         $this->accessGuard->assertGranted();
@@ -85,6 +107,7 @@ final class RoutingPanelController
         return $this->form($request, $definition);
     }
 
+    #[Route('/delete/{id}', name: 'nowo_routing_kit_panel_delete', methods: ['POST'], requirements: ['id' => '[A-Za-z0-9_.-]+'])]
     public function delete(Request $request, string $id): Response
     {
         $this->accessGuard->assertGranted();
@@ -99,6 +122,7 @@ final class RoutingPanelController
         return new RedirectResponse($this->pathPrefix . '/');
     }
 
+    #[Route('/clear-cache', name: 'nowo_routing_kit_panel_clear_cache', methods: ['POST'])]
     public function clearCache(Request $request): Response
     {
         $this->accessGuard->assertGranted();
@@ -113,6 +137,7 @@ final class RoutingPanelController
         return new RedirectResponse($this->pathPrefix . '/');
     }
 
+    #[Route('/export', name: 'nowo_routing_kit_panel_export', methods: ['POST'])]
     public function export(Request $request): Response
     {
         $this->accessGuard->assertGranted();
@@ -131,6 +156,7 @@ final class RoutingPanelController
         ]);
     }
 
+    #[Route('/import', name: 'nowo_routing_kit_panel_import', methods: ['POST'])]
     public function import(Request $request): Response
     {
         $this->accessGuard->assertGranted();
@@ -170,6 +196,7 @@ final class RoutingPanelController
         return new RedirectResponse($this->pathPrefix . '/');
     }
 
+    #[Route('/conflicts', name: 'nowo_routing_kit_panel_conflicts', methods: ['GET'])]
     public function previewConflicts(Request $request): JsonResponse
     {
         $this->accessGuard->assertGranted();

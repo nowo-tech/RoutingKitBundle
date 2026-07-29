@@ -1,43 +1,7 @@
-nowo_routing_kit_panel:
-    path: '%nowo.routing_kit.panel.path_prefix%/'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::index
-    methods: [GET]
-
-nowo_routing_kit_panel_create:
-    path: '%nowo.routing_kit.panel.path_prefix%/new'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::create
-    methods: [GET, POST]
-
-nowo_routing_kit_panel_edit:
-    path: '%nowo.routing_kit.panel.path_prefix%/edit/{id}'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::edit
-    methods: [GET, POST]
-    requirements:
-        id: '[A-Za-z0-9_.-]+'
-
-nowo_routing_kit_panel_delete:
-    path: '%nowo.routing_kit.panel.path_prefix%/delete/{id}'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::delete
-    methods: [POST]
-    requirements:
-        id: '[A-Za-z0-9_.-]+'
-
-nowo_routing_kit_panel_clear_cache:
-    path: '%nowo.routing_kit.panel.path_prefix%/clear-cache'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::clearCache
-    methods: [POST]
-
-nowo_routing_kit_panel_export:
-    path: '%nowo.routing_kit.panel.path_prefix%/export'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::export
-    methods: [POST]
-
-nowo_routing_kit_panel_import:
-    path: '%nowo.routing_kit.panel.path_prefix%/import'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::import
-    methods: [POST]
-
-nowo_routing_kit_panel_conflicts:
-    path: '%nowo.routing_kit.panel.path_prefix%/conflicts'
-    controller: Nowo\RoutingKitBundle\Controller\RoutingPanelController::previewConflicts
-    methods: [GET]
+# Attribute routes for the CRUD panel (REQ-SF-004). Prefix comes from panel.path_prefix.
+nowo_routing_kit_controllers:
+    resource:
+        path: '../../Controller/'
+        namespace: Nowo\RoutingKitBundle\Controller
+    type: attribute
+    prefix: '%nowo.routing_kit.panel.path_prefix%'

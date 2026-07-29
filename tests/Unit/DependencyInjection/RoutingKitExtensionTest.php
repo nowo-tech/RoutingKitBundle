@@ -138,7 +138,8 @@ final class RoutingKitExtensionTest extends TestCase
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
         self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
-        self::assertSame('ROLE_ADMIN', $guard->getArgument('$requiredRole'));
+        self::assertSame('ROLE_ADMIN', $guard->getArgument('$accessRoles')[0] ?? null);
+        self::assertSame(['ROLE_ADMIN'], $guard->getArgument('$accessRoles'));
 
         $export = $container->getDefinition(RoutePathImportExport::class);
         self::assertSame('routing-kit-test-signing-key-32ch!!', $export->getArgument('$signingKey'));
@@ -146,6 +147,22 @@ final class RoutingKitExtensionTest extends TestCase
         $audit = $container->getDefinition(RoutePathAuditSubscriber::class);
         self::assertEquals(new Reference('logger'), $audit->getArgument('$logger'));
         self::assertEquals(new Reference('security.token_storage'), $audit->getArgument('$tokenStorage'));
+    }
+
+    public function testAllowUnauthenticatedClearsAccessRoles(): void
+    {
+        $container = $this->createContainer();
+        $extension = new RoutingKitExtension();
+        $extension->load([[
+            'security' => [
+                'access_roles'          => ['ROLE_ADMIN'],
+                'allow_unauthenticated' => true,
+            ],
+        ]], $container);
+
+        $guard = $container->getDefinition(PanelAccessGuard::class);
+        self::assertSame([], $guard->getArgument('$accessRoles'));
+        self::assertTrue($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
     }
 
     public function testLoadRemovesPanelControllerWhenPanelIsDisabled(): void

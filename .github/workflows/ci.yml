@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master]
 
+env:
+  SYMFONY_DEPRECATIONS_HELPER: max[direct]=0
+
 jobs:
   git-hygiene:
     name: Git history (no Cursor co-author)

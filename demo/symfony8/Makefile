@@ -2,9 +2,15 @@
 # Run from this directory: make up, make install, etc.
 
 SHELL := /bin/bash
-DOCKER ?= $(shell command -v docker 2>/dev/null || echo /usr/bin/docker)
+# Prefer Compose V2; absolute docker path avoids shadowing by local docker/ when PATH has "." (REQ-MAKE-010).
+DOCKER_BIN := $(shell command -v docker 2>/dev/null)
 COMPOSE_FILE := docker-compose.yml
-DOCKER_COMPOSE := $(DOCKER) compose -f $(COMPOSE_FILE)
+ifeq ($(DOCKER_BIN),)
+COMPOSE_BIN := docker-compose
+else
+COMPOSE_BIN := $(shell $(DOCKER_BIN) compose version >/dev/null 2>&1 && echo "$(DOCKER_BIN) compose" || echo "docker-compose")
+endif
+DOCKER_COMPOSE := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
 .PHONY: help up down restart build install shell logs cache-clear update-bundle ensure-up test test-coverage verify release-check
@@ -94,4 +100,5 @@ verify: ensure-up
 release-check: update-bundle test verify
 
 # REQ-MAKE-008: update-deps
-include $(BUNDLE_ROOT)/../.scripts/Makefile.demo-update-deps.mk
+# Optional: monorepo helper absent on standalone GitHub Actions checkout (REQ-MAKE-009).
+-include $(BUNDLE_ROOT)/../.scripts/Makefile.demo-update-deps.mk

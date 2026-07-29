@@ -2,37 +2,41 @@
 
 ## Table of contents
 
-- [To 1.1.4](#to-114)
+- [To 1.1.5](#to-115)
   - [Install / update](#install--update)
   - [Behaviour / security](#behaviour--security)
   - [Breaking / migration](#breaking--migration)
-- [To 1.1.3](#to-113)
-- [To 1.1.2](#to-112)
+- [To 1.1.4](#to-114)
   - [Install / update](#install--update-1)
   - [Behaviour / security](#behaviour--security-1)
   - [Breaking / migration](#breaking--migration-1)
-- [To 1.1.1](#to-111)
+- [To 1.1.3](#to-113)
+- [To 1.1.2](#to-112)
   - [Install / update](#install--update-2)
   - [Behaviour / security](#behaviour--security-2)
   - [Breaking / migration](#breaking--migration-2)
+- [To 1.1.1](#to-111)
+  - [Install / update](#install--update-3)
+  - [Behaviour / security](#behaviour--security-3)
+  - [Breaking / migration](#breaking--migration-3)
 - [To 1.1.0](#to-110)
   - [Requirements](#requirements)
-  - [Install / update](#install--update-3)
-  - [Breaking / migration](#breaking--migration-3)
+  - [Install / update](#install--update-4)
+  - [Breaking / migration](#breaking--migration-4)
   - [Behaviour notes](#behaviour-notes)
 - [To 1.0.3](#to-103)
   - [Requirements](#requirements-1)
-  - [Install / update](#install--update-4)
+  - [Install / update](#install--update-5)
   - [Behavior notes](#behavior-notes)
   - [Breaking changes](#breaking-changes)
 - [To 1.0.2](#to-102)
   - [Requirements](#requirements-2)
-  - [Install / update](#install--update-5)
+  - [Install / update](#install--update-6)
   - [Behavior notes](#behavior-notes-1)
   - [Breaking changes](#breaking-changes-1)
 - [To 1.0.1](#to-101)
   - [Requirements](#requirements-3)
-  - [Install / update](#install--update-6)
+  - [Install / update](#install--update-7)
   - [Breaking changes](#breaking-changes-2)
   - [Behaviour notes (non-breaking)](#behaviour-notes-non-breaking)
 - [To 1.0.0](#to-100)
@@ -43,6 +47,34 @@
   - [Security](#security)
   - [SeoKit](#seokit)
   - [Storage](#storage)
+
+## To 1.1.5
+
+Compliance remedia (2026-07-29): open-PR gate, zero direct deprecations, attribute panel routes, UI/security contract, list pagination.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.5
+php bin/console cache:clear
+```
+
+### Behaviour / security
+
+- Panel routes use PHP `#[Route]` attributes (imported with `panel.path_prefix`).
+- Canonical private access: `security.access_roles` (+ optional `allow_unauthenticated` for demos). `panel.role` remains a BC alias.
+- Panel look-and-feel: `web_ui.layout_template` / `css_framework` / `icon_set` + `nowo-ui-*` markup.
+- Index list paginates with `panel.list_page_size` (default 50); storage still hard-capped by `panel.max_definitions`.
+
+### Breaking / migration
+
+| Topic | Before | After |
+| --- | --- | --- |
+| Preferred panel ACL | `panel.role` | `security.access_roles` (`panel.role` still works) |
+| Demo open panel | `panel.role: null` | same, or `security.access_roles: []` / `allow_unauthenticated: true` |
+| Host layout | Fixed bundle layout | Set `web_ui.layout_template` to the project layout |
+
+---
 
 ## To 1.1.4
 

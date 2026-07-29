@@ -91,7 +91,7 @@ PHP);
             csrfTokenManager: $this->createCsrfManager(valid: true),
         );
 
-        $response = $controller->index();
+        $response = $controller->index(Request::create('/_routing-kit/', 'GET'));
 
         self::assertSame('<html>index</html>', $response->getContent());
     }
@@ -321,7 +321,7 @@ PHP);
                 $locales,
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
                 $csrf,
-                new PanelAccessGuard(null, null),
+                new PanelAccessGuard(null, []),
                 new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
                 '/_routing-kit',
                 false,
