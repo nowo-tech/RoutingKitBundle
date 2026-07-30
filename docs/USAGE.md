@@ -51,10 +51,12 @@ Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` 
 
 ## Panel
 
-- List / create / edit / delete at `/_routing` (configurable).
+- List / create / edit / delete at `/_routing` (configurable `panel.path_prefix`).
 - **Clear routing cache** button; saves/deletes also invalidate when `auto_invalidate_cache: true`.
 - Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows). Signing key must be ≥32 characters (`panel.export_signing_key` or `kernel.secret`).
-- If `panel.role` is `null`, the panel shows an **UNSAFE** banner (demo / trusted networks only).
+- Index list paginates with `panel.list_page_size` (default 50).
+- Private access: prefer `security.access_roles` (e.g. `[ROLE_ADMIN]`); `panel.role` remains a BC alias. Empty roles / `allow_unauthenticated: true` show an **UNSAFE** banner (demo / trusted networks only). Also firewall the path prefix in the host app.
+- Host chrome without forking pages: set `web_ui.layout_template` to the project layout (and optional `web_ui.css_framework`). See [CONFIGURATION.md](CONFIGURATION.md#host-app-ui-integration-req-ui-001).
 
 ## SeoKitBundle
 
@@ -83,10 +85,14 @@ Implement `LocaleProviderInterface` and `RoutePathStorageInterface` (including `
 
 ## Overriding templates (REQ-TWIG-001)
 
+Twig namespace: **`NowoRoutingKitBundle`**. Application files under `templates/bundles/NowoRoutingKitBundle/` **always win**.
+
+**Freeze rule:** a full-file override hides vendor updates for that `<subpath>` until you delete or merge it. Prefer `web_ui.layout_template` / `web_ui.css_framework` (or a one-file bridge) over copying list/form pages so package upgrades keep shipping UI fixes.
+
 | Subpath | Purpose |
 | --- | --- |
-| `panel/layout.html.twig` | Panel chrome |
+| `panel/layout.html.twig` | Default demo shell (`web_ui.layout_template` default) |
 | `panel/index.html.twig` | List |
 | `panel/form.html.twig` | Create/edit |
 
-Copy to `templates/bundles/NowoRoutingKitBundle/<subpath>`.
+**Procedure:** copy the vendor file to `templates/bundles/NowoRoutingKitBundle/<subpath>`, then `php bin/console cache:clear` if needed.

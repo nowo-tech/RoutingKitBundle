@@ -43,6 +43,7 @@ nowo_routing_kit_db:
 ```
 
 The loader registers `{name}.{locale}` with `_canonical_route`. Protect `/_routing` with your firewall.
+
 ## Requirements
 
 - PHP `>=8.2` (<8.6); **Symfony 8.0** and **8.1** require **PHP 8.4+**

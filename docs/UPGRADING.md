@@ -2,6 +2,7 @@
 
 ## Table of contents
 
+- [To 1.1.6](#to-116)
 - [To 1.1.5](#to-115)
   - [Install / update](#install--update)
   - [Behaviour / security](#behaviour--security)
@@ -47,6 +48,21 @@
   - [Security](#security)
   - [SeoKit](#seokit)
   - [Storage](#storage)
+
+## To 1.1.6
+
+Documentation polish only (README section order, USAGE Twig override / `web_ui` guidance). **No config or API migration.**
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.6
+php bin/console cache:clear
+```
+
+Hosts that already use `web_ui.layout_template` / `security.access_roles` from **1.1.5** need no further changes.
+
+---
 
 ## To 1.1.5
 

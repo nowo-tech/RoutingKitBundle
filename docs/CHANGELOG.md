@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.1.6] - 2026-07-30](#116---2026-07-30)
 - [[1.1.5] - 2026-07-29](#115---2026-07-29)
 - [[1.1.4] - 2026-07-26](#114---2026-07-26)
 - [[1.1.3] - 2026-07-26](#113---2026-07-26)
@@ -20,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.1.6] - 2026-07-30
+
+### Documentation
+
+- README: section order (Requirements / Configuration / Usage / Development / Documentation) aligned with org checklist (REQ-DOCS-019).
+- USAGE: panel security (`security.access_roles`), pagination, host `web_ui.layout_template` path; Twig override freeze rule + procedure (REQ-TWIG-001).
+- Panel demo layout: clarify root shell has no `{{ parent() }}` (pages do not reopen asset blocks).
 
 ## [1.1.5] - 2026-07-29
 
@@ -225,7 +234,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.5...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...HEAD
+[1.1.6]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.2...v1.1.3
