@@ -40,3 +40,29 @@ nowo_routing_kit_db:
 ## Protect the panel
 
 The bundle does not ship authentication. Restrict `/_routing` (or your `panel.path_prefix`) with Symfony Security firewalls / access control.
+
+## Assets
+
+Run `assets:install` after installing the bundle so the panel CSS is available:
+
+```bash
+php bin/console assets:install --symlink
+```
+
+This copies (or symlinks) `src/Resources/public/` to `public/bundles/noworoutingkit/`. The named Symfony asset package `nowo_routing_kit` resolves `asset('css/nowo-ui.css', 'nowo_routing_kit')` to `/bundles/noworoutingkit/css/nowo-ui.css`.
+
+### Host layout integration (`css_framework: custom`)
+
+Set `web_ui.css_framework: custom` and point `web_ui.layout_template` at your project shell. The intermediate `panel/base.html.twig` injects the bundle CSS via the `stylesheets` block, so your host shell receives it through `{{ parent() }}`:
+
+```yaml
+# config/packages/nowo_routing_kit.yaml
+nowo_routing_kit:
+    web_ui:
+        layout_template: 'base.html.twig'  # your app layout
+        css_framework: custom
+    security:
+        access_roles: [ROLE_ADMIN]
+```
+
+Override `--nowo-ui-*` CSS tokens in your own stylesheet to match your brand without forking any bundle template.

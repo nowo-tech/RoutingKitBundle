@@ -21,17 +21,38 @@ use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
+use Symfony\Component\Asset\Package;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 use function array_values;
 use function is_string;
 
-final class RoutingKitExtension extends Extension
+final class RoutingKitExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * Registers the named asset package 'nowo_routing_kit' so host apps can
+     * use asset('css/nowo-ui.css', 'nowo_routing_kit') after running assets:install.
+     */
+    public function prepend(ContainerBuilder $container): void
+    {
+        if ($container->hasExtension('framework') && class_exists(Package::class)) {
+            $container->prependExtensionConfig('framework', [
+                'assets' => [
+                    'packages' => [
+                        Configuration::ALIAS => [
+                            'base_path' => '/bundles/noworoutingkit',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+    }
+
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();

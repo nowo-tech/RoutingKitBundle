@@ -41,13 +41,39 @@ Root key: `nowo_routing_kit`.
 nowo_routing_kit:
     web_ui:
         layout_template: 'base.html.twig'   # project layout
-        css_framework: bootstrap5
-        icon_set: bootstrap-icons
+        css_framework: custom
+        icon_set: none
     security:
         access_roles: [ROLE_ADMIN]
 ```
 
-Panel templates extend `layout|default(nowo_routing_kit_layout_template)` and use semantic `nowo-ui-*` classes.
+Panel templates extend `layout|default(nowo_routing_kit_layout_template)` via the intermediate `@NowoRoutingKitBundle/panel/base.html.twig`, which injects `nowo-ui.css` through the `stylesheets` block. Host shells receive the CSS automatically via `{{ parent() }}`.
+
+#### `css_framework: custom` — host path without reimplementing CSS
+
+When `css_framework: custom`, the bundle's own `nowo-ui.css` is linked via the `stylesheets` block. No Bootstrap or Tailwind CDN is needed. Customise appearance by overriding `--nowo-ui-*` CSS tokens in your host layout:
+
+```css
+/* your app's CSS */
+:root {
+    --nowo-ui-accent:       #1d4ed8;   /* primary action colour */
+    --nowo-ui-accent-fg:    #fff;
+    --nowo-ui-bg:           #f9fafb;
+    --nowo-ui-radius:       0.375rem;  /* rounded inputs/buttons */
+}
+```
+
+Available tokens are documented at the top of `public/bundles/noworoutingkit/css/nowo-ui.css` after running `assets:install`.
+
+#### Bootstrap 5 example (demo)
+
+```yaml
+nowo_routing_kit:
+    web_ui:
+        layout_template: 'base.html.twig'
+        css_framework: bootstrap5
+        icon_set: bootstrap-icons
+```
 
 ### Private access (REQ-UI-002)
 

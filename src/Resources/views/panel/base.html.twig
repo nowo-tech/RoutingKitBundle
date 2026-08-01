@@ -1,0 +1,5 @@
+{% extends layout|default(nowo_routing_kit_layout_template) %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/nowo-ui.css', 'nowo_routing_kit') }}">
+{% endblock %}

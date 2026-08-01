@@ -1,0 +1,153 @@
+/*
+ * RoutingKit panel styles — served via named asset package 'nowo_routing_kit'.
+ *
+ * Override any --nowo-ui-* token in your host layout's <style> block
+ * (or in your own CSS) to skin the panel without touching bundle templates.
+ *
+ * Token alignment with DashboardMenuBundle: --nowo-ui-accent maps to the same
+ * semantic slot as --nowo-ui-accent in that bundle; --nowo-ui-line matches
+ * --nowo-ui-border; --nowo-ui-surface matches --nowo-ui-surface.
+ */
+
+:root {
+    /* Colour palette */
+    --nowo-ui-bg:            #f6f4ef;
+    --nowo-ui-ink:           #1a1a1a;
+    --nowo-ui-accent:        #0b6e4f;
+    --nowo-ui-accent-fg:     #fff;
+    --nowo-ui-muted-ink:     #5c5c5c;
+    --nowo-ui-line:          #d9d2c5;
+    --nowo-ui-surface:       #fff;
+    --nowo-ui-error-bg:      #ffe8e5;
+    --nowo-ui-error-border:  #e7a59b;
+    --nowo-ui-secondary-bg:  #444;
+    --nowo-ui-secondary-fg:  #fff;
+    --nowo-ui-code-bg:       #eee;
+
+    /* Layout */
+    --nowo-ui-font:          "IBM Plex Sans", "Segoe UI", sans-serif;
+    --nowo-ui-container-w:   960px;
+    --nowo-ui-radius:        0;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+
+body {
+    font-family: var(--nowo-ui-font);
+    margin: 0;
+    background: var(--nowo-ui-bg);
+    color: var(--nowo-ui-ink);
+}
+
+.nowo-ui-container {
+    max-width: var(--nowo-ui-container-w);
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem;
+}
+
+code {
+    background: var(--nowo-ui-code-bg);
+    padding: 0.1rem 0.3rem;
+}
+
+/* ── Muted text ─────────────────────────────────────────────────────────── */
+
+.nowo-ui-muted,
+.muted {
+    color: var(--nowo-ui-muted-ink);
+    font-size: 0.95rem;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+
+.nowo-ui-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--nowo-ui-surface);
+}
+
+.nowo-ui-table th,
+.nowo-ui-table td {
+    border-bottom: 1px solid var(--nowo-ui-line);
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    font-size: 0.92rem;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+
+.nowo-ui-btn,
+a.button,
+button {
+    display: inline-block;
+    background: var(--nowo-ui-accent);
+    color: var(--nowo-ui-accent-fg);
+    border: 0;
+    padding: 0.5rem 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+    font: inherit;
+    border-radius: var(--nowo-ui-radius);
+}
+
+.nowo-ui-btn--secondary,
+a.button.secondary,
+button.secondary {
+    background: var(--nowo-ui-secondary-bg);
+    color: var(--nowo-ui-secondary-fg);
+}
+
+/* ── Action bar ─────────────────────────────────────────────────────────── */
+
+.nowo-ui-actions,
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+
+label {
+    display: block;
+    margin: 0.75rem 0 0.25rem;
+    font-weight: 600;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    max-width: 32rem;
+    padding: 0.45rem 0.5rem;
+    font: inherit;
+    border: 1px solid var(--nowo-ui-line);
+    background: var(--nowo-ui-surface);
+    color: var(--nowo-ui-ink);
+    border-radius: var(--nowo-ui-radius);
+}
+
+/* ── Errors ─────────────────────────────────────────────────────────────── */
+
+.nowo-ui-error,
+.errors {
+    background: var(--nowo-ui-error-bg);
+    border: 1px solid var(--nowo-ui-error-border);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+
+.nowo-ui-pagination {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 1rem 0;
+}

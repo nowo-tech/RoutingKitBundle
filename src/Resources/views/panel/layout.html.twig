@@ -6,23 +6,7 @@
     <title>{% block title %}{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}</title>
     {# Demo root layout: no parent() (full HTML). Pages do not reopen stylesheets/javascripts. #}
     {% block stylesheets %}
-    <style>
-        :root { --bg: #f6f4ef; --ink: #1a1a1a; --accent: #0b6e4f; --line: #d9d2c5; }
-        body { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; margin: 0; background: var(--bg); color: var(--ink); }
-        .nowo-ui-container { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
-        h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
-        .nowo-ui-muted, .muted { color: #5c5c5c; font-size: 0.95rem; }
-        .nowo-ui-table { width: 100%; border-collapse: collapse; background: #fff; }
-        .nowo-ui-table th, .nowo-ui-table td { border-bottom: 1px solid var(--line); padding: 0.65rem 0.75rem; text-align: left; font-size: 0.92rem; }
-        .nowo-ui-actions, .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
-        .nowo-ui-btn, a.button, button { background: var(--accent); color: #fff; border: 0; padding: 0.5rem 0.9rem; text-decoration: none; cursor: pointer; font: inherit; }
-        .nowo-ui-btn--secondary, a.button.secondary, button.secondary { background: #444; }
-        .nowo-ui-error, .errors { background: #ffe8e5; border: 1px solid #e7a59b; padding: 0.75rem; margin-bottom: 1rem; }
-        label { display: block; margin: 0.75rem 0 0.25rem; font-weight: 600; }
-        input, select, textarea { width: 100%; max-width: 32rem; padding: 0.45rem 0.5rem; font: inherit; }
-        code { background: #eee; padding: 0.1rem 0.3rem; }
-        .nowo-ui-pagination { display: flex; gap: 0.75rem; align-items: center; margin: 1rem 0; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/nowo-ui.css', 'nowo_routing_kit') }}">
     {% endblock %}
 </head>
 <body class="nowo-ui-page nowo-ui-routing-kit-panel" data-css-framework="{{ nowo_routing_kit_css_framework|default('custom') }}" data-icon-set="{{ nowo_routing_kit_icon_set|default('none') }}">

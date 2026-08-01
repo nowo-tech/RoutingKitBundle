@@ -1,4 +1,4 @@
-{% extends layout|default(nowo_routing_kit_layout_template) %}
+{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
 
 {% block title %}{{ definition and definition.id ? 'panel.edit_title'|trans({}, 'NowoRoutingKitBundle') : 'panel.create_title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
 

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.1.7] - 2026-08-01](#117---2026-08-01)
 - [[1.1.6] - 2026-07-30](#116---2026-07-30)
 - [[1.1.5] - 2026-07-29](#115---2026-07-29)
 - [[1.1.4] - 2026-07-26](#114---2026-07-26)
@@ -21,6 +22,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.1.7] - 2026-08-01
+
+### Added
+
+- `src/Resources/public/css/nowo-ui.css`: tokenized panel stylesheet with `--nowo-ui-*` CSS variables extracted from the former inline styles (buttons, table, forms, muted, errors, pagination, actions). Tokens align with DashboardMenuBundle semantics where applicable.
+- Named Symfony asset package `nowo_routing_kit` (base path `/bundles/noworoutingkit`) registered via `PrependExtensionInterface` in `RoutingKitExtension`, mirroring the DashboardMenuBundle pattern. Run `assets:install` to expose the CSS to host apps.
+- `src/Resources/views/panel/base.html.twig`: intermediate Twig template that extends the configured `layout_template` and injects `nowo-ui.css` via the `stylesheets` block so host shells receive the CSS through `{{ parent() }}`.
+
+### Changed
+
+- `panel/index.html.twig` and `panel/form.html.twig` now extend `@NowoRoutingKitBundle/panel/base.html.twig` instead of `layout|default(nowo_routing_kit_layout_template)` directly.
+- `panel/layout.html.twig` (demo root shell): inline `<style>` block replaced by `<link>` to `asset('css/nowo-ui.css', 'nowo_routing_kit')`, keeping the demo self-contained without duplicating CSS.
+
+### Documentation
+
+- CONFIGURATION: `css_framework: custom` recommended host path; `--nowo-ui-*` token override guide; Bootstrap 5 example retained as an alternative.
+- INSTALLATION: new **Assets** section (`assets:install`, `nowo_routing_kit` package, host layout integration with `css_framework: custom`).
 
 ## [1.1.6] - 2026-07-30
 
