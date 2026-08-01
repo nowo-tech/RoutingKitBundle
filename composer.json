@@ -55,14 +55,16 @@
         "rector/rector": "^2.0",
         "symfony/framework-bundle": "^7.0 || ^8.0",
         "symfony/twig-bundle": "^7.0 || ^8.0",
-        "twig/twig": "^3.12"
+        "twig/twig": "^3.12",
+        "symfony/asset": "^7.0 || ^8.0"
     },
     "suggest": {
         "symfony/twig-bundle": "Required to render the routing CRUD panel",
         "symfony/translation": "Required for |trans in panel templates",
         "symfony/security-bundle": "Recommended: firewall + ROLE_ADMIN for /_routing",
         "nowo-tech/seo-kit-bundle": "Bridge: RoutingKit paths feed SeoKit canonical/hreflang (requires SeoPathBuilderInterface)",
-        "doctrine/orm": "Implement RoutePathStorageInterface against Doctrine entities"
+        "doctrine/orm": "Implement RoutePathStorageInterface against Doctrine entities",
+        "symfony/asset": "Required for the nowo_routing_kit named asset package (panel CSS via assets:install)"
     },
     "autoload": {
         "psr-4": {

@@ -13,7 +13,7 @@
 | Control | Behaviour |
 | --- | --- |
 | CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
-| `security.access_roles` | Default `[ROLE_ADMIN]` via `AuthorizationCheckerInterface`. Empty list / `allow_unauthenticated: true` disables the in-bundle gate (firewall still required). |
+| `security.access_roles` | Default `[ROLE_ADMIN]` via `AuthorizationCheckerInterface` (wired at compile time by `PanelAccessGuardPass`, 1.1.8+). Empty list / `allow_unauthenticated: true` disables the in-bundle gate (firewall still required). |
 | `panel.role` | BC alias for `security.access_roles` (`null` → empty roles). Prefer `security.access_roles`. |
 | Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |
 | Controller override | Off by default; when on, only discovery controllers are accepted. Loader ignores stored overrides when off. |

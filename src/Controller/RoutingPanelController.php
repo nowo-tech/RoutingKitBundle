@@ -94,7 +94,7 @@ final class RoutingPanelController
         return $this->form($request, null);
     }
 
-    #[Route('/edit/{id}', name: 'nowo_routing_kit_panel_edit', methods: ['GET', 'POST'], requirements: ['id' => '[A-Za-z0-9_.-]+'])]
+    #[Route('/edit/{id}', name: 'nowo_routing_kit_panel_edit', requirements: ['id' => '[A-Za-z0-9_.-]+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, string $id): Response
     {
         $this->accessGuard->assertGranted();
@@ -107,7 +107,7 @@ final class RoutingPanelController
         return $this->form($request, $definition);
     }
 
-    #[Route('/delete/{id}', name: 'nowo_routing_kit_panel_delete', methods: ['POST'], requirements: ['id' => '[A-Za-z0-9_.-]+'])]
+    #[Route('/delete/{id}', name: 'nowo_routing_kit_panel_delete', requirements: ['id' => '[A-Za-z0-9_.-]+'], methods: ['POST'])]
     public function delete(Request $request, string $id): Response
     {
         $this->accessGuard->assertGranted();

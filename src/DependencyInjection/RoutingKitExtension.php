@@ -40,17 +40,19 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     public function prepend(ContainerBuilder $container): void
     {
-        if ($container->hasExtension('framework') && class_exists(Package::class)) {
-            $container->prependExtensionConfig('framework', [
-                'assets' => [
-                    'packages' => [
-                        Configuration::ALIAS => [
-                            'base_path' => '/bundles/noworoutingkit',
-                        ],
+        if (!$container->hasExtension('framework') || !class_exists(Package::class)) {
+            return;
+        }
+
+        $container->prependExtensionConfig('framework', [
+            'assets' => [
+                'packages' => [
+                    Configuration::ALIAS => [
+                        'base_path' => '/bundles/noworoutingkit',
                     ],
                 ],
-            ]);
-        }
+            ],
+        ]);
     }
 
     public function load(array $configs, ContainerBuilder $container): void
@@ -248,13 +250,10 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
         $accessRoles = $this->resolveAccessRoles($config);
 
-        $guard = $container->getDefinition(PanelAccessGuard::class)
+        // accessRoles only here — AuthorizationChecker is wired in PanelAccessGuardPass
+        // (SecurityBundle may not have registered security.authorization_checker yet).
+        $container->getDefinition(PanelAccessGuard::class)
             ->setArgument('$accessRoles', $accessRoles);
-        if ($container->hasDefinition('security.authorization_checker') || $container->hasAlias('security.authorization_checker')) {
-            $guard->setArgument('$authorizationChecker', new Reference('security.authorization_checker'));
-        } else {
-            $guard->setArgument('$authorizationChecker', null);
-        }
 
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])

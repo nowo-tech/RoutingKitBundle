@@ -2,6 +2,8 @@
 
 ## Table of contents
 
+- [To 1.1.8](#to-118)
+- [To 1.1.7](#to-117)
 - [To 1.1.6](#to-116)
 - [To 1.1.5](#to-115)
   - [Install / update](#install--update)
@@ -48,6 +50,41 @@
   - [Security](#security)
   - [SeoKit](#seokit)
   - [Storage](#storage)
+
+## To 1.1.8
+
+Bugfix: `PanelAccessGuard` now receives `security.authorization_checker` via `PanelAccessGuardPass` (compiler pass). Extension-time wiring often missed SecurityBundle’s service and denied `/_routing` when `security.access_roles` was non-empty.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.8
+php bin/console cache:clear
+```
+
+No YAML or public API changes. Clear the container cache so the new compiler pass runs.
+
+Hosts that use the `nowo_routing_kit` asset package need `symfony/asset` (usually already present via FrameworkBundle). The bundle suggests it; the Symfony 8 demo requires it explicitly.
+
+---
+
+## To 1.1.7
+
+Panel CSS extracted to the `nowo_routing_kit` asset package (`css/nowo-ui.css`) for `css_framework: custom` hosts (e.g. Tailwind). See [CONFIGURATION.md](CONFIGURATION.md) and [INSTALLATION.md](INSTALLATION.md) **Assets**.
+
+### Install / update
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.1.7
+php bin/console assets:install
+php bin/console cache:clear
+```
+
+Requires `symfony/asset` for the named package registration (see **To 1.1.8** note).
+
+Hosts using `web_ui.css_framework: custom` should ensure the host layout exposes a `stylesheets` block so `@NowoRoutingKitBundle/panel/base.html.twig` can inject `nowo-ui.css` via `{{ parent() }}`.
+
+---
 
 ## To 1.1.6
 

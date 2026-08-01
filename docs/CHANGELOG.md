@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.1.8] - 2026-08-01](#118---2026-08-01)
 - [[1.1.7] - 2026-08-01](#117---2026-08-01)
 - [[1.1.6] - 2026-07-30](#116---2026-07-30)
 - [[1.1.5] - 2026-07-29](#115---2026-07-29)
@@ -22,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.1.8] - 2026-08-01
+
+### Fixed
+
+- `PanelAccessGuard`: wire `security.authorization_checker` in a compiler pass (`PanelAccessGuardPass`). Extension-time `hasDefinition`/`hasAlias` often misses the SecurityBundle service, leaving the guard with a null checker and AccessDenied on `/_routing` when `security.access_roles` is non-empty.
+
+### Changed
+
+- Suggest / require-dev `symfony/asset` so the `nowo_routing_kit` named package can register when FrameworkBundle is present (demo Symfony 8 requires `symfony/asset`).
+
+### Documentation
+
+- [UPGRADING.md](UPGRADING.md) sections **To 1.1.8** and **To 1.1.7**; SECURITY notes compile-time guard wiring.
 
 ## [1.1.7] - 2026-08-01
 
@@ -253,7 +268,9 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...HEAD
+[1.1.8]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.7...v1.1.8
+[1.1.7]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.3...v1.1.4

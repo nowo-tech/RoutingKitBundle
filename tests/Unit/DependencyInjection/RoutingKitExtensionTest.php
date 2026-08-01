@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Unit\DependencyInjection;
 
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
+use Nowo\RoutingKitBundle\DependencyInjection\Compiler\PanelAccessGuardPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
 use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
@@ -23,6 +24,7 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 
 final class RoutingKitExtensionTest extends TestCase
@@ -137,9 +139,13 @@ final class RoutingKitExtensionTest extends TestCase
         ]], $container);
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
-        self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
+        // Extension only sets roles; PanelAccessGuardPass wires AuthorizationChecker at compile time.
+        self::assertArrayNotHasKey('$authorizationChecker', $guard->getArguments());
         self::assertSame('ROLE_ADMIN', $guard->getArgument('$accessRoles')[0] ?? null);
         self::assertSame(['ROLE_ADMIN'], $guard->getArgument('$accessRoles'));
+
+        (new PanelAccessGuardPass())->process($container);
+        self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
 
         $export = $container->getDefinition(RoutePathImportExport::class);
         self::assertSame('routing-kit-test-signing-key-32ch!!', $export->getArgument('$signingKey'));
@@ -188,6 +194,48 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertFalse($container->hasDefinition(DbRouteLoader::class));
         self::assertFalse($container->hasDefinition(CanonicalRedirectSubscriber::class));
         self::assertFalse($container->hasDefinition(RootRedirectSubscriber::class));
+    }
+
+    public function testPrependRegistersNamedAssetPackageWhenFrameworkIsPresent(): void
+    {
+        $container = $this->createContainer();
+        $container->registerExtension(new class implements ExtensionInterface {
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getNamespace(): string
+            {
+                return '';
+            }
+
+            public function getXsdValidationBasePath(): false
+            {
+                return false;
+            }
+
+            public function getAlias(): string
+            {
+                return 'framework';
+            }
+        });
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $prepended = $container->getExtensionConfig('framework');
+        self::assertNotSame([], $prepended);
+        self::assertSame(
+            '/bundles/noworoutingkit',
+            $prepended[0]['assets']['packages'][Configuration::ALIAS]['base_path'] ?? null,
+        );
+    }
+
+    public function testPrependIsNoopWithoutFrameworkExtension(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->prepend($container);
+
+        self::assertSame([], $container->getExtensionConfig('framework'));
     }
 
     private function createContainer(): ContainerBuilder
