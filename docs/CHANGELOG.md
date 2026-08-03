@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.1.9] - 2026-08-03](#119---2026-08-03)
 - [[1.1.8] - 2026-08-01](#118---2026-08-01)
 - [[1.1.7] - 2026-08-01](#117---2026-08-01)
 - [[1.1.6] - 2026-07-30](#116---2026-07-30)
@@ -23,6 +24,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.1.9] - 2026-08-03
+
+### Added
+
+- `RoutingKitAccessCheckerInterface` with `ConfigurableRoutingKitAccessChecker` (role gate) and `AllowAllRoutingKitAccessChecker` (`security.allow_unauthenticated`) — REQ-UI-002.
+- Compile-time guard: panel enabled + `allow_unauthenticated: false` requires SecurityBundle.
+
+### Changed
+
+- `PanelAccessGuard` delegates to the access checker and uses `security.token_storage` (wired by `PanelAccessGuardPass`) instead of injecting `AuthorizationChecker` directly.
+- `security.access_checker` accepts a custom service id implementing `RoutingKitAccessCheckerInterface` (`null` = configurable by `access_roles`).
+- CI: bump `actions/stale` from v10 to v11.
+- Dev dependency: `nowo-tech/phpstan-frankenphp` 1.0.3.
+
+### Documentation
+
+- [CONFIGURATION.md](CONFIGURATION.md) / [SECURITY.md](SECURITY.md) / [UPGRADING.md](UPGRADING.md) for the checker contract.
 
 ## [1.1.8] - 2026-08-01
 
@@ -268,7 +287,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.5...v1.1.6

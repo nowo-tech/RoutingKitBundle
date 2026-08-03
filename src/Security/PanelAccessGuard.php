@@ -6,44 +6,36 @@ namespace Nowo\RoutingKitBundle\Security;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-use function implode;
-use function sprintf;
+use function is_object;
 
 /**
  * Optional in-bundle role gate for the CRUD panel (apps should still firewall the prefix).
  *
- * Empty {@see $accessRoles} disables the in-bundle check (REQ-UI-002).
+ * Delegates to {@see RoutingKitAccessCheckerInterface}. Empty access_roles / allow_unauthenticated
+ * disables the in-bundle check (REQ-UI-002).
  */
 final class PanelAccessGuard
 {
-    /**
-     * @param list<string> $accessRoles
-     */
     public function __construct(
-        private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
-        private readonly array $accessRoles = ['ROLE_ADMIN'],
+        private readonly RoutingKitAccessCheckerInterface $accessChecker,
+        private readonly ?TokenStorageInterface $tokenStorage = null,
+        private readonly bool $allowUnauthenticated = false,
+        private readonly bool $roleGateDisabled = false,
     ) {
     }
 
     public function assertGranted(): void
     {
-        if ($this->accessRoles === []) {
+        if ($this->allowUnauthenticated || $this->roleGateDisabled) {
             return;
         }
 
-        if (!$this->authorizationChecker instanceof AuthorizationCheckerInterface) {
-            throw new AccessDeniedHttpException('RoutingKit panel requires AuthorizationCheckerInterface when security.access_roles is non-empty. Install symfony/security-bundle and grant a role, set security.access_roles: [], or use panel.role: null (BC).');
+        $user = $this->tokenStorage?->getToken()?->getUser();
+        if (!is_object($user) || !$this->accessChecker->canAccess($user)) {
+            throw new AccessDeniedHttpException('Access denied to RoutingKit panel.');
         }
-
-        foreach ($this->accessRoles as $role) {
-            if ($this->authorizationChecker->isGranted($role)) {
-                return;
-            }
-        }
-
-        throw new AccessDeniedHttpException(sprintf('Access denied. Required one of: %s.', implode(', ', $this->accessRoles)));
     }
 
     public function deniedResponse(): Response

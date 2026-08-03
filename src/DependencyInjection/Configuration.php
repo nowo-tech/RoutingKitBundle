@@ -186,7 +186,7 @@ final class Configuration implements ConfigurationInterface
                             ->defaultValue(['ROLE_ADMIN'])
                         ->end()
                         ->scalarNode('access_checker')
-                            ->info('Optional custom service id; reserved for future checkers. null = built-in role gate.')
+                            ->info('Optional custom service id implementing RoutingKitAccessCheckerInterface. null = ConfigurableRoutingKitAccessChecker.')
                             ->defaultNull()
                         ->end()
                         ->booleanNode('allow_unauthenticated')

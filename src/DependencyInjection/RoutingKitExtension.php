@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
+use LogicException;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
@@ -14,7 +15,10 @@ use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
+use Nowo\RoutingKitBundle\Security\ConfigurableRoutingKitAccessChecker;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
+use Nowo\RoutingKitBundle\Security\RoutingKitAccessCheckerInterface;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
@@ -24,6 +28,7 @@ use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Symfony\Component\Asset\Package;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -76,6 +81,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->setParameter('nowo.routing_kit.web_ui.icon_set', $config['web_ui']['icon_set']);
         $container->setParameter('nowo.routing_kit.security', $config['security']);
         $container->setParameter('nowo.routing_kit.security.access_roles', array_values($config['security']['access_roles']));
+        $container->setParameter('nowo.routing_kit.security.access_checker', $config['security']['access_checker']);
         $container->setParameter('nowo.routing_kit.security.allow_unauthenticated', (bool) $config['security']['allow_unauthenticated']);
         $container->setParameter('nowo.routing_kit.auto_invalidate_cache', $config['auto_invalidate_cache']);
         $container->setParameter('nowo.routing_kit.register_unprefixed_default', $config['register_unprefixed_default']);
@@ -89,6 +95,14 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             $this->disableBundle($container);
 
             return;
+        }
+
+        if (
+            $config['panel']['enabled']
+            && !$config['security']['allow_unauthenticated']
+            && !$this->isSecurityBundleAvailable($container)
+        ) {
+            throw new LogicException('NowoRoutingKitBundle panel requires symfony/security-bundle when security.allow_unauthenticated is false.');
         }
 
         $this->configureLocales($container, $config);
@@ -248,12 +262,13 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             return;
         }
 
+        $this->registerAccessChecker($container, $config['security']);
+
         $accessRoles = $this->resolveAccessRoles($config);
 
-        // accessRoles only here — AuthorizationChecker is wired in PanelAccessGuardPass
-        // (SecurityBundle may not have registered security.authorization_checker yet).
         $container->getDefinition(PanelAccessGuard::class)
-            ->setArgument('$accessRoles', $accessRoles);
+            ->setArgument('$allowUnauthenticated', (bool) $config['security']['allow_unauthenticated'])
+            ->setArgument('$roleGateDisabled', $accessRoles === []);
 
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
@@ -262,6 +277,51 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');
+    }
+
+    /** @param array<string, mixed> $security */
+    private function registerAccessChecker(ContainerBuilder $container, array $security): void
+    {
+        if ($security['allow_unauthenticated']) {
+            $accessCheckerId = 'nowo.routing_kit.access_checker.allow_all';
+            $container->setDefinition($accessCheckerId, new Definition(AllowAllRoutingKitAccessChecker::class));
+            $container->setAlias(RoutingKitAccessCheckerInterface::class, $accessCheckerId)->setPublic(false);
+
+            return;
+        }
+
+        $accessCheckerId = $security['access_checker'] ?? null;
+        if (is_string($accessCheckerId) && $accessCheckerId !== '') {
+            $container->setAlias(RoutingKitAccessCheckerInterface::class, $accessCheckerId)->setPublic(false);
+
+            return;
+        }
+
+        $accessCheckerId = 'nowo.routing_kit.access_checker.default';
+        $container->setDefinition($accessCheckerId, (new Definition(ConfigurableRoutingKitAccessChecker::class))
+            ->setAutowired(true)
+            ->setArgument('$accessRoles', array_values($security['access_roles'])));
+        $container->setAlias(RoutingKitAccessCheckerInterface::class, $accessCheckerId)->setPublic(false);
+    }
+
+    /**
+     * Prefer kernel.bundles: ContainerBuilder::hasExtension() can be false while SecurityBundle
+     * is already registered (e.g. during early Flex cache:clear boots).
+     */
+    private function isSecurityBundleAvailable(ContainerBuilder $container): bool
+    {
+        if ($container->hasExtension('security')) {
+            return true;
+        }
+
+        if (!$container->hasParameter('kernel.bundles')) {
+            return false;
+        }
+
+        /** @var array<string, class-string> $bundles */
+        $bundles = $container->getParameter('kernel.bundles');
+
+        return isset($bundles['SecurityBundle']);
     }
 
     /**

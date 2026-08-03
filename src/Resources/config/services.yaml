@@ -34,7 +34,12 @@ services:
     Nowo\RoutingKitBundle\Service\RoutePathManager: ~
     Nowo\RoutingKitBundle\Service\RoutePathImportExport: ~
     Nowo\RoutingKitBundle\Seo\RoutingKitSeoPathProvider: ~
-    Nowo\RoutingKitBundle\Security\PanelAccessGuard: ~
+    Nowo\RoutingKitBundle\Security\PanelAccessGuard:
+        arguments:
+            $tokenStorage: null
+            $allowUnauthenticated: false
+            $roleGateDisabled: false
+
 
     Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber: ~

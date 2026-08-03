@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\DependencyInjection;
 
+use LogicException;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\PanelAccessGuardPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
@@ -16,7 +17,9 @@ use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
+use Nowo\RoutingKitBundle\Security\RoutingKitAccessCheckerInterface;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
@@ -139,13 +142,12 @@ final class RoutingKitExtensionTest extends TestCase
         ]], $container);
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
-        // Extension only sets roles; PanelAccessGuardPass wires AuthorizationChecker at compile time.
-        self::assertArrayNotHasKey('$authorizationChecker', $guard->getArguments());
-        self::assertSame('ROLE_ADMIN', $guard->getArgument('$accessRoles')[0] ?? null);
-        self::assertSame(['ROLE_ADMIN'], $guard->getArgument('$accessRoles'));
+        // Extension sets flags; PanelAccessGuardPass wires TokenStorage at compile time.
+        self::assertFalse($guard->getArgument('$allowUnauthenticated'));
+        self::assertFalse($guard->getArgument('$roleGateDisabled'));
 
         (new PanelAccessGuardPass())->process($container);
-        self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
+        self::assertEquals(new Reference('security.token_storage'), $guard->getArgument('$tokenStorage'));
 
         $export = $container->getDefinition(RoutePathImportExport::class);
         self::assertSame('routing-kit-test-signing-key-32ch!!', $export->getArgument('$signingKey'));
@@ -167,8 +169,92 @@ final class RoutingKitExtensionTest extends TestCase
         ]], $container);
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
-        self::assertSame([], $guard->getArgument('$accessRoles'));
+        self::assertTrue($guard->getArgument('$allowUnauthenticated'));
+        self::assertTrue($guard->getArgument('$roleGateDisabled'));
         self::assertTrue($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
+        self::assertTrue($container->hasDefinition('nowo.routing_kit.access_checker.allow_all'));
+    }
+
+    public function testPanelRequiresSecurityBundleWhenAuthenticated(): void
+    {
+        $container = $this->createContainer();
+        $container->setParameter('kernel.bundles', []);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('requires symfony/security-bundle');
+
+        (new RoutingKitExtension())->load([[
+            'panel'    => ['enabled' => true],
+            'security' => ['allow_unauthenticated' => false],
+        ]], $container);
+    }
+
+    public function testPanelRequiresSecurityBundleWhenKernelBundlesMissing(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.project_dir', '/tmp/project');
+        $container->setParameter('kernel.cache_dir', '/tmp/cache');
+        $container->setParameter('kernel.secret', 'test-secret');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('requires symfony/security-bundle');
+
+        (new RoutingKitExtension())->load([[
+            'panel'    => ['enabled' => true],
+            'security' => ['allow_unauthenticated' => false],
+        ]], $container);
+    }
+
+    public function testAcceptsSecurityBundleViaRegisteredExtension(): void
+    {
+        $container = $this->createContainer();
+        $container->setParameter('kernel.bundles', []);
+        $container->registerExtension(new class implements ExtensionInterface {
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getNamespace(): string
+            {
+                return '';
+            }
+
+            public function getXsdValidationBasePath(): false
+            {
+                return false;
+            }
+
+            public function getAlias(): string
+            {
+                return 'security';
+            }
+        });
+        $container->setDefinition('security.authorization_checker', new Definition());
+
+        (new RoutingKitExtension())->load([[
+            'panel'    => ['enabled' => true],
+            'security' => ['allow_unauthenticated' => false, 'access_roles' => ['ROLE_ADMIN']],
+        ]], $container);
+
+        self::assertTrue($container->hasDefinition('nowo.routing_kit.access_checker.default'));
+    }
+
+    public function testCustomAccessCheckerAlias(): void
+    {
+        $container = $this->createContainer();
+        $container->setDefinition('app.routing_access', new Definition(AllowAllRoutingKitAccessChecker::class));
+
+        (new RoutingKitExtension())->load([[
+            'security' => [
+                'allow_unauthenticated' => false,
+                'access_checker'        => 'app.routing_access',
+            ],
+        ]], $container);
+
+        self::assertSame(
+            'app.routing_access',
+            (string) $container->getAlias(RoutingKitAccessCheckerInterface::class),
+        );
     }
 
     public function testLoadRemovesPanelControllerWhenPanelIsDisabled(): void
@@ -244,6 +330,7 @@ final class RoutingKitExtensionTest extends TestCase
         $container->setParameter('kernel.project_dir', '/tmp/project');
         $container->setParameter('kernel.cache_dir', '/tmp/cache');
         $container->setParameter('kernel.secret', 'test-secret');
+        $container->setParameter('kernel.bundles', ['SecurityBundle' => 'Symfony\\Bundle\\SecurityBundle\\SecurityBundle']);
 
         return $container;
     }

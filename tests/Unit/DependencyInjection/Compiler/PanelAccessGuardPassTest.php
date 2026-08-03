@@ -13,29 +13,29 @@ use Symfony\Component\DependencyInjection\Reference;
 
 final class PanelAccessGuardPassTest extends TestCase
 {
-    public function testWiresAuthorizationCheckerWhenSecurityBundleIsPresent(): void
+    public function testWiresTokenStorageWhenSecurityBundleIsPresent(): void
     {
         $container = new ContainerBuilder();
         $container->setDefinition(PanelAccessGuard::class, new Definition(PanelAccessGuard::class));
-        $container->setDefinition('security.authorization_checker', new Definition());
+        $container->setDefinition('security.token_storage', new Definition());
 
         (new PanelAccessGuardPass())->process($container);
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
-        self::assertEquals(new Reference('security.authorization_checker'), $guard->getArgument('$authorizationChecker'));
+        self::assertEquals(new Reference('security.token_storage'), $guard->getArgument('$tokenStorage'));
     }
 
     public function testNoopsWhenGuardDefinitionMissing(): void
     {
         $container = new ContainerBuilder();
-        $container->setDefinition('security.authorization_checker', new Definition());
+        $container->setDefinition('security.token_storage', new Definition());
 
         (new PanelAccessGuardPass())->process($container);
 
         self::assertFalse($container->hasDefinition(PanelAccessGuard::class));
     }
 
-    public function testNoopsWhenAuthorizationCheckerMissing(): void
+    public function testNoopsWhenTokenStorageMissing(): void
     {
         $container = new ContainerBuilder();
         $container->setDefinition(PanelAccessGuard::class, new Definition(PanelAccessGuard::class));
@@ -43,6 +43,6 @@ final class PanelAccessGuardPassTest extends TestCase
         (new PanelAccessGuardPass())->process($container);
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
-        self::assertArrayNotHasKey('$authorizationChecker', $guard->getArguments());
+        self::assertArrayNotHasKey('$tokenStorage', $guard->getArguments());
     }
 }

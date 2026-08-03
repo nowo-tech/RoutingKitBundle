@@ -2,6 +2,7 @@
 
 ## Table of contents
 
+- [To 1.1.9](#to-119)
 - [To 1.1.8](#to-118)
 - [To 1.1.7](#to-117)
 - [To 1.1.6](#to-116)
@@ -50,6 +51,29 @@
   - [Security](#security)
   - [SeoKit](#seokit)
   - [Storage](#storage)
+
+## To 1.1.9
+
+Panel access aligns with REQ-UI-002 (`access_roles` / `access_checker` / `allow_unauthenticated`). Defaults keep `[ROLE_ADMIN]` behaviour.
+
+### Install / update
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+### Behaviour / security
+
+- Default gate uses `ConfigurableRoutingKitAccessChecker` + `security.access_roles`.
+- Custom checker: set `security.access_checker` to a service implementing `RoutingKitAccessCheckerInterface`.
+- `allow_unauthenticated: true` registers `AllowAllRoutingKitAccessChecker` (demos only).
+- With the panel enabled and `allow_unauthenticated: false`, the host must register SecurityBundle (compile-time `LogicException` otherwise).
+- `PanelAccessGuardPass` wires `security.token_storage` at compile time (unchanged need for a firewall on the panel prefix).
+
+### Breaking / migration
+
+No YAML key renames. If you subclassed or constructed `PanelAccessGuard` manually with `(AuthorizationChecker, roles)`, switch to the checker + token storage constructor (apps using DI only need no code changes).
 
 ## To 1.1.8
 

@@ -11,6 +11,8 @@ use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
+use Nowo\RoutingKitBundle\Security\ConfigurableRoutingKitAccessChecker;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
@@ -26,7 +28,10 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -78,13 +83,24 @@ PHP);
 
     public function testPanelAccessGuardDeniedResponseAndRoleDenied(): void
     {
-        $guard = new PanelAccessGuard(null, []);
+        $guard = new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true);
         self::assertSame(403, $guard->deniedResponse()->getStatusCode());
 
-        $checker = $this->createMock(AuthorizationCheckerInterface::class);
-        $checker->method('isGranted')->willReturn(false);
+        $user  = $this->createMock(UserInterface::class);
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+        $storage = $this->createMock(TokenStorageInterface::class);
+        $storage->method('getToken')->willReturn($token);
+
+        $auth = $this->createMock(AuthorizationCheckerInterface::class);
+        $auth->method('isGranted')->willReturn(false);
         $this->expectException(AccessDeniedHttpException::class);
-        (new PanelAccessGuard($checker, ['ROLE_ADMIN']))->assertGranted();
+        (new PanelAccessGuard(
+            new ConfigurableRoutingKitAccessChecker($auth, ['ROLE_ADMIN']),
+            $storage,
+            false,
+            false,
+        ))->assertGranted();
     }
 
     public function testConflictDetectorFindsCollisionsIncludingFallbackLocale(): void
@@ -413,7 +429,7 @@ PHP);
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, []),
+            new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             false,
@@ -447,7 +463,7 @@ PHP);
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, []),
+            new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             false,
@@ -477,17 +493,19 @@ PHP);
         $twig = $this->createMock(Environment::class);
         $twig->method('render')->willReturn('<html/>');
 
+        $roleGateDisabled = $role === null || $role === '';
+
         return new RoutingPanelController(
             $manager,
             $discovery,
             $locales,
             $twig,
             $csrf,
-            new PanelAccessGuard(null, $role === null || $role === '' ? [] : [$role]),
+            new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, $roleGateDisabled),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             $allowOverride,
-            $role === null || $role === '',
+            $roleGateDisabled,
             50,
         );
     }

@@ -24,8 +24,8 @@ Root key: `nowo_routing_kit`.
 | `web_ui.css_framework` | `custom` | `bootstrap` / `bootstrap4` / `bootstrap5` / `tailwind` / `foundation` / `custom` / `tabler` / `none` |
 | `web_ui.icon_set` | `none` | `bootstrap-icons` / `tabler-icons` / `ux_icon` / `svg_inline` / `none` |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = no in-bundle gate (still firewall the prefix) |
-| `security.access_checker` | `null` | Reserved for a custom checker service id |
-| `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check |
+| `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |
+| `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll); panel requires SecurityBundle when `false` |
 | `redirects.canonical_enabled` | `true` | Redirect non-canonical twins |
 | `redirects.canonical_status` | `301` | Redirect status |
 | `redirects.root_enabled` | `false` | Redirect `/` to default-locale home |

@@ -10,11 +10,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Wires {@see PanelAccessGuard} to SecurityBundle after extensions have loaded.
+ * Wires {@see PanelAccessGuard} to SecurityBundle token storage after extensions have loaded.
  *
  * Extension-time {@see ContainerBuilder::hasDefinition()} / hasAlias() often miss
- * {@code security.authorization_checker} (registered later by SecurityBundle).
- * Compile-time {@see ContainerBuilder::has()} matches CookieConsentSecurityPass.
+ * {@code security.token_storage} (registered later by SecurityBundle).
  */
 final class PanelAccessGuardPass implements CompilerPassInterface
 {
@@ -24,11 +23,11 @@ final class PanelAccessGuardPass implements CompilerPassInterface
             return;
         }
 
-        if (!$container->has('security.authorization_checker')) {
+        if (!$container->has('security.token_storage')) {
             return;
         }
 
         $container->getDefinition(PanelAccessGuard::class)
-            ->setArgument('$authorizationChecker', new Reference('security.authorization_checker'));
+            ->setArgument('$tokenStorage', new Reference('security.token_storage'));
     }
 }

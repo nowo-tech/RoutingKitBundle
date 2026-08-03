@@ -10,6 +10,7 @@ use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
+use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
@@ -321,7 +322,7 @@ PHP);
                 $locales,
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
                 $csrf,
-                new PanelAccessGuard(null, []),
+                new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
                 new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
                 '/_routing-kit',
                 false,
