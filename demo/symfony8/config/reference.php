@@ -794,7 +794,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     security?: array{ // REQ-UI-002 private panel access (firewall the path_prefix in the host app as well).
  *         access_roles?: list<scalar|Param|null>,
- *         access_checker?: scalar|Param|null, // Optional custom service id; reserved for future checkers. null = built-in role gate. // Default: null
+ *         access_checker?: scalar|Param|null, // Optional custom service id implementing RoutingKitAccessCheckerInterface. null = ConfigurableRoutingKitAccessChecker. // Default: null
  *         allow_unauthenticated?: bool|Param, // DEV/DEMO only: skip in-bundle role check (same effect as empty access_roles). Production MUST keep false. // Default: false
  *     },
  *     redirects?: array{
