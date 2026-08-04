@@ -15,3 +15,15 @@ panel.create_title: Create path
 panel.form_hint: 'Define path as /about or /blog/{slug}. Do not include {_locale}.'
 panel.save: Save
 panel.cancel: Cancel
+panel.form.trailing_slash: Trailing slash
+panel.form.alias_mode: Alias mode
+panel.form.controller: Controller (allowlist override)
+panel.form.controller_empty: — discovery default —
+panel.form.canonical_style.without_prefix: Without locale prefix
+panel.form.canonical_style.with_prefix: With locale prefix
+panel.form.trailing_slash_style.omit: Omit
+panel.form.trailing_slash_style.keep: Keep
+panel.form.trailing_slash_style.redirect_to_omit: Redirect to omit
+panel.form.trailing_slash_style.redirect_to_keep: Redirect to keep
+panel.form.alias_mode_choice.redirect: Redirect alias to canonical
+panel.form.alias_mode_choice.alias: Serve alias (200)

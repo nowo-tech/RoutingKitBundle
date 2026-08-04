@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.3.0] - 2026-08-05](#130---2026-08-05)
 - [[1.2.0] - 2026-08-04](#120---2026-08-04)
 - [[1.1.9] - 2026-08-03](#119---2026-08-03)
 - [[1.1.8] - 2026-08-01](#118---2026-08-01)
@@ -25,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.3.0] - 2026-08-05
+
+### Added
+
+- **FormKitBundle:** depend on [`nowo-tech/form-kit-bundle`](https://github.com/nowo-tech/FormKitBundle) `^2.2`. Panel path row form uses `RoutePathDefinitionType` with `FormOptionsTrait` + profile `routing_kit` (`#[FormKitConfig]`). Extension prepends that profile with `auto_help` / `auto_placeholder` false (and default `css_framework: bootstrap`) when the host has not defined them.
+- `NowoRoutingKitBundle::TRANSLATION_DOMAIN` constant for shared translation domain wiring.
+- Unit coverage for `RoutingKitExtension::prependFormKitDefaults` (routing_kit profile seed + host override guards).
+
+### Changed
+
+- **Panel form:** `RoutingPanelController::form()` builds/handles a Symfony form (CSRF via form component); `panel/form.html.twig` renders `form_start` / `form_row` / `form_end` with FormKit UiKit attrs.
+- **Panel index:** list pagination uses `@NowoUiKitBundle/partials/_pagination.html.twig` instead of hand-rolled Previous/Next links.
+
+[1.3.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.3.0
 
 ## [1.2.0] - 2026-08-04
 

@@ -14,6 +14,8 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 final class NowoRoutingKitBundle extends Bundle
 {
+    public const TRANSLATION_DOMAIN = 'NowoRoutingKitBundle';
+
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);

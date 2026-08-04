@@ -15,3 +15,15 @@ panel.create_title: Crear path
 panel.form_hint: 'Define el path como /about o /blog/{slug}. No incluyas {_locale}.'
 panel.save: Guardar
 panel.cancel: Cancelar
+panel.form.trailing_slash: Barra final
+panel.form.alias_mode: Modo alias
+panel.form.controller: Controlador (override allowlist)
+panel.form.controller_empty: — valor por defecto del discovery —
+panel.form.canonical_style.without_prefix: Sin prefijo de locale
+panel.form.canonical_style.with_prefix: Con prefijo de locale
+panel.form.trailing_slash_style.omit: Omitir
+panel.form.trailing_slash_style.keep: Mantener
+panel.form.trailing_slash_style.redirect_to_omit: Redirigir a omitir
+panel.form.trailing_slash_style.redirect_to_keep: Redirigir a mantener
+panel.form.alias_mode_choice.redirect: Redirigir alias a canónica
+panel.form.alias_mode_choice.alias: Servir alias (200)

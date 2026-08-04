@@ -16,6 +16,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
+use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -103,7 +104,7 @@ PHP);
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
                 self::assertNull($context['definition']);
-                self::assertCount(1, $context['routables']);
+                self::assertArrayHasKey('form', $context);
                 self::assertSame([], $context['errors']);
 
                 return '<html>form</html>';
@@ -119,16 +120,9 @@ PHP);
     {
         [$controller, $storage] = $this->createController();
 
-        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', [
-            '_csrf_token'     => 'token-value',
-            'route_name'      => 'app_article_show',
-            'locale'          => 'en',
-            'path'            => '/articles/{slug}',
-            'canonical_style' => 'without_prefix',
-            'trailing_slash'  => 'omit',
-            'alias_mode'      => 'redirect',
-            'enabled'         => '1',
-        ]));
+        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', $this->validFormPayload([
+            'path' => '/articles/{slug}',
+        ])));
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/_routing-kit/', $response->headers->get('Location'));
@@ -147,12 +141,9 @@ PHP);
             }),
         );
 
-        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', [
-            '_csrf_token' => 'token-value',
-            'route_name'  => 'app_article_show',
-            'locale'      => 'en',
-            'path'        => '/articles',
-        ]));
+        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', $this->validFormPayload([
+            'path' => '/articles',
+        ])));
 
         self::assertSame('<html>error</html>', $response->getContent());
     }
@@ -162,19 +153,17 @@ PHP);
         [$controller] = $this->createController(
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
-                self::assertContains('Invalid CSRF token.', $context['errors']);
+                self::assertNotEmpty($context['errors']);
 
                 return '<html>csrf-error</html>';
             }),
             csrfTokenManager: $this->createCsrfManager(valid: false),
         );
 
-        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', [
-            '_csrf_token' => 'bad',
-            'route_name'  => 'app_article_show',
-            'locale'      => 'en',
+        $response = $controller->create(Request::create('/_routing-kit/create', 'POST', $this->validFormPayload([
             'path'        => '/articles/{slug}',
-        ]));
+            '_csrf_token' => 'bad',
+        ])));
 
         self::assertSame('<html>csrf-error</html>', $response->getContent());
     }
@@ -203,13 +192,10 @@ PHP);
         );
 
         $getResponse  = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'GET'), 'rk_1');
-        $postResponse = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', [
-            '_csrf_token' => 'token-value',
-            'route_name'  => 'app_article_show',
-            'locale'      => 'en',
-            'path'        => '/stories/{slug}',
-            'enabled'     => '1',
-        ]), 'rk_1');
+        $postResponse = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', $this->validFormPayload([
+            'path'    => '/stories/{slug}',
+            'enabled' => '1',
+        ])), 'rk_1');
 
         self::assertSame('<html>edit</html>', $getResponse->getContent());
         self::assertSame('/stories/{slug}', $storage->findById('rk_1')?->path);
@@ -231,12 +217,9 @@ PHP);
             }),
         );
 
-        $response = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', [
-            '_csrf_token' => 'token-value',
-            'route_name'  => 'app_article_show',
-            'locale'      => 'en',
-            'path'        => '/broken',
-        ]), 'rk_1');
+        $response = $controller->edit(Request::create('/_routing-kit/edit/rk_1', 'POST', $this->validFormPayload([
+            'path' => '/broken',
+        ])), 'rk_1');
 
         self::assertSame('<html>edit-error</html>', $response->getContent());
     }
@@ -321,6 +304,7 @@ PHP);
                 $discovery,
                 $locales,
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
+                FormKitTestSupport::createFormFactory($csrf),
                 $csrf,
                 new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
                 new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -350,6 +334,25 @@ PHP);
         $manager->method('isTokenValid')->willReturn($valid);
 
         return $manager;
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     *
+     * @return array<string, mixed>
+     */
+    private function validFormPayload(array $overrides = []): array
+    {
+        return array_merge([
+            '_csrf_token'     => 'token-value',
+            'route_name'      => 'app_article_show',
+            'locale'          => 'en',
+            'path'            => '/articles/{slug}',
+            'canonical_style' => 'without_prefix',
+            'trailing_slash'  => 'omit',
+            'alias_mode'      => 'redirect',
+            'enabled'         => '1',
+        ], $overrides);
     }
 }
 

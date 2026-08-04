@@ -21,7 +21,7 @@
     </div>
 </header>
 <main>
-    <p class="nowo-ui-muted muted">{{ total }} row(s) · page {{ page }}/{{ pages }} ({{ page_size }}/page)</p>
+    <p class="nowo-ui-muted muted">{{ total }} row(s)</p>
     <div class="nowo-ui-table-wrap">
     <table class="nowo-ui-table">
         <thead>
@@ -72,16 +72,18 @@
     </table>
     </div>
 
-    {% if pages > 1 %}
-    <nav class="nowo-ui-pagination" aria-label="Pagination">
-        {% if page > 1 %}
-            <a class="{{ ui.btn('secondary', 'sm', _css_fw) }} nowo-ui-action-prev" href="{{ path_prefix }}/?page={{ page - 1 }}">Previous</a>
-        {% endif %}
-        {% if page < pages %}
-            <a class="{{ ui.btn('secondary', 'sm', _css_fw) }} nowo-ui-action-next" href="{{ path_prefix }}/?page={{ page + 1 }}">Next</a>
-        {% endif %}
-    </nav>
-    {% endif %}
+    {% include '@NowoUiKitBundle/partials/_pagination.html.twig' with {
+        pagination: {
+            page: page,
+            per_page: page_size,
+            total: total,
+            total_pages: pages
+        },
+        item_count: item_count,
+        route: 'nowo_routing_kit_panel',
+        route_params: {},
+        framework: _css_fw
+    } %}
 
     <h2>Import (signed JSON)</h2>
     <form method="post" action="{{ path_prefix }}/import">

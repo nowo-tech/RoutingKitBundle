@@ -15,6 +15,7 @@ use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
+use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -322,6 +323,102 @@ final class RoutingKitExtensionTest extends TestCase
         (new RoutingKitExtension())->prepend($container);
 
         self::assertSame([], $container->getExtensionConfig('framework'));
+    }
+
+    public function testPrependSeedsFormKitRoutingKitProfileWhenHostUnset(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_form_kit');
+        $this->registerStubExtension($container, 'framework');
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $found = false;
+        foreach ($container->getExtensionConfig('nowo_form_kit') as $cfg) {
+            if (($cfg['css_framework'] ?? null) === 'bootstrap'
+                && isset($cfg['profiles']['routing_kit']['alias'])
+                && $cfg['profiles']['routing_kit']['alias'] === 'routing_kit'
+            ) {
+                $found = true;
+                self::assertSame(NowoRoutingKitBundle::TRANSLATION_DOMAIN, $cfg['profiles']['routing_kit']['translation_domain']);
+                self::assertFalse($cfg['profiles']['routing_kit']['auto_placeholder']);
+                self::assertFalse($cfg['profiles']['routing_kit']['auto_help']);
+                self::assertSame('nowo-ui-input form-control', $cfg['profiles']['routing_kit']['defaults']['attr']['class']);
+                break;
+            }
+        }
+        self::assertTrue($found, 'Expected nowo_form_kit routing_kit profile and css_framework bootstrap.');
+    }
+
+    public function testPrependDoesNotOverrideExplicitFormKitHostConfig(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_form_kit');
+        $container->prependExtensionConfig('nowo_form_kit', [
+            'css_framework' => 'none',
+            'profiles'      => [
+                'routing_kit' => [
+                    'alias'              => 'routing_kit',
+                    'translation_domain' => 'HostDomain',
+                ],
+            ],
+        ]);
+        $this->registerStubExtension($container, 'framework');
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $bootstrapSeed   = false;
+        $routingKitReseed = false;
+        foreach ($container->getExtensionConfig('nowo_form_kit') as $cfg) {
+            if (($cfg['css_framework'] ?? null) === 'bootstrap') {
+                $bootstrapSeed = true;
+            }
+            if (isset($cfg['profiles']['routing_kit']['translation_domain'])
+                && $cfg['profiles']['routing_kit']['translation_domain'] === NowoRoutingKitBundle::TRANSLATION_DOMAIN
+            ) {
+                $routingKitReseed = true;
+            }
+        }
+        self::assertFalse($bootstrapSeed, 'Must not prepend FormKit css_framework when host already set it.');
+        self::assertFalse($routingKitReseed, 'Must not re-seed routing_kit profile when host already defined it.');
+    }
+
+    public function testPrependSkipsFormKitWhenExtensionMissing(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'framework');
+
+        (new RoutingKitExtension())->prepend($container);
+
+        self::assertSame([], $container->getExtensionConfig('nowo_form_kit'));
+    }
+
+    private function registerStubExtension(ContainerBuilder $container, string $alias): void
+    {
+        $container->registerExtension(new class($alias) implements ExtensionInterface {
+            public function __construct(private readonly string $extensionAlias)
+            {
+            }
+
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getNamespace(): string
+            {
+                return '';
+            }
+
+            public function getXsdValidationBasePath(): false
+            {
+                return false;
+            }
+
+            public function getAlias(): string
+            {
+                return $this->extensionAlias;
+            }
+        });
     }
 
     private function createContainer(): ContainerBuilder

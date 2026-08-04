@@ -6,6 +6,7 @@ namespace Nowo\RoutingKitBundle\Controller;
 
 use JsonException;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
+use Nowo\RoutingKitBundle\Form\RoutePathDefinitionType;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\AliasMode;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
@@ -15,6 +16,8 @@ use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use RuntimeException;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -50,6 +53,7 @@ final class RoutingPanelController
         private readonly RoutableControllerDiscovery $discovery,
         private readonly LocaleProviderInterface $locales,
         private readonly Environment $twig,
+        private readonly FormFactoryInterface $formFactory,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly PanelAccessGuard $accessGuard,
         private readonly RoutePathImportExport $importExport,
@@ -71,9 +75,10 @@ final class RoutingPanelController
         $pages    = max(1, (int) ceil($total / $pageSize));
         $page     = max(1, min($pages, $request->query->getInt('page', 1)));
         $offset   = ($page - 1) * $pageSize;
+        $rows     = array_slice($all, $offset, $pageSize);
 
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
-            'definitions'        => array_slice($all, $offset, $pageSize),
+            'definitions'        => $rows,
             'path_prefix'        => $this->pathPrefix,
             'locales'            => $this->locales->getLocales(),
             'default'            => $this->locales->getDefaultLocale(),
@@ -83,6 +88,7 @@ final class RoutingPanelController
             'pages'              => $pages,
             'total'              => $total,
             'page_size'          => $pageSize,
+            'item_count'         => count($rows),
         ]));
     }
 
@@ -221,36 +227,40 @@ final class RoutingPanelController
 
     private function form(Request $request, ?RoutePathDefinition $existing): Response
     {
+        $routables    = $this->discovery->discover();
+        $localeList   = $this->locales->getLocales();
+        $initialRoute = $existing?->routeName ?? ($routables[0]['route_name'] ?? '');
+
+        /** @var FormInterface<array<string, mixed>|null> $form */
+        $form = $this->formFactory->createNamed(
+            '',
+            RoutePathDefinitionType::class,
+            $this->formDataFromDefinition($existing, $initialRoute),
+            [
+                'routables'                 => $routables,
+                'locales'                   => $localeList,
+                'allow_controller_override' => $this->allowControllerOverride,
+                'is_create'                 => $existing === null,
+                'initial_route_name'        => $initialRoute,
+            ],
+        );
+
+        $form->handleRequest($request);
+
         $errors    = [];
         $conflicts = [];
+        $definition = $existing;
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfValid($request)) {
-                $errors[] = 'Invalid CSRF token.';
-            } else {
-                $routeName = (string) $request->request->get('route_name', '');
-                $locale    = (string) $request->request->get('locale', '');
-                $path      = (string) $request->request->get('path', '/');
-
-                $controller = null;
-                if ($this->allowControllerOverride) {
-                    $raw        = $request->request->get('controller');
-                    $controller = is_string($raw) && $raw !== '' ? $raw : null;
+        if ($form->isSubmitted()) {
+            if (!$form->isValid()) {
+                foreach ($form->getErrors(true) as $error) {
+                    $errors[] = $error->getMessage();
                 }
-
-                $definition = new RoutePathDefinition(
-                    routeName: $routeName,
-                    locale: $locale,
-                    path: $path,
-                    canonicalStyle: CanonicalStyle::tryFrom((string) $request->request->get('canonical_style', CanonicalStyle::WithoutPrefix->value)) ?? CanonicalStyle::WithoutPrefix,
-                    trailingSlash: TrailingSlashStyle::tryFrom((string) $request->request->get('trailing_slash', TrailingSlashStyle::Omit->value)) ?? TrailingSlashStyle::Omit,
-                    aliasMode: AliasMode::tryFrom((string) $request->request->get('alias_mode', AliasMode::Redirect->value)) ?? AliasMode::Redirect,
-                    enabled: $request->request->getBoolean('enabled', true),
-                    controller: $controller,
-                    id: $existing?->id,
-                );
-
-                $conflicts = $this->manager->previewConflicts($definition);
+            } else {
+                /** @var array<string, mixed> $data */
+                $data       = $form->getData() ?? [];
+                $definition = $this->definitionFromFormData($data, $existing?->id);
+                $conflicts  = $this->manager->previewConflicts($definition);
 
                 try {
                     $this->manager->save($definition);
@@ -258,7 +268,6 @@ final class RoutingPanelController
                     return new RedirectResponse($this->pathPrefix . '/');
                 } catch (Throwable $e) {
                     $errors[] = $e->getMessage();
-                    $existing = $definition;
                 }
             }
         } elseif ($existing instanceof RoutePathDefinition) {
@@ -266,19 +275,67 @@ final class RoutingPanelController
         }
 
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/form.html.twig', [
-            'definition'                => $existing,
-            'routables'                 => $this->discovery->discover(),
-            'locales'                   => $this->locales->getLocales(),
-            'path_prefix'               => $this->pathPrefix,
-            'errors'                    => $errors,
-            'conflicts'                 => $conflicts,
-            'canonical_styles'          => CanonicalStyle::cases(),
-            'trailing_styles'           => TrailingSlashStyle::cases(),
-            'alias_modes'               => AliasMode::cases(),
-            'csrf_token'                => $this->csrfToken(),
-            'allow_controller_override' => $this->allowControllerOverride,
-            'role_gate_disabled'        => $this->roleGateDisabled,
+            'definition'         => $definition,
+            'form'               => $form->createView(),
+            'path_prefix'        => $this->pathPrefix,
+            'errors'             => $errors,
+            'conflicts'          => $conflicts,
+            'role_gate_disabled' => $this->roleGateDisabled,
         ]));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formDataFromDefinition(?RoutePathDefinition $definition, string $initialRoute): array
+    {
+        if ($definition instanceof RoutePathDefinition) {
+            return [
+                'route_name'      => $definition->routeName,
+                'locale'          => $definition->locale,
+                'path'            => $definition->path,
+                'canonical_style' => $definition->canonicalStyle->value,
+                'trailing_slash'  => $definition->trailingSlash->value,
+                'alias_mode'      => $definition->aliasMode->value,
+                'enabled'         => $definition->enabled,
+                'controller'      => $definition->controller ?? '',
+            ];
+        }
+
+        return [
+            'route_name'      => $initialRoute,
+            'locale'          => $this->locales->getDefaultLocale(),
+            'path'            => '/',
+            'canonical_style' => CanonicalStyle::WithoutPrefix->value,
+            'trailing_slash'  => TrailingSlashStyle::Omit->value,
+            'alias_mode'      => AliasMode::Redirect->value,
+            'enabled'         => true,
+            'controller'      => '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function definitionFromFormData(array $data, ?string $id): RoutePathDefinition
+    {
+        $controller = null;
+        if ($this->allowControllerOverride) {
+            $raw        = $data['controller'] ?? null;
+            $controller = is_string($raw) && $raw !== '' ? $raw : null;
+        }
+
+        return new RoutePathDefinition(
+            routeName: (string) ($data['route_name'] ?? ''),
+            locale: (string) ($data['locale'] ?? ''),
+            path: (string) ($data['path'] ?? '/'),
+            canonicalStyle: CanonicalStyle::tryFrom((string) ($data['canonical_style'] ?? CanonicalStyle::WithoutPrefix->value)) ?? CanonicalStyle::WithoutPrefix,
+            trailingSlash: TrailingSlashStyle::tryFrom((string) ($data['trailing_slash'] ?? TrailingSlashStyle::Omit->value)) ?? TrailingSlashStyle::Omit,
+            aliasMode: AliasMode::tryFrom((string) ($data['alias_mode'] ?? AliasMode::Redirect->value)) ?? AliasMode::Redirect,
+            enabled: (bool) ($data['enabled'] ?? false),
+            controller: $controller,
+            id: $id,
+        );
     }
 
     private function csrfToken(): string

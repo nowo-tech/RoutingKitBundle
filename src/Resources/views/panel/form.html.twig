@@ -20,66 +20,16 @@
             {% for conflict in conflicts %}<div>{{ conflict }}</div>{% endfor %}
         </div>
     {% endif %}
-    <form method="post" class="nowo-ui-form">
-        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-        <label for="route_name">{{ 'panel.col.route'|trans({}, 'NowoRoutingKitBundle') }}</label>
-        <select id="route_name" name="route_name" required>
-            {% for item in routables %}
-                <option value="{{ item.route_name }}" {% if definition and definition.routeName == item.route_name %}selected{% endif %}>
-                    {{ item.route_name }}
-                </option>
-            {% endfor %}
-        </select>
-
-        <label for="locale">{{ 'panel.col.locale'|trans({}, 'NowoRoutingKitBundle') }}</label>
-        <select id="locale" name="locale" required>
-            {% for loc in locales %}
-                <option value="{{ loc }}" {% if definition and definition.locale == loc %}selected{% endif %}>{{ loc }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="path">{{ 'panel.col.path'|trans({}, 'NowoRoutingKitBundle') }}</label>
-        <input id="path" name="path" required value="{{ definition ? definition.path : '/' }}" placeholder="/about">
-
-        <label for="canonical_style">{{ 'panel.col.canonical'|trans({}, 'NowoRoutingKitBundle') }}</label>
-        <select id="canonical_style" name="canonical_style">
-            {% for style in canonical_styles %}
-                <option value="{{ style.value }}" {% if definition and definition.canonicalStyle == style %}selected{% endif %}>{{ style.value }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="trailing_slash">trailing_slash</label>
-        <select id="trailing_slash" name="trailing_slash">
-            {% for style in trailing_styles %}
-                <option value="{{ style.value }}" {% if definition and definition.trailingSlash == style %}selected{% endif %}>{{ style.value }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="alias_mode">alias_mode</label>
-        <select id="alias_mode" name="alias_mode">
-            {% for mode in alias_modes %}
-                <option value="{{ mode.value }}" {% if definition and definition.aliasMode == mode %}selected{% endif %}>{{ mode.value }}</option>
-            {% endfor %}
-        </select>
-
-        {% if allow_controller_override %}
-            <label for="controller">controller (allowlist override)</label>
-            <select id="controller" name="controller">
-                <option value="">— discovery default —</option>
-                {% for item in routables %}
-                    {% if definition is null or definition.routeName == item.route_name or item.route_name == (definition ? definition.routeName : '') %}
-                        <option value="{{ item.controller }}" {% if definition and definition.controller == item.controller %}selected{% endif %}>{{ item.controller }}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        {% endif %}
-
-        <label><input type="checkbox" name="enabled" value="1" {% if definition is null or definition.enabled %}checked{% endif %}> enabled</label>
-
+    {{ form_start(form, {attr: {class: 'nowo-ui-form'}}) }}
+        {% for child in form %}
+            {% if not child.rendered %}
+                {{ form_row(child) }}
+            {% endif %}
+        {% endfor %}
         <div class="nowo-ui-actions actions">
             <button type="submit" class="{{ ui.btn('primary', null, _css_fw) }} nowo-ui-action-save">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
             <a class="{{ ui.btn('secondary', null, _css_fw) }} nowo-ui-action-cancel" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
         </div>
-    </form>
+    {{ form_end(form) }}
 </main>
 {% endblock %}

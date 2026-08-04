@@ -19,6 +19,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -428,6 +429,7 @@ PHP);
             $discovery,
             $locales,
             $twig,
+            FormKitTestSupport::createFormFactory($csrf),
             $csrf,
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -462,6 +464,7 @@ PHP);
             $discovery,
             $locales,
             $twig,
+            FormKitTestSupport::createFormFactory($csrf),
             $csrf,
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -500,6 +503,7 @@ PHP);
             $discovery,
             $locales,
             $twig,
+            FormKitTestSupport::createFormFactory($csrf),
             $csrf,
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, $roleGateDisabled),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),

@@ -13,6 +13,7 @@ use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
+use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -61,6 +62,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         }
 
         $this->prependUiKitDefaults($container);
+        $this->prependFormKitDefaults($container);
     }
 
     /**
@@ -105,6 +107,74 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
         if ($defaults !== []) {
             $container->prependExtensionConfig('nowo_ui_kit', $defaults);
+        }
+    }
+
+    /**
+     * When FormKit is installed, register the {@code routing_kit} profile. Forms select it via {@code #[FormKitConfig]}.
+     */
+    private function prependFormKitDefaults(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('nowo_form_kit')) {
+            return;
+        }
+
+        $hostHasCssFramework = false;
+        $hostHasProfile      = false;
+        foreach ($container->getExtensionConfig('nowo_form_kit') as $cfg) {
+            if (!is_array($cfg)) {
+                continue;
+            }
+            if (array_key_exists('css_framework', $cfg)) {
+                $hostHasCssFramework = true;
+            }
+            $profiles = $cfg['profiles'] ?? null;
+            if (is_array($profiles) && array_key_exists('routing_kit', $profiles)) {
+                $hostHasProfile = true;
+            }
+        }
+
+        $seed = [];
+
+        if (!$hostHasCssFramework) {
+            $seed['css_framework'] = 'bootstrap';
+        }
+
+        if (!$hostHasProfile) {
+            $seed['profiles'] = [
+                'routing_kit' => [
+                    'alias'              => 'routing_kit',
+                    'translation_domain' => NowoRoutingKitBundle::TRANSLATION_DOMAIN,
+                    'auto_placeholder'   => false,
+                    'auto_help'          => false,
+                    'defaults'           => [
+                        'attr'     => ['class' => 'nowo-ui-input form-control'],
+                        'row_attr' => ['class' => 'mb-2'],
+                    ],
+                    'field_types' => [
+                        'checkbox' => [
+                            'attr'     => ['class' => 'form-check-input'],
+                            'row_attr' => ['class' => 'form-check mb-2'],
+                        ],
+                        'choice' => [
+                            'attr' => ['class' => 'form-select'],
+                        ],
+                        'entity' => [
+                            'attr' => ['class' => 'form-select'],
+                        ],
+                        'file' => [
+                            'attr' => ['class' => 'nowo-ui-input form-control'],
+                        ],
+                        'textarea' => [
+                            'attr' => ['class' => 'nowo-ui-input form-control'],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        if ($seed !== []) {
+            $container->prependExtensionConfig('nowo_form_kit', $seed);
         }
     }
 

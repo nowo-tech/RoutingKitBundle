@@ -32,8 +32,10 @@
         }
     ],
     "require": {
-        "nowo-tech/ui-kit-bundle": "^1.4 || ^1.5",
+        "nowo-tech/form-kit-bundle": "^2.2",
+        "nowo-tech/ui-kit-bundle": "^1.4 || ^1.5 || ^1.7",
         "php": ">=8.2 <8.6",
+        "symfony/form": "^7.4 || ^8.0",
         "symfony/config": "^7.4 || ^8.0",
         "symfony/dependency-injection": "^7.4 || ^8.0",
         "symfony/event-dispatcher": "^7.0 || ^8.0",
@@ -63,6 +65,7 @@
         "vincentlanglet/twig-cs-fixer": "^3.0"
     },
     "suggest": {
+        "nowo-tech/form-kit-bundle": "Panel Symfony forms (FormOptionsTrait, profile routing_kit). Pulled in automatically when using the CRUD panel.",
         "symfony/twig-bundle": "Required to render the routing CRUD panel",
         "symfony/translation": "Required for |trans in panel templates",
         "symfony/security-bundle": "Recommended: firewall + ROLE_ADMIN for /_routing",
