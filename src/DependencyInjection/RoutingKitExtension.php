@@ -34,30 +34,78 @@ use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
+use function array_key_exists;
 use function array_values;
+use function is_array;
 use function is_string;
 
 final class RoutingKitExtension extends Extension implements PrependExtensionInterface
 {
     /**
-     * Registers the named asset package 'nowo_routing_kit' so host apps can
-     * use asset('css/nowo-ui.css', 'nowo_routing_kit') after running assets:install.
+     * Registers the named asset package 'nowo_routing_kit' for any remaining panel assets,
+     * and seeds UiKit defaults from web_ui when the host has not set nowo_ui_kit (REQ-UI-001-kit).
+     * Admin CSS is served from the UiKit package: asset('css/nowo-ui.css', 'nowo_ui_kit').
      */
     public function prepend(ContainerBuilder $container): void
     {
-        if (!$container->hasExtension('framework') || !class_exists(Package::class)) {
+        if ($container->hasExtension('framework') && class_exists(Package::class)) {
+            $container->prependExtensionConfig('framework', [
+                'assets' => [
+                    'packages' => [
+                        Configuration::ALIAS => [
+                            'base_path' => '/bundles/noworoutingkit',
+                        ],
+                    ],
+                ],
+            ]);
+        }
+
+        $this->prependUiKitDefaults($container);
+    }
+
+    /**
+     * When UiKit is installed, seed nowo_ui_kit.css_framework / icon_set from web_ui.
+     * Does not override keys the host already set under nowo_ui_kit.
+     */
+    private function prependUiKitDefaults(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('nowo_ui_kit')) {
             return;
         }
 
-        $container->prependExtensionConfig('framework', [
-            'assets' => [
-                'packages' => [
-                    Configuration::ALIAS => [
-                        'base_path' => '/bundles/noworoutingkit',
-                    ],
-                ],
-            ],
-        ]);
+        $hostHasCssFramework = false;
+        $hostHasIconSet      = false;
+        foreach ($container->getExtensionConfig('nowo_ui_kit') as $cfg) {
+            if (!is_array($cfg)) {
+                continue;
+            }
+            if (array_key_exists('css_framework', $cfg)) {
+                $hostHasCssFramework = true;
+            }
+            if (array_key_exists('icon_set', $cfg)) {
+                $hostHasIconSet = true;
+            }
+        }
+
+        if ($hostHasCssFramework && $hostHasIconSet) {
+            return;
+        }
+
+        $config  = $this->processConfiguration(new Configuration(), $container->getExtensionConfig(Configuration::ALIAS));
+        $webUi   = is_array($config['web_ui'] ?? null) ? $config['web_ui'] : [];
+        $defaults = [];
+
+        if (!$hostHasCssFramework) {
+            $fw = (string) ($webUi['css_framework'] ?? 'custom');
+            $defaults['css_framework'] = $fw === 'bootstrap' ? 'bootstrap5' : $fw;
+        }
+        if (!$hostHasIconSet) {
+            $defaults['icon_set'] = (string) ($webUi['icon_set'] ?? 'none');
+        }
+
+        if ($defaults !== []) {
+            $container->prependExtensionConfig('nowo_ui_kit', $defaults);
+        }
     }
 
     public function load(array $configs, ContainerBuilder $container): void

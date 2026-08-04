@@ -21,7 +21,7 @@
     },
     "authors": [
         {
-            "name": "H\u00e9ctor Franco Aceituno",
+            "name": "Héctor Franco Aceituno",
             "email": "hectorfranco@nowo.tech",
             "homepage": "https://github.com/HecFranco",
             "role": "Developer"
@@ -32,6 +32,7 @@
         }
     ],
     "require": {
+        "nowo-tech/ui-kit-bundle": "^1.4 || ^1.5",
         "php": ">=8.2 <8.6",
         "symfony/config": "^7.4 || ^8.0",
         "symfony/dependency-injection": "^7.4 || ^8.0",
@@ -42,7 +43,9 @@
         "symfony/routing": "^7.0 || ^8.0",
         "symfony/security-core": "^7.4 || ^8.0",
         "symfony/security-csrf": "^7.0 || ^8.0",
-        "symfony/yaml": "^7.0 || ^8.0"
+        "symfony/yaml": "^7.0 || ^8.0",
+        "twig/extra-bundle": "^3.12",
+        "twig/string-extra": "^3.12"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",
@@ -53,10 +56,11 @@
         "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^10.0",
         "rector/rector": "^2.0",
+        "symfony/asset": "^7.0 || ^8.0",
         "symfony/framework-bundle": "^7.0 || ^8.0",
         "symfony/twig-bundle": "^7.0 || ^8.0",
         "twig/twig": "^3.12",
-        "symfony/asset": "^7.0 || ^8.0"
+        "vincentlanglet/twig-cs-fixer": "^3.0"
     },
     "suggest": {
         "symfony/twig-bundle": "Required to render the routing CRUD panel",
@@ -104,6 +108,9 @@
         "qa": [
             "@cs-check",
             "@test"
-        ]
+        ],
+        "twig:lint": "twig-cs-fixer lint --config=.twig-cs-fixer.php",
+        "twig:fix": "twig-cs-fixer fix --config=.twig-cs-fixer.php",
+        "twig:fix:check": "twig-cs-fixer lint --config=.twig-cs-fixer.php --fix"
     }
 }

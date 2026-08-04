@@ -1,4 +1,6 @@
 {% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
+{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
 
 {% block title %}{{ definition and definition.id ? 'panel.edit_title'|trans({}, 'NowoRoutingKitBundle') : 'panel.create_title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
 
@@ -75,8 +77,8 @@
         <label><input type="checkbox" name="enabled" value="1" {% if definition is null or definition.enabled %}checked{% endif %}> enabled</label>
 
         <div class="nowo-ui-actions actions">
-            <button type="submit" class="nowo-ui-btn">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
-            <a class="nowo-ui-btn nowo-ui-btn--secondary button secondary" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
+            <button type="submit" class="{{ ui.btn('primary', null, _css_fw) }} nowo-ui-action-save">{{ 'panel.save'|trans({}, 'NowoRoutingKitBundle') }}</button>
+            <a class="{{ ui.btn('secondary', null, _css_fw) }} nowo-ui-action-cancel" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
         </div>
     </form>
 </main>

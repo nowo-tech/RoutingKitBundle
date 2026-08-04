@@ -49,7 +49,7 @@ Run `assets:install` after installing the bundle so the panel CSS is available:
 php bin/console assets:install --symlink
 ```
 
-This copies (or symlinks) `src/Resources/public/` to `public/bundles/noworoutingkit/`. The named Symfony asset package `nowo_routing_kit` resolves `asset('css/nowo-ui.css', 'nowo_routing_kit')` to `/bundles/noworoutingkit/css/nowo-ui.css`.
+This copies (or symlinks) `src/Resources/public/` to `public/bundles/noworoutingkit/` when present. Panel look-and-feel CSS comes from **UiKitBundle** (`asset('css/nowo-ui.css', 'nowo_ui_kit')` → `/bundles/nowouikit/css/nowo-ui.css`). Run `assets:install` so both packages are published.
 
 ### Host layout integration (`css_framework: custom`)
 
@@ -66,3 +66,13 @@ nowo_routing_kit:
 ```
 
 Override `--nowo-ui-*` CSS tokens in your own stylesheet to match your brand without forking any bundle template.
+
+## Twig Extra Bundle (REQ-TWIG-004)
+
+This package ships Twig templates. Host applications **must** install and enable Twig Extra:
+
+```bash
+composer require twig/extra-bundle twig/string-extra
+```
+
+Register `Twig\Extra\TwigExtraBundle\TwigExtraBundle` in `config/bundles.php` (Flex usually does this). Demos already include the same stack. The package `release-check` runs `make check-twig-extra` to guard this contract.

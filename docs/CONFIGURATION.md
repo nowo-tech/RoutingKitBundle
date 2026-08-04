@@ -47,11 +47,11 @@ nowo_routing_kit:
         access_roles: [ROLE_ADMIN]
 ```
 
-Panel templates extend `layout|default(nowo_routing_kit_layout_template)` via the intermediate `@NowoRoutingKitBundle/panel/base.html.twig`, which injects `nowo-ui.css` through the `stylesheets` block. Host shells receive the CSS automatically via `{{ parent() }}`.
+Panel templates extend `layout|default(nowo_routing_kit_layout_template)` via the intermediate `@NowoRoutingKitBundle/panel/base.html.twig`, which injects UiKit `nowo-ui.css` (`nowo_ui_kit` package) through the `stylesheets` block. Host shells receive the CSS automatically via `{{ parent() }}`.
 
 #### `css_framework: custom` — host path without reimplementing CSS
 
-When `css_framework: custom`, the bundle's own `nowo-ui.css` is linked via the `stylesheets` block. No Bootstrap or Tailwind CDN is needed. Customise appearance by overriding `--nowo-ui-*` CSS tokens in your host layout:
+When `css_framework: custom`, UiKit `nowo-ui.css` is linked via the `stylesheets` block. No Bootstrap or Tailwind CDN is needed. Customise appearance by overriding `--nowo-ui-*` CSS tokens in your host layout:
 
 ```css
 /* your app's CSS */
@@ -63,7 +63,7 @@ When `css_framework: custom`, the bundle's own `nowo-ui.css` is linked via the `
 }
 ```
 
-Available tokens are documented at the top of `public/bundles/noworoutingkit/css/nowo-ui.css` after running `assets:install`.
+Available tokens are documented in UiKit `public/bundles/nowouikit/css/nowo-ui.css` after running `assets:install`.
 
 #### Bootstrap 5 example (demo)
 

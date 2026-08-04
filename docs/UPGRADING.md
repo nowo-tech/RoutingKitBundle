@@ -1,7 +1,36 @@
 # Upgrading
 
+## To 1.2.0
+
+From **1.1.9** — UiKit, Twig Extra (REQ-TWIG-004), Twig-CS-Fixer.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+### UiKit composition
+
+Panel `nowo-ui.css` now comes from **UiKitBundle** (`asset('css/nowo-ui.css', 'nowo_ui_kit')`). Hosts that linked `nowo_routing_kit` for that stylesheet must switch package (or rely on `panel/base.html.twig`). Require `nowo-tech/ui-kit-bundle` `^1.4` and run `assets:install`. Panel templates import `@NowoUiKitBundle/macros/ui.html.twig` for primary toolbar actions (`ui.btn` on index).
+
+### Twig Extra Bundle (REQ-TWIG-004)
+
+Hosts that render this bundle's Twig templates must install:
+
+```bash
+composer require twig/extra-bundle twig/string-extra
+```
+
+and enable `Twig\Extra\TwigExtraBundle\TwigExtraBundle`. Flex recipes usually register it automatically.
+
+### Twig-CS-Fixer (maintainers)
+
+Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fixer.php` over `src/` (and `templates/` when present).
+
+
 ## Table of contents
 
+- [To 1.2.0](#to-120)
 - [To 1.1.9](#to-119)
 - [To 1.1.8](#to-118)
 - [To 1.1.7](#to-117)

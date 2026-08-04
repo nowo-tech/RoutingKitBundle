@@ -1,4 +1,6 @@
 {% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
+{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
 
 {% block title %}{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
 
@@ -7,14 +9,14 @@
     <h1>{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
     <p class="nowo-ui-muted muted">{{ 'panel.subtitle'|trans({'%default%': default}, 'NowoRoutingKitBundle') }}</p>
     <div class="nowo-ui-actions actions">
-        <a class="nowo-ui-btn button" href="{{ path_prefix }}/new">{{ 'panel.new'|trans({}, 'NowoRoutingKitBundle') }}</a>
+        <a class="{{ ui.btn('primary', null, _css_fw) }} nowo-ui-action-create" href="{{ path_prefix }}/new">{{ 'panel.new'|trans({}, 'NowoRoutingKitBundle') }}</a>
         <form method="post" action="{{ path_prefix }}/export" style="display:inline">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary secondary">Export</button>
+            <button type="submit" class="{{ ui.btn('secondary', null, _css_fw) }}">Export</button>
         </form>
         <form method="post" action="{{ path_prefix }}/clear-cache" style="display:inline">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary secondary">{{ 'panel.clear_cache'|trans({}, 'NowoRoutingKitBundle') }}</button>
+            <button type="submit" class="{{ ui.btn('secondary', null, _css_fw) }}">{{ 'panel.clear_cache'|trans({}, 'NowoRoutingKitBundle') }}</button>
         </form>
     </div>
 </header>
@@ -40,12 +42,27 @@
                 <td><code>{{ row.path }}</code></td>
                 <td>{{ row.canonicalStyle.value }}</td>
                 <td>{{ row.enabled ? 'yes' : 'no' }}</td>
-                <td class="nowo-ui-row-actions">
-                    <a class="nowo-ui-action nowo-ui-action--edit" href="{{ path_prefix }}/edit/{{ row.id }}">{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}</a>
-                    <form method="post" action="{{ path_prefix }}/delete/{{ row.id }}" style="display:inline" onsubmit="return confirm('Delete?');">
-                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-                        <button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary secondary">{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</button>
-                    </form>
+                <td>
+                    {% include '@NowoUiKitBundle/partials/_row_actions.html.twig' with {
+                        framework: _css_fw,
+                        display: 'text',
+                        actions: [
+                            {
+                                kind: 'edit',
+                                href: path_prefix ~ '/edit/' ~ row.id,
+                                label: 'panel.edit'|trans({}, 'NowoRoutingKitBundle')
+                            },
+                            {
+                                kind: 'delete',
+                                method: 'POST',
+                                href: path_prefix ~ '/delete/' ~ row.id,
+                                csrf_token: csrf_token,
+                                csrf_field: '_csrf_token',
+                                confirm_message: 'Delete?',
+                                label: 'panel.delete'|trans({}, 'NowoRoutingKitBundle')
+                            }
+                        ]
+                    } %}
                 </td>
             </tr>
         {% else %}
@@ -58,10 +75,10 @@
     {% if pages > 1 %}
     <nav class="nowo-ui-pagination" aria-label="Pagination">
         {% if page > 1 %}
-            <a class="nowo-ui-btn nowo-ui-btn--secondary secondary" href="{{ path_prefix }}/?page={{ page - 1 }}">Previous</a>
+            <a class="{{ ui.btn('secondary', 'sm', _css_fw) }} nowo-ui-action-prev" href="{{ path_prefix }}/?page={{ page - 1 }}">Previous</a>
         {% endif %}
         {% if page < pages %}
-            <a class="nowo-ui-btn nowo-ui-btn--secondary secondary" href="{{ path_prefix }}/?page={{ page + 1 }}">Next</a>
+            <a class="{{ ui.btn('secondary', 'sm', _css_fw) }} nowo-ui-action-next" href="{{ path_prefix }}/?page={{ page + 1 }}">Next</a>
         {% endif %}
     </nav>
     {% endif %}
@@ -73,7 +90,7 @@
         <textarea id="payload_json" name="payload_json" rows="6" required placeholder='{"version":1,"payload":[],"signature":"..."}'></textarea>
         <label><input type="checkbox" name="replace_all" value="1"> replace all existing rows</label>
         <div class="nowo-ui-actions actions">
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary secondary">Import</button>
+            <button type="submit" class="{{ ui.btn('secondary', null, _css_fw) }}">Import</button>
         </div>
     </form>
 </main>

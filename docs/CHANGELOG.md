@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.2.0] - 2026-08-04](#120---2026-08-04)
 - [[1.1.9] - 2026-08-03](#119---2026-08-03)
 - [[1.1.8] - 2026-08-01](#118---2026-08-01)
 - [[1.1.7] - 2026-08-01](#117---2026-08-01)
@@ -24,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.2.0] - 2026-08-04
+
+### Added
+- **REQ-TWIG-004:** require `twig/extra-bundle` + `twig/string-extra`; `make check-twig-extra` in `release-check`; demos register `TwigExtraBundle`.
+- **Twig-CS-Fixer:** `vincentlanglet/twig-cs-fixer`, `.twig-cs-fixer.php`, `composer twig:lint` / `twig:fix`.
+
+### Changed
+
+- **REQ-UI-001-kit:** Panel `nowo-ui.css` now loads from UiKit (`asset('css/nowo-ui.css', 'nowo_ui_kit')`). Removed the forked `src/Resources/public/css/nowo-ui.css`. Requires `nowo-tech/ui-kit-bundle` `^1.4`. Extension seeds `nowo_ui_kit` defaults from `web_ui.css_framework` / `icon_set` when the host has not configured UiKit. `panel/base.html.twig` imports `@NowoUiKitBundle/macros/ui.html.twig` (panel index primary action via `ui.btn`).
+- **UiKit:** Panel templates use `ui.btn` / `ui.row_actions` macros with `nowo_routing_kit_css_framework` for secondary/row/form actions instead of hand-rolled `nowo-ui-btn` classes.
+
+[1.2.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.2.0
 
 ## [1.1.9] - 2026-08-03
 

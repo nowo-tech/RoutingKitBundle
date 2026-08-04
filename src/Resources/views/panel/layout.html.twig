@@ -6,7 +6,7 @@
     <title>{% block title %}{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}</title>
     {# Demo root layout: no parent() (full HTML). Pages do not reopen stylesheets/javascripts. #}
     {% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('css/nowo-ui.css', 'nowo_routing_kit') }}">
+    <link rel="stylesheet" href="{{ asset('css/nowo-ui.css', 'nowo_ui_kit') }}">
     {% endblock %}
 </head>
 <body class="nowo-ui-page nowo-ui-routing-kit-panel" data-css-framework="{{ nowo_routing_kit_css_framework|default('custom') }}" data-icon-set="{{ nowo_routing_kit_icon_set|default('none') }}">
