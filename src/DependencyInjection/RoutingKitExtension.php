@@ -91,12 +91,12 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             return;
         }
 
-        $config  = $this->processConfiguration(new Configuration(), $container->getExtensionConfig(Configuration::ALIAS));
-        $webUi   = is_array($config['web_ui'] ?? null) ? $config['web_ui'] : [];
+        $config   = $this->processConfiguration(new Configuration(), $container->getExtensionConfig(Configuration::ALIAS));
+        $webUi    = is_array($config['web_ui'] ?? null) ? $config['web_ui'] : [];
         $defaults = [];
 
         if (!$hostHasCssFramework) {
-            $fw = (string) ($webUi['css_framework'] ?? 'custom');
+            $fw                        = (string) ($webUi['css_framework'] ?? 'custom');
             $defaults['css_framework'] = $fw === 'bootstrap' ? 'bootstrap5' : $fw;
         }
         if (!$hostHasIconSet) {
