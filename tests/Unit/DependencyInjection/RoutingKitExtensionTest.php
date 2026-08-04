@@ -367,7 +367,7 @@ final class RoutingKitExtensionTest extends TestCase
 
         (new RoutingKitExtension())->prepend($container);
 
-        $bootstrapSeed   = false;
+        $bootstrapSeed    = false;
         $routingKitReseed = false;
         foreach ($container->getExtensionConfig('nowo_form_kit') as $cfg) {
             if (($cfg['css_framework'] ?? null) === 'bootstrap') {

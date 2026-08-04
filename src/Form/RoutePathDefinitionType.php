@@ -46,19 +46,19 @@ final class RoutePathDefinitionType extends AbstractType
         }
 
         $this->addChoice($builder, 'route_name', [
-            'label'   => 'panel.col.route',
-            'choices' => $routeChoices,
-            'required'=> true,
+            'label'    => 'panel.col.route',
+            'choices'  => $routeChoices,
+            'required' => true,
         ]);
         $this->addChoice($builder, 'locale', [
-            'label'   => 'panel.col.locale',
-            'choices' => $localeChoices,
-            'required'=> true,
+            'label'    => 'panel.col.locale',
+            'choices'  => $localeChoices,
+            'required' => true,
         ]);
         $this->addText($builder, 'path', [
-            'label'       => 'panel.col.path',
-            'required'    => true,
-            'attr'        => ['placeholder' => '/about'],
+            'label'    => 'panel.col.path',
+            'required' => true,
+            'attr'     => ['placeholder' => '/about'],
         ]);
         $this->addChoice($builder, 'canonical_style', [
             'label'   => 'panel.col.canonical',
@@ -91,15 +91,15 @@ final class RoutePathDefinitionType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class'                  => null,
-            'translation_domain'          => NowoRoutingKitBundle::TRANSLATION_DOMAIN,
-            'csrf_field_name'             => '_csrf_token',
-            'csrf_token_id'               => RoutingPanelController::CSRF_TOKEN_ID,
-            'routables'                   => [],
-            'locales'                     => [],
-            'allow_controller_override'   => false,
-            'is_create'                   => true,
-            'initial_route_name'          => null,
+            'data_class'                => null,
+            'translation_domain'        => NowoRoutingKitBundle::TRANSLATION_DOMAIN,
+            'csrf_field_name'           => '_csrf_token',
+            'csrf_token_id'             => RoutingPanelController::CSRF_TOKEN_ID,
+            'routables'                 => [],
+            'locales'                   => [],
+            'allow_controller_override' => false,
+            'is_create'                 => true,
+            'initial_route_name'        => null,
         ]);
         $resolver->setAllowedTypes('routables', 'array');
         $resolver->setAllowedTypes('locales', 'array');
@@ -135,7 +135,7 @@ final class RoutePathDefinitionType extends AbstractType
      */
     private function controllerChoices(array $options): array
     {
-        $choices = ['panel.form.controller_empty' => ''];
+        $choices   = ['panel.form.controller_empty' => ''];
         $routeName = $options['initial_route_name'];
         $isCreate  = (bool) $options['is_create'];
 

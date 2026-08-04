@@ -247,8 +247,8 @@ final class RoutingPanelController
 
         $form->handleRequest($request);
 
-        $errors    = [];
-        $conflicts = [];
+        $errors     = [];
+        $conflicts  = [];
         $definition = $existing;
 
         if ($form->isSubmitted()) {

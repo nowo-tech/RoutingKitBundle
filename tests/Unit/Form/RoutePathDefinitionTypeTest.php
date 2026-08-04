@@ -28,8 +28,8 @@ final class RoutePathDefinitionTypeTest extends TestCase
             'routables' => [
                 ['route_name' => 'app_home', 'controller' => 'App\\Controller\\HomeController::index'],
             ],
-            'locales'     => ['en', 'es'],
-            'is_create'   => true,
+            'locales'   => ['en', 'es'],
+            'is_create' => true,
         ]);
 
         self::assertTrue($form->has('route_name'));
@@ -53,7 +53,7 @@ final class RoutePathDefinitionTypeTest extends TestCase
             ->getFormFactory();
 
         $form = $factory->createNamed('', RoutePathDefinitionType::class, null, [
-            'routables'                 => [
+            'routables' => [
                 ['route_name' => 'app_home', 'controller' => 'App\\Controller\\HomeController::index'],
             ],
             'locales'                   => ['en'],
