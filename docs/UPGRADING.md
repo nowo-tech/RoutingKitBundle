@@ -1,5 +1,25 @@
 # Upgrading
 
+## To 1.3.1
+
+From **1.3.0** — maintainer/CI fix only (`composer.lock` content-hash). No host migration.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+## To 1.3.0
+
+From **1.2.0** — FormKit panel form + UiKit pagination.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+php bin/console assets:install --symlink --relative public
+```
+
+Requires `nowo-tech/form-kit-bundle` `^2.2` and `symfony/form`. Panel create/edit uses a Symfony form (`RoutePathDefinitionType` + FormKit profile `routing_kit`). Pagination on the panel index uses UiKit `_pagination`.
+
 ## To 1.2.0
 
 From **1.1.9** — UiKit, Twig Extra (REQ-TWIG-004), Twig-CS-Fixer.
@@ -30,6 +50,8 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 ## Table of contents
 
+- [To 1.3.1](#to-131)
+- [To 1.3.0](#to-130)
 - [To 1.2.0](#to-120)
 - [To 1.1.9](#to-119)
 - [To 1.1.8](#to-118)

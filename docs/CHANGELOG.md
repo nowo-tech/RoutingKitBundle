@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.3.1] - 2026-08-07](#131---2026-08-07)
 - [[1.3.0] - 2026-08-05](#130---2026-08-05)
 - [[1.2.0] - 2026-08-04](#120---2026-08-04)
 - [[1.1.9] - 2026-08-03](#119---2026-08-03)
@@ -26,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.3.1] - 2026-08-07
+
+### Fixed
+
+- **CI / Composer:** regenerate `composer.lock` content-hash after the v1.3.0 `composer.json` changes (`form-kit-bundle`, `symfony/form`, UiKit constraint, suggest). `composer validate --strict` on the default branch is green again (REQ-CI-003).
+
+### Tests
+
+- Cover `prependUiKitDefaults` (seed / host override / non-array config bags) and FormKit/UiKit skip paths; cover invalid routable/locale/controller choice filtering in `RoutePathDefinitionType` (100% line coverage).
+
+[1.3.1]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.3.1
 
 ## [1.3.0] - 2026-08-05
 

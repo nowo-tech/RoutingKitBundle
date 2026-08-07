@@ -393,6 +393,92 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertSame([], $container->getExtensionConfig('nowo_form_kit'));
     }
 
+    public function testPrependSeedsUiKitFromWebUiWhenHostUnset(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_ui_kit');
+        $this->registerStubExtension($container, 'framework');
+        $container->prependExtensionConfig(Configuration::ALIAS, [
+            'web_ui' => [
+                'css_framework' => 'bootstrap',
+                'icon_set'      => 'bootstrap-icons',
+            ],
+        ]);
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $found = false;
+        foreach ($container->getExtensionConfig('nowo_ui_kit') as $cfg) {
+            if (($cfg['css_framework'] ?? null) === 'bootstrap5'
+                && ($cfg['icon_set'] ?? null) === 'bootstrap-icons'
+            ) {
+                $found = true;
+                break;
+            }
+        }
+        self::assertTrue($found, 'Expected nowo_ui_kit defaults seeded from web_ui (bootstrap → bootstrap5).');
+    }
+
+    public function testPrependDoesNotOverrideExplicitUiKitHostConfig(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_ui_kit');
+        $container->prependExtensionConfig('nowo_ui_kit', [
+            'css_framework' => 'bootstrap5',
+            'icon_set'      => 'none',
+        ]);
+        $this->registerStubExtension($container, 'framework');
+        $container->prependExtensionConfig(Configuration::ALIAS, [
+            'web_ui' => [
+                'css_framework' => 'custom',
+                'icon_set'      => 'bootstrap-icons',
+            ],
+        ]);
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $reseeds = 0;
+        foreach ($container->getExtensionConfig('nowo_ui_kit') as $cfg) {
+            if (($cfg['css_framework'] ?? null) === 'custom' || ($cfg['icon_set'] ?? null) === 'bootstrap-icons') {
+                ++$reseeds;
+            }
+        }
+        self::assertSame(0, $reseeds, 'Must not re-seed UiKit when host already set css_framework and icon_set.');
+    }
+
+    public function testPrependIgnoresNonArrayUiKitAndFormKitConfigs(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_ui_kit');
+        $this->registerStubExtension($container, 'nowo_form_kit');
+        $this->registerStubExtension($container, 'framework');
+
+        // Inject non-array config bags (prependExtensionConfig is typed as array).
+        $ref = new \ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
+        $configs                   = $ref->getValue($container);
+        $configs['nowo_ui_kit'][]  = 'invalid';
+        $configs['nowo_form_kit'][] = 'invalid';
+        $ref->setValue($container, $configs);
+
+        (new RoutingKitExtension())->prepend($container);
+
+        $uiSeeded = false;
+        foreach ($container->getExtensionConfig('nowo_ui_kit') as $cfg) {
+            if (is_array($cfg) && array_key_exists('css_framework', $cfg)) {
+                $uiSeeded = true;
+            }
+        }
+        self::assertTrue($uiSeeded);
+
+        $formSeeded = false;
+        foreach ($container->getExtensionConfig('nowo_form_kit') as $cfg) {
+            if (is_array($cfg) && (($cfg['css_framework'] ?? null) === 'bootstrap')) {
+                $formSeeded = true;
+            }
+        }
+        self::assertTrue($formSeeded);
+    }
+
     private function registerStubExtension(ContainerBuilder $container, string $alias): void
     {
         $container->registerExtension(new class($alias) implements ExtensionInterface {

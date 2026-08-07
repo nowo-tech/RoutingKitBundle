@@ -64,4 +64,50 @@ final class RoutePathDefinitionTypeTest extends TestCase
 
         self::assertTrue($form->has('controller'));
     }
+
+    public function testSkipsInvalidRoutablesAndLocalesWhenBuildingChoices(): void
+    {
+        $csrf = $this->createMock(CsrfTokenManagerInterface::class);
+        $csrf->method('getToken')->willReturn(new CsrfToken('nowo_routing_kit_panel', 'token-value'));
+
+        $factory = Forms::createFormFactoryBuilder()
+            ->addExtension(new CsrfExtension($csrf))
+            ->addType(FormKitTestSupport::withMerger(new RoutePathDefinitionType()))
+            ->getFormFactory();
+
+        $form = $factory->createNamed('', RoutePathDefinitionType::class, null, [
+            'routables' => [
+                'not-an-array',
+                ['route_name' => 123],
+                ['controller' => 'App\\Controller\\HomeController::index'],
+                [
+                    'route_name' => 'app_home',
+                    'controller' => 'App\\Controller\\HomeController::index',
+                ],
+                [
+                    'route_name' => 'app_other',
+                    'controller' => 42,
+                ],
+            ],
+            'locales'                   => ['en', '', 12, null],
+            'allow_controller_override' => true,
+            'initial_route_name'        => 'app_home',
+            'is_create'                 => false,
+        ]);
+
+        $routeChoices = $form->get('route_name')->getConfig()->getOption('choices');
+        self::assertSame([
+            'app_home'  => 'app_home',
+            'app_other' => 'app_other',
+        ], $routeChoices);
+
+        $localeChoices = $form->get('locale')->getConfig()->getOption('choices');
+        self::assertSame(['en' => 'en'], $localeChoices);
+
+        $controllerChoices = $form->get('controller')->getConfig()->getOption('choices');
+        self::assertArrayHasKey('App\\Controller\\HomeController::index', $controllerChoices);
+        // Invalid controller type / missing controller must not appear as a choice value.
+        self::assertNotContains(42, $controllerChoices);
+        self::assertSame('', $controllerChoices['panel.form.controller_empty'] ?? null);
+    }
 }

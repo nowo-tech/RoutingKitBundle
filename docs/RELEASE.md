@@ -1,6 +1,6 @@
 # Release
 
-Current stable target: **v1.1.9**.
+Current stable target: **v1.3.1**.
 
 ## Checklist
 
@@ -13,20 +13,20 @@ Current stable target: **v1.1.9**.
 7. Push the branch and the tag to `git@github.com:nowo-tech/RoutingKitBundle.git` — `.github/workflows/release.yml` creates the GitHub Release from the tag + changelog entry.
 8. Confirm [Packagist](https://packagist.org/packages/nowo-tech/routing-kit-bundle) picks up the tag (submit the GitHub repo once if the package is new).
 
-## Example: v1.1.9
+## Example: v1.3.1
 
 ```bash
-git tag -a v1.1.9 -m "Release v1.1.9 - REQ-UI-002 panel access checker"
+git tag -a v1.3.1 -m "Release v1.3.1: sync composer.lock content-hash for CI validate."
 git push origin main
-git push origin v1.1.9
+git push origin v1.3.1
 ```
 
-## Example: v1.1.8
+## Example: v1.3.0
 
 ```bash
-git tag -a v1.1.8 -m "Release v1.1.8 - fix PanelAccessGuard authorization_checker wiring"
+git tag -a v1.3.0 -m "Release v1.3.0: FormKit panel form and UiKit pagination."
 git push origin main
-git push origin v1.1.8
+git push origin v1.3.0
 ```
 
 ## Versioning
