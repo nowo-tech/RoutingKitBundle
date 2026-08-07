@@ -26,10 +26,14 @@ use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
+
+use function array_key_exists;
+use function is_array;
 
 final class RoutingKitExtensionTest extends TestCase
 {
@@ -454,9 +458,9 @@ final class RoutingKitExtensionTest extends TestCase
         $this->registerStubExtension($container, 'framework');
 
         // Inject non-array config bags (prependExtensionConfig is typed as array).
-        $ref = new \ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
-        $configs                   = $ref->getValue($container);
-        $configs['nowo_ui_kit'][]  = 'invalid';
+        $ref                        = new ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
+        $configs                    = $ref->getValue($container);
+        $configs['nowo_ui_kit'][]   = 'invalid';
         $configs['nowo_form_kit'][] = 'invalid';
         $ref->setValue($container, $configs);
 
