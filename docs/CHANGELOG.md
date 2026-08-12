@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.4.0] - 2026-08-12](#140---2026-08-12)
 - [[1.3.1] - 2026-08-07](#131---2026-08-07)
 - [[1.3.0] - 2026-08-05](#130---2026-08-05)
 - [[1.2.0] - 2026-08-04](#120---2026-08-04)
@@ -28,13 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-12
+
 ### Changed
 
-- **REQ-TWIG-005:** replace the panel index raw Twig `<form>` markup (export, clear-cache, import) with Symfony Form Types rendered through `form_*`. Import uses FormKit `routing_kit`; toolbar actions share the existing panel CSRF token id.
+- **REQ-TWIG-005:** replace the panel index raw Twig `<form>` markup (export, clear-cache, import, **delete**) with Symfony Form Types rendered through `form_*`. Import uses FormKit `routing_kit`; toolbar/delete actions share `RoutingPanelActionType` + panel CSRF token id. Host overrides should use `export_form` / `clear_cache_form` / `import_form` / `delete_forms` (no raw HTML `<form>`, no Twig `constant()` for CSRF). Index no longer passes `csrf_token`.
 
 ### Tests
 
 - Add unit coverage for the new panel action/import form types and update controller/form-factory support so the index/actions keep working through Symfony forms.
+
+[1.4.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.0
 
 ## [1.3.1] - 2026-08-07
 
@@ -338,7 +343,9 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.9...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.1...v1.4.0
+[1.3.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.0...v1.3.1
 [1.1.9]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...v1.1.7

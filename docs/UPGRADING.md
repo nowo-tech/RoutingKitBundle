@@ -1,5 +1,27 @@
 # Upgrading
 
+## To 1.4.0
+
+From **1.3.1** — panel index actions (export, clear-cache, import, delete) are Symfony forms (`form_*`).
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+### Host Twig overrides
+
+If you override `panel/index.html.twig`, stop using raw HTML `<form>` / Twig `constant(...::CSRF_TOKEN_ID)` / a bare `csrf_token` string. Use the controller context instead:
+
+| Action | Context |
+| --- | --- |
+| Export | `export_form` |
+| Clear cache | `clear_cache_form` |
+| Import | `import_form` |
+| Delete (per row) | `delete_forms[row.id]` |
+
+`csrf_token` is no longer passed to the index template.
+
 ## To 1.3.1
 
 From **1.3.0** — maintainer/CI fix only (`composer.lock` content-hash). No host migration.
@@ -50,6 +72,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 ## Table of contents
 
+- [To 1.4.0](#to-140)
 - [To 1.3.1](#to-131)
 - [To 1.3.0](#to-130)
 - [To 1.2.0](#to-120)

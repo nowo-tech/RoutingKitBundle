@@ -105,6 +105,7 @@ final class RoutePathDefinitionTypeTest extends TestCase
         self::assertSame(['en' => 'en'], $localeChoices);
 
         $controllerChoices = $form->get('controller')->getConfig()->getOption('choices');
+        self::assertIsArray($controllerChoices);
         self::assertArrayHasKey('App\\Controller\\HomeController::index', $controllerChoices);
         // Invalid controller type / missing controller must not appear as a choice value.
         self::assertNotContains(42, $controllerChoices);

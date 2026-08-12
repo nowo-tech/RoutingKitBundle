@@ -86,10 +86,11 @@ PHP);
                 self::assertSame('/_routing-kit', $context['path_prefix']);
                 self::assertSame(['en', 'es'], $context['locales']);
                 self::assertSame('en', $context['default']);
-                self::assertSame('token-value', $context['csrf_token']);
                 self::assertArrayHasKey('export_form', $context);
                 self::assertArrayHasKey('clear_cache_form', $context);
                 self::assertArrayHasKey('import_form', $context);
+                self::assertArrayHasKey('delete_forms', $context);
+                self::assertArrayHasKey('rk_1', $context['delete_forms']);
 
                 return '<html>index</html>';
             }),
@@ -250,6 +251,19 @@ PHP);
         self::assertSame(0, $router->warmUpCalls);
     }
 
+    public function testClearCacheGetRedirectsWithoutMutating(): void
+    {
+        [$controller, , $router] = $this->createController(
+            csrfTokenManager: $this->createCsrfManager(valid: true),
+        );
+
+        $response = $controller->clearCache(Request::create('/_routing-kit/clear-cache', 'GET'));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/_routing-kit/', $response->headers->get('Location'));
+        self::assertSame(0, $router->warmUpCalls);
+    }
+
     public function testDeleteAndClearCacheSucceedWithValidCsrf(): void
     {
         $existing                        = new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1');
@@ -312,7 +326,6 @@ PHP);
                 $locales,
                 $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
                 FormKitTestSupport::createFormFactory($csrf),
-                $csrf,
                 new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
                 new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
                 '/_routing-kit',

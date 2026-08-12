@@ -51,26 +51,32 @@
                 <td>{{ row.canonicalStyle.value }}</td>
                 <td>{{ row.enabled ? 'yes' : 'no' }}</td>
                 <td>
-                    {{ include('@NowoUiKitBundle/partials/_row_actions.html.twig', {
-                        framework: _css_fw,
-                        display: 'text',
-                        actions: [
-                            {
-                                kind: 'edit',
-                                href: path_prefix ~ '/edit/' ~ row.id,
-                                label: 'panel.edit'|trans({}, 'NowoRoutingKitBundle'),
-                            },
-                            {
-                                kind: 'delete',
+                    <div class="{{ ui.row_actions(_css_fw) }} nowo-ui-row-actions--text">
+                        <a
+                            class="{{ ui.action('edit', _css_fw) }}"
+                            href="{{ path_prefix }}/edit/{{ row.id }}"
+                            title="{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}"
+                            aria-label="{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}"
+                        >{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}</a>
+                        {% if delete_forms[row.id] is defined %}
+                            {{ form_start(delete_forms[row.id], {
+                                action: path_prefix ~ '/delete/' ~ row.id,
                                 method: 'POST',
-                                href: path_prefix ~ '/delete/' ~ row.id,
-                                csrf_token: csrf_token,
-                                csrf_field: '_csrf_token',
-                                confirm_message: 'Delete?',
-                                label: 'panel.delete'|trans({}, 'NowoRoutingKitBundle'),
-                            },
-                        ],
-                    }) }}
+                                attr: {
+                                    class: 'nowo-ui-row-actions__form',
+                                    onsubmit: "return confirm('Delete?');",
+                                },
+                            }) }}
+                                {{ form_rest(delete_forms[row.id]) }}
+                                <button
+                                    type="submit"
+                                    class="{{ ui.action('delete', _css_fw) }}"
+                                    title="{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}"
+                                    aria-label="{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}"
+                                >{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</button>
+                            {{ form_end(delete_forms[row.id], {render_rest: false}) }}
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
         {% else %}
