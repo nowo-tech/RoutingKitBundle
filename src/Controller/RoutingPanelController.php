@@ -26,8 +26,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Csrf\CsrfToken;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Throwable;
 use Twig\Environment;
 
@@ -56,7 +54,6 @@ final class RoutingPanelController
         private readonly LocaleProviderInterface $locales,
         private readonly Environment $twig,
         private readonly FormFactoryInterface $formFactory,
-        private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly PanelAccessGuard $accessGuard,
         private readonly RoutePathImportExport $importExport,
         private readonly string $pathPrefix = '/_routing',
@@ -82,16 +79,20 @@ final class RoutingPanelController
         $exportForm     = $this->createPanelActionForm();
         $clearCacheForm = $this->createPanelActionForm();
         $importForm     = $this->createPanelImportForm();
+        $deleteForms    = [];
+        foreach ($rows as $row) {
+            $deleteForms[(string) $row->id] = $this->createPanelActionForm()->createView();
+        }
 
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
             'definitions'        => $rows,
             'path_prefix'        => $this->pathPrefix,
             'locales'            => $this->locales->getLocales(),
             'default'            => $this->locales->getDefaultLocale(),
-            'csrf_token'         => $this->csrfToken(),
             'export_form'        => $exportForm->createView(),
             'clear_cache_form'   => $clearCacheForm->createView(),
             'import_form'        => $importForm->createView(),
+            'delete_forms'       => $deleteForms,
             'role_gate_disabled' => $this->roleGateDisabled,
             'page'               => $page,
             'pages'              => $pages,
@@ -127,12 +128,14 @@ final class RoutingPanelController
     {
         $this->accessGuard->assertGranted();
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfValid($request)) {
-                return new Response('Invalid CSRF token.', 403);
-            }
-            $this->manager->delete($id);
+        $form = $this->createPanelActionForm();
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            return new Response('Invalid CSRF token.', 403);
         }
+
+        $this->manager->delete($id);
 
         return new RedirectResponse($this->pathPrefix . '/');
     }
@@ -254,7 +257,9 @@ final class RoutingPanelController
     {
         $routables    = $this->discovery->discover();
         $localeList   = $this->locales->getLocales();
-        $initialRoute = $existing?->routeName ?? ($routables[0]['route_name'] ?? '');
+        $initialRoute = $existing instanceof RoutePathDefinition
+            ? $existing->routeName
+            : ($routables[0]['route_name'] ?? '');
 
         /** @var FormInterface<array<string, mixed>|null> $form */
         $form = $this->formFactory->createNamed(
@@ -265,7 +270,7 @@ final class RoutingPanelController
                 'routables'                 => $routables,
                 'locales'                   => $localeList,
                 'allow_controller_override' => $this->allowControllerOverride,
-                'is_create'                 => $existing === null,
+                'is_create'                 => !$existing instanceof RoutePathDefinition,
                 'initial_route_name'        => $initialRoute,
             ],
         );
@@ -363,24 +368,12 @@ final class RoutingPanelController
         );
     }
 
-    private function csrfToken(): string
-    {
-        return $this->csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue();
-    }
-
     /**
      * @return FormInterface<array<string, mixed>|null>
      */
     private function createPanelActionForm(): FormInterface
     {
         return $this->formFactory->createNamed('', RoutingPanelActionType::class);
-    }
-
-    private function isCsrfValid(Request $request): bool
-    {
-        $value = (string) $request->request->get('_csrf_token', '');
-
-        return $this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $value));
     }
 
     /**

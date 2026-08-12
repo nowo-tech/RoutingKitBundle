@@ -9,4 +9,5 @@ return [
     Nowo\TwigInspectorBundle\NowoTwigInspectorBundle::class => ['dev' => true, 'test' => true],
     Nowo\RoutingKitBundle\NowoRoutingKitBundle::class => ['all' => true],
     Nowo\UiKitBundle\NowoUiKitBundle::class => ['all' => true],
+    Nowo\FormKitBundle\NowoFormKitBundle::class => ['all' => true],
 ];
