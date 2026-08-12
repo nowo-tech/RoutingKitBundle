@@ -7,6 +7,8 @@ namespace Nowo\RoutingKitBundle\Controller;
 use JsonException;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Form\RoutePathDefinitionType;
+use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
+use Nowo\RoutingKitBundle\Form\RoutingPanelImportType;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\AliasMode;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
@@ -77,12 +79,19 @@ final class RoutingPanelController
         $offset   = ($page - 1) * $pageSize;
         $rows     = array_slice($all, $offset, $pageSize);
 
+        $exportForm     = $this->createPanelActionForm();
+        $clearCacheForm = $this->createPanelActionForm();
+        $importForm     = $this->createPanelImportForm();
+
         return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
             'definitions'        => $rows,
             'path_prefix'        => $this->pathPrefix,
             'locales'            => $this->locales->getLocales(),
             'default'            => $this->locales->getDefaultLocale(),
             'csrf_token'         => $this->csrfToken(),
+            'export_form'        => $exportForm->createView(),
+            'clear_cache_form'   => $clearCacheForm->createView(),
+            'import_form'        => $importForm->createView(),
             'role_gate_disabled' => $this->roleGateDisabled,
             'page'               => $page,
             'pages'              => $pages,
@@ -133,12 +142,18 @@ final class RoutingPanelController
     {
         $this->accessGuard->assertGranted();
 
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfValid($request)) {
-                return new Response('Invalid CSRF token.', 403);
-            }
-            $this->manager->clearCache();
+        if (!$request->isMethod('POST')) {
+            return new RedirectResponse($this->pathPrefix . '/');
         }
+
+        $form = $this->createPanelActionForm();
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            return new Response('Invalid CSRF token.', 403);
+        }
+
+        $this->manager->clearCache();
 
         return new RedirectResponse($this->pathPrefix . '/');
     }
@@ -151,7 +166,11 @@ final class RoutingPanelController
         if (!$request->isMethod('POST')) {
             return new Response('Method Not Allowed', Response::HTTP_METHOD_NOT_ALLOWED);
         }
-        if (!$this->isCsrfValid($request)) {
+
+        $form = $this->createPanelActionForm();
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
             return new Response('Invalid CSRF token.', 403);
         }
 
@@ -170,11 +189,17 @@ final class RoutingPanelController
         if (!$request->isMethod('POST')) {
             return new RedirectResponse($this->pathPrefix . '/');
         }
-        if (!$this->isCsrfValid($request)) {
+
+        $form = $this->createPanelImportForm();
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
             return new Response('Invalid CSRF token.', 403);
         }
 
-        $raw = (string) $request->request->get('payload_json', '');
+        /** @var array<string, mixed> $data */
+        $data = $form->getData() ?? [];
+        $raw  = (string) ($data['payload_json'] ?? '');
         if (strlen($raw) > self::MAX_IMPORT_PAYLOAD_BYTES) {
             return new Response('Import payload too large.', 413);
         }
@@ -191,7 +216,7 @@ final class RoutingPanelController
 
         /* @var array{payload?: mixed, signature?: mixed, version?: mixed} $decoded */
         try {
-            $this->importExport->import($decoded, $request->request->getBoolean('replace_all', false));
+            $this->importExport->import($decoded, (bool) ($data['replace_all'] ?? false));
             $this->manager->clearCache();
         } catch (Throwable $e) {
             $message = $e instanceof RuntimeException ? $e->getMessage() : 'Import failed.';
@@ -343,10 +368,26 @@ final class RoutingPanelController
         return $this->csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue();
     }
 
+    /**
+     * @return FormInterface<array<string, mixed>|null>
+     */
+    private function createPanelActionForm(): FormInterface
+    {
+        return $this->formFactory->createNamed('', RoutingPanelActionType::class);
+    }
+
     private function isCsrfValid(Request $request): bool
     {
         $value = (string) $request->request->get('_csrf_token', '');
 
         return $this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $value));
+    }
+
+    /**
+     * @return FormInterface<array<string, mixed>|null>
+     */
+    private function createPanelImportForm(): FormInterface
+    {
+        return $this->formFactory->createNamed('', RoutingPanelImportType::class);
     }
 }
