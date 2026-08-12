@@ -54,6 +54,7 @@ Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` 
 - List / create / edit / delete at `/_routing` (configurable `panel.path_prefix`).
 - **Clear routing cache** button; saves/deletes also invalidate when `auto_invalidate_cache: true`.
 - Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows). Signing key must be ≥32 characters (`panel.export_signing_key` or `kernel.secret`).
+- Toolbar and import actions use Symfony Form Types rendered with `form_start` / `form_row` / `form_end` (FormKit profile `routing_kit` for visible fields), so host overrides should keep using form rendering instead of raw HTML `<form>`.
 - Index list paginates with `panel.list_page_size` (default 50).
 - Private access: prefer `security.access_roles` (e.g. `[ROLE_ADMIN]`); `panel.role` remains a BC alias. Empty roles / `allow_unauthenticated: true` show an **UNSAFE** banner (demo / trusted networks only). Also firewall the path prefix in the host app.
 - Host chrome without forking pages: set `web_ui.layout_template` to the project layout (and optional `web_ui.css_framework`). See [CONFIGURATION.md](CONFIGURATION.md#host-app-ui-integration-req-ui-001).

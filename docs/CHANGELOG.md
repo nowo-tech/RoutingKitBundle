@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **REQ-TWIG-005:** replace the panel index raw Twig `<form>` markup (export, clear-cache, import) with Symfony Form Types rendered through `form_*`. Import uses FormKit `routing_kit`; toolbar actions share the existing panel CSRF token id.
+
+### Tests
+
+- Add unit coverage for the new panel action/import form types and update controller/form-factory support so the index/actions keep working through Symfony forms.
+
 ## [1.3.1] - 2026-08-07
 
 ### Fixed

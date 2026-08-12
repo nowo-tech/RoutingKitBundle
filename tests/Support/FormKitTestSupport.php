@@ -7,6 +7,8 @@ namespace Nowo\RoutingKitBundle\Tests\Support;
 use Nowo\FormKitBundle\Form\Constraint\ConstraintDefinitionFactory;
 use Nowo\FormKitBundle\Form\FormOptionsMerger;
 use Nowo\RoutingKitBundle\Form\RoutePathDefinitionType;
+use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
+use Nowo\RoutingKitBundle\Form\RoutingPanelImportType;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Symfony\Component\Form\Extension\Csrf\CsrfExtension;
 use Symfony\Component\Form\Extension\HttpFoundation\HttpFoundationExtension;
@@ -67,6 +69,8 @@ final class FormKitTestSupport
         return Forms::createFormFactoryBuilder()
             ->addExtension(new HttpFoundationExtension())
             ->addExtension(new CsrfExtension($csrfTokenManager))
+            ->addType(new RoutingPanelActionType())
+            ->addType(self::withMerger(new RoutingPanelImportType()))
             ->addType(self::withMerger(new RoutePathDefinitionType()))
             ->getFormFactory();
     }

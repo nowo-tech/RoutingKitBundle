@@ -87,6 +87,9 @@ PHP);
                 self::assertSame(['en', 'es'], $context['locales']);
                 self::assertSame('en', $context['default']);
                 self::assertSame('token-value', $context['csrf_token']);
+                self::assertArrayHasKey('export_form', $context);
+                self::assertArrayHasKey('clear_cache_form', $context);
+                self::assertArrayHasKey('import_form', $context);
 
                 return '<html>index</html>';
             }),
@@ -234,9 +237,11 @@ PHP);
 
         $deleteResponse = $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'POST', [
             '_csrf_token' => 'bad',
+            'confirmed'   => '1',
         ]), 'rk_1');
         $clearResponse = $controller->clearCache(Request::create('/_routing-kit/clear-cache', 'POST', [
             '_csrf_token' => 'bad',
+            'confirmed'   => '1',
         ]));
 
         self::assertSame(403, $deleteResponse->getStatusCode());
@@ -255,9 +260,11 @@ PHP);
 
         $deleteResponse = $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'POST', [
             '_csrf_token' => 'token-value',
+            'confirmed'   => '1',
         ]), 'rk_1');
         $clearResponse = $controller->clearCache(Request::create('/_routing-kit/clear-cache', 'POST', [
             '_csrf_token' => 'token-value',
+            'confirmed'   => '1',
         ]));
 
         self::assertSame('/_routing-kit/', $deleteResponse->headers->get('Location'));

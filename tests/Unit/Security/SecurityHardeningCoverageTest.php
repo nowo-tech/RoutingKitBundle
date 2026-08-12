@@ -221,7 +221,7 @@ PHP);
         $controller = $this->createPanel(role: null, allowOverride: true);
 
         self::assertSame(405, $controller->export(Request::create('/export', 'GET'))->getStatusCode());
-        $export = $controller->export(Request::create('/export', 'POST', ['_csrf_token' => 'token-value']));
+        $export = $controller->export(Request::create('/export', 'POST', ['_csrf_token' => 'token-value', 'confirmed' => '1']));
         self::assertSame(200, $export->getStatusCode());
         $payload = (string) $export->getContent();
         self::assertSame(302, $controller->import(Request::create('/import', 'POST', [
@@ -236,7 +236,7 @@ PHP);
         ]))->getStatusCode());
 
         $csrfBad = $this->createPanelWithCsrf(false);
-        self::assertSame(403, $csrfBad->export(Request::create('/export', 'POST', ['_csrf_token' => 'x']))->getStatusCode());
+        self::assertSame(403, $csrfBad->export(Request::create('/export', 'POST', ['_csrf_token' => 'x', 'confirmed' => '1']))->getStatusCode());
         self::assertSame(302, $controller->import(Request::create('/import', 'GET'))->getStatusCode());
         self::assertSame(403, $csrfBad->import(Request::create('/import', 'POST', [
             '_csrf_token'  => 'x',
