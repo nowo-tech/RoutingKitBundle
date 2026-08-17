@@ -19,7 +19,7 @@ This bundle is **FrankenPHP worker mode friendly**.
 - **Fallback** — Missing locale row → default-locale path for that route name.
 - **`#[Routable]`** — Controllers offered in the CRUD; params + constraints validated on save.
 - **Loader** — `type: nowo_routing_kit` registers `{name}.{locale}` with `_canonical_route` (import last).
-- **Panel** — Twig CRUD under `/_routing` + Symfony forms for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete).
+- **Panel** — Twig CRUD under `/_routing` + Symfony forms (FormKit + UiKit) for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete). Protect with `security.access_roles` (default `[ROLE_ADMIN]`) / `allow_unauthenticated`.
 - **SeoKit** — Optional bridge decorates `SeoPathBuilderInterface` for canonical/hreflang paths.
 
 ## Installation
