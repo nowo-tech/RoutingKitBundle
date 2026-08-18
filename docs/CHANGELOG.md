@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.4.1] - 2026-08-18](#141---2026-08-18)
 - [[1.4.0] - 2026-08-12](#140---2026-08-12)
 - [[1.3.1] - 2026-08-07](#131---2026-08-07)
 - [[1.3.0] - 2026-08-05](#130---2026-08-05)
@@ -28,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.4.1] - 2026-08-18
+
+### Changed
+
+- **Demos:** pin `nowo-tech/hot-reload-bundle` to `^1.4` with FrankenPHP Mercure/`hot_reload` (`dev`/`test` only).
+
+[1.4.1]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.1
 
 ## [1.4.0] - 2026-08-12
 
@@ -343,7 +352,7 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.1...HEAD
 [1.4.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.0...v1.3.1
 [1.1.9]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...v1.1.9

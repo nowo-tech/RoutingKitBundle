@@ -1,5 +1,14 @@
 # Upgrading
 
+## To 1.4.1
+
+No application upgrade steps. **Demos only:** Hot Reload Bundle `^1.4` (FrankenPHP Mercure/`hot_reload`, `dev`/`test`).
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
 ## To 1.4.0
 
 From **1.3.1** — panel index actions (export, clear-cache, import, delete) are Symfony forms (`form_*`).
@@ -72,6 +81,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 ## Table of contents
 
+- [To 1.4.1](#to-141)
 - [To 1.4.0](#to-140)
 - [To 1.3.1](#to-131)
 - [To 1.3.0](#to-130)
