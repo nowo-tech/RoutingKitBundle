@@ -66,6 +66,7 @@ This bundle does **not** run long blocking conversions or third-party HTTP from 
 Configured for local development and debugging:
 
 - **Symfony Web Profiler** and **DebugBundle** — `dev` / `test`.
+- **Nowo Twig Inspector** (`nowo-tech/twig-inspector-bundle`) and **Nowo Hot Reload** (`nowo-tech/hot-reload-bundle`) — required together on FrankenPHP demos (dev/test only; Caddyfile Mercure + `hot_reload`, plus `worker { watch }` in worker mode). Do not enable Hot Reload in production.
 - **Twig Inspector** (`nowo-tech/twig-inspector-bundle`) — `dev` / `test`.
 - **Routing Kit Bundle** — `all` environments; panel at `/_routing`.
 
