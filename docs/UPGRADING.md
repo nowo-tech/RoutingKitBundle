@@ -1,5 +1,13 @@
 # Upgrading
 
+## To 1.4.2
+
+No application upgrade steps.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
 ## To 1.4.1
 
 No application upgrade steps. **Demos only:** Hot Reload Bundle `^1.4` (FrankenPHP Mercure/`hot_reload`, `dev`/`test`).
@@ -81,6 +89,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 ## Table of contents
 
+- [To 1.4.2](#to-142)
 - [To 1.4.1](#to-141)
 - [To 1.4.0](#to-140)
 - [To 1.3.1](#to-131)

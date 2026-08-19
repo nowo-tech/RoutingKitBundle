@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-08-19
+
+### Security
+
+- **CI:** run `composer audit --locked` after dependency install (REQ-SEC / P3).
+
+[1.4.2]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.2
+
 ## [1.4.1] - 2026-08-18
 
 ### Changed
