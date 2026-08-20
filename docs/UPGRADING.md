@@ -1,5 +1,14 @@
 # Upgrading
 
+## To 1.4.3
+
+Review Flex `when@prod` (`allow_controller_override: false`) and `security_nowo_routing_kit.yaml`. Prefer **`^1.4.3`**.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
 ## To 1.4.2
 
 No application upgrade steps.

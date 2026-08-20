@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.4.3] - 2026-08-20](#143---2026-08-20)
 - [[1.4.1] - 2026-08-18](#141---2026-08-18)
 - [[1.4.0] - 2026-08-12](#140---2026-08-12)
 - [[1.3.1] - 2026-08-07](#131---2026-08-07)
@@ -29,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.4.3] - 2026-08-20
+
+### Security
+
+- **Flex recipe `when@prod`:** disable `panel.allow_controller_override`, keep `ROLE_ADMIN`; ship `security_nowo_routing_kit.yaml` (`access_control` for `/_routing`). Prefer **`^1.4.3`**.
+
+[1.4.3]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.3
 
 ## [1.4.2] - 2026-08-19
 
