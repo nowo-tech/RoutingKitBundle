@@ -20,3 +20,11 @@ nowo_routing_kit:
         allow_unauthenticated: false
     auto_invalidate_cache: true
     seo_kit_bridge: true
+
+when@prod:
+    nowo_routing_kit:
+        panel:
+            allow_controller_override: false
+        security:
+            access_roles: [ROLE_ADMIN]
+            allow_unauthenticated: false
