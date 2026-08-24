@@ -98,6 +98,8 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 ## Table of contents
 
+
+- [From 1.4.3 to 1.4.4](#from-143-to-144)
 - [To 1.4.2](#to-142)
 - [To 1.4.1](#to-141)
 - [To 1.4.0](#to-140)
