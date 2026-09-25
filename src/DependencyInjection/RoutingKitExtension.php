@@ -10,6 +10,7 @@ use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
@@ -29,6 +30,7 @@ use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Symfony\Component\Asset\Package;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -249,6 +251,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->removeDefinition(CanonicalRedirectSubscriber::class);
         $container->removeDefinition(RootRedirectSubscriber::class);
         $container->removeDefinition(RoutePathAuditSubscriber::class);
+        $container->removeDefinition(RouteTableFreshnessSubscriber::class);
         $container->removeDefinition(PanelAccessGuard::class);
         $container->removeDefinition(RoutePathImportExport::class);
         if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
@@ -487,7 +490,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
     {
         $container->getDefinition(RouteCacheInvalidator::class)
             ->setArgument('$router', new Reference('router'))
-            ->setArgument('$cacheDir', '%kernel.cache_dir%');
+            ->setArgument('$cacheDir', '%kernel.cache_dir%')
+            ->setArgument('$routeLoader', new Reference(DbRouteLoader::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
     }
 
     private function configureAudit(ContainerBuilder $container): void

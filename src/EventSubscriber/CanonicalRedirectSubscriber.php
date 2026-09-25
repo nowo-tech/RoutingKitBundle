@@ -47,13 +47,16 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface
         $request  = $event->getRequest();
         $pathInfo = $request->getPathInfo();
 
-        foreach ($this->storage->all() as $stored) {
+        $all   = $this->storage->all();
+        $index = PublicPathResolver::indexDefinitions($all);
+
+        foreach ($all as $stored) {
             if (!$stored->enabled) {
                 continue;
             }
 
             foreach ($this->locales->getLocales() as $locale) {
-                $definition = $this->paths->resolveDefinition($stored->routeName, $locale);
+                $definition = $this->paths->resolveDefinition($stored->routeName, $locale, $index);
                 if (!$definition instanceof RoutePathDefinition) {
                     continue;
                 }

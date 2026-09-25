@@ -1,7 +1,7 @@
 # Routing Kit Bundle — Baseline product specification
 
 **Package**: `nowo-tech/routing-kit-bundle`  
-**Last audited**: 2026-07-26  
+**Last audited**: 2026-09-25  
 **Inventory**: [`code-inventory.md`](code-inventory.md)
 
 ## Overview
@@ -20,7 +20,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-06 | Default **filesystem JSON** storage; replaceable via `RoutePathStorageInterface`. |
 | FR-07 | Locales come from YAML or a custom `LocaleProviderInterface`. |
 | FR-08 | Twig **panel** lists/creates/edits/deletes paths and can clear the router cache. |
-| FR-09 | Save/delete can auto-invalidate the router cache; panel also exposes a manual button. |
+| FR-09 | Save/delete can auto-invalidate the router cache; panel also exposes a manual button. In long-running workers, invalidation rebuilds the in-process router and publishes a route-table version so peer workers refresh on the next main request (no `kernel.reset` required). |
 | FR-10 | `type: nowo_routing_kit` loader registers/overwrites routes when imported last. |
 | FR-11 | Canonical style (`without_prefix` / `with_prefix`) and alias mode (`redirect` / `alias`). |
 | FR-12 | Optional root `/` redirect to the default-locale home. |
@@ -30,6 +30,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-16 | Optional SeoKit bridge decorates `SeoPathBuilderInterface::pagePath`. |
 | FR-17 | Panel POST actions validate CSRF when `CsrfTokenManagerInterface` is available. |
 | FR-18 | Seven minimum translation locales for the panel domain `NowoRoutingKitBundle`. |
+| FR-19 | Safe under FrankenPHP **worker** with the kernel **not** reset between requests: no per-request state leaks; panel path changes propagate to every worker sharing `%kernel.cache_dir%` on the next main request. |
 
 ## User scenarios
 
@@ -55,7 +56,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 
 **Given** paths were changed in the panel  
 **When** auto-invalidate is enabled (or the operator clicks clear cache)  
-**Then** the Symfony router cache is cleared/warmed.
+**Then** the Symfony router cache is cleared/warmed, and every FrankenPHP worker that shares the kernel cache directory serves the new table on its next main request (even when the kernel is not reset between requests).
 
 ### US-05 — SeoKit bridge
 
@@ -77,6 +78,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | SC-02 | PHPStan level 8 passes with `nowo-tech/phpstan-frankenphp` rulesets. |
 | SC-03 | Demo FrankenPHP app boots; panel and sample `#[Routable]` pages smoke-test. |
 | SC-04 | `code-inventory.md` maps 100% of production files under `src/` to one or more `FR-*` IDs. |
+| SC-05 | Unit tests prove two workers sharing a cache directory pick up a path change without `kernel.reset` (`WorkerRouteTableSyncTest`). |
 
 ## Validation
 
@@ -92,7 +94,7 @@ make test-coverage
 - FR-04 … FR-05: `tests/Unit/Validation/*`, `tests/Unit/Discovery/*`
 - FR-06: `tests/Unit/Storage/*`
 - FR-07: `tests/Unit/Locale/*`
-- FR-08 … FR-09, FR-17: `tests/Unit/Controller/*`, `tests/Unit/Service/*`
+- FR-08 … FR-09, FR-17, FR-19: `tests/Unit/Controller/*`, `tests/Unit/Service/*`, `tests/Unit/Routing/WorkerRouteTableSyncTest.php`, `tests/Unit/Routing/RouteCacheInvalidatorTest.php`, `tests/Unit/EventSubscriber/RouteTableFreshnessSubscriberTest.php`
 - FR-10: `tests/Unit/Routing/DbRouteLoaderTest.php`
 - FR-14: `tests/Unit/DependencyInjection/Compiler/TwigPathsPassTest.php`
 - FR-15: `tests/Unit/Service/RoutePathManagerTest.php`

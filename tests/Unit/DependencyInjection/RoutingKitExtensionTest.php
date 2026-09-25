@@ -12,6 +12,7 @@ use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
@@ -28,6 +29,7 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
@@ -112,6 +114,11 @@ final class RoutingKitExtensionTest extends TestCase
         $invalidator = $container->getDefinition(RouteCacheInvalidator::class);
         self::assertEquals(new Reference('router'), $invalidator->getArgument('$router'));
         self::assertSame('%kernel.cache_dir%', $invalidator->getArgument('$cacheDir'));
+        self::assertEquals(
+            new Reference(DbRouteLoader::class, ContainerInterface::NULL_ON_INVALID_REFERENCE),
+            $invalidator->getArgument('$routeLoader'),
+        );
+        self::assertTrue($container->hasDefinition(RouteTableFreshnessSubscriber::class));
     }
 
     public function testLoadUsesCustomAliasesWhenConfigured(): void
@@ -283,6 +290,7 @@ final class RoutingKitExtensionTest extends TestCase
 
         self::assertFalse($container->hasDefinition(RoutingPanelController::class));
         self::assertFalse($container->hasDefinition(DbRouteLoader::class));
+        self::assertFalse($container->hasDefinition(RouteTableFreshnessSubscriber::class));
         self::assertFalse($container->hasDefinition(CanonicalRedirectSubscriber::class));
         self::assertFalse($container->hasDefinition(RootRedirectSubscriber::class));
     }

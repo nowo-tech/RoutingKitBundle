@@ -1,6 +1,6 @@
 # Release
 
-Current stable target: **v1.4.0**.
+Current stable target: **v1.4.5**.
 
 ## Checklist
 
@@ -13,28 +13,12 @@ Current stable target: **v1.4.0**.
 7. Push the branch and the tag to `git@github.com:nowo-tech/RoutingKitBundle.git` — `.github/workflows/release.yml` creates the GitHub Release from the tag + changelog entry.
 8. Confirm [Packagist](https://packagist.org/packages/nowo-tech/routing-kit-bundle) picks up the tag (submit the GitHub repo once if the package is new).
 
-## Example: v1.4.0
+## Example: v1.4.5
 
 ```bash
-git tag -a v1.4.0 -m "Release v1.4.0: Symfony forms for panel index actions (REQ-TWIG-005)."
+git tag -a v1.4.5 -m "Release v1.4.5: FrankenPHP worker mode without kernel reset (route-table sync)"
 git push origin main
-git push origin v1.4.0
-```
-
-## Example: v1.3.1
-
-```bash
-git tag -a v1.3.1 -m "Release v1.3.1: sync composer.lock content-hash for CI validate."
-git push origin main
-git push origin v1.3.1
-```
-
-## Example: v1.3.0
-
-```bash
-git tag -a v1.3.0 -m "Release v1.3.0: FormKit panel form and UiKit pagination."
-git push origin main
-git push origin v1.3.0
+git push origin v1.4.5
 ```
 
 ## Versioning

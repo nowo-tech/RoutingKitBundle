@@ -12,6 +12,7 @@ use RuntimeException;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
+use Symfony\Contracts\Service\ResetInterface;
 
 use function implode;
 use function is_array;
@@ -29,8 +30,11 @@ use function sprintf;
  * other locales use `/{locale}{path}`.
  *
  * Stored `controller` overrides are applied only when {@see $allowControllerOverride} is true.
+ *
+ * The duplicate-import guard is cleared by {@see reset()}, which {@see RouteCacheInvalidator} calls
+ * before the router rebuilds its collection in a long-running worker.
  */
-final class DbRouteLoader extends Loader
+final class DbRouteLoader extends Loader implements ResetInterface
 {
     private bool $loaded = false;
 
@@ -46,6 +50,11 @@ final class DbRouteLoader extends Loader
         parent::__construct($env);
     }
 
+    public function reset(): void
+    {
+        $this->loaded = false;
+    }
+
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
         if ($this->loaded) {
@@ -56,8 +65,10 @@ final class DbRouteLoader extends Loader
         $collection    = new RouteCollection();
         $defaultLocale = $this->locales->getDefaultLocale();
 
+        $all     = $this->storage->all();
+        $index   = PublicPathResolver::indexDefinitions($all);
         $byRoute = [];
-        foreach ($this->storage->all() as $definition) {
+        foreach ($all as $definition) {
             if (!$definition->enabled) {
                 continue;
             }
@@ -77,7 +88,7 @@ final class DbRouteLoader extends Loader
             foreach ($this->locales->getLocales() as $locale) {
                 $definition = $localeMap[$locale]
                     ?? (isset($localeMap[$defaultLocale])
-                        ? $this->pathResolver->resolveDefinition($routeName, $locale)
+                        ? $this->pathResolver->resolveDefinition($routeName, $locale, $index)
                         : null);
 
                 if ($definition === null) {

@@ -32,12 +32,14 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const LOCK_EX;
+use const LOCK_SH;
 use const LOCK_UN;
 
 /**
  * JSON file storage for route path definitions (Doctrine-free default).
  *
- * Mutations take an exclusive lock on `{paths}.lock` to avoid lost updates.
+ * Mutations take an exclusive lock on `{paths}.lock` to avoid lost updates; reads take a shared lock
+ * so concurrent readers (every worker thread on every request) do not serialize.
  * Corrupt JSON fails closed (does not wipe the file on the next save).
  */
 final class FilesystemRoutePathStorage implements RoutePathStorageInterface
@@ -49,12 +51,12 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 
     public function all(): array
     {
-        return array_values($this->withExclusiveLock(fn (): array => $this->loadUnlocked()));
+        return array_values($this->withLock(LOCK_SH, fn (): array => $this->loadUnlocked()));
     }
 
     public function find(string $routeName, string $locale): ?RoutePathDefinition
     {
-        return $this->withExclusiveLock(function () use ($routeName, $locale): ?RoutePathDefinition {
+        return $this->withLock(LOCK_SH, function () use ($routeName, $locale): ?RoutePathDefinition {
             foreach ($this->loadUnlocked() as $definition) {
                 if ($definition->routeName === $routeName && $definition->locale === $locale) {
                     return $definition;
@@ -67,12 +69,12 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 
     public function findById(string $id): ?RoutePathDefinition
     {
-        return $this->withExclusiveLock(fn (): ?RoutePathDefinition => $this->loadUnlocked()[$id] ?? null);
+        return $this->withLock(LOCK_SH, fn (): ?RoutePathDefinition => $this->loadUnlocked()[$id] ?? null);
     }
 
     public function findByRouteName(string $routeName): array
     {
-        return $this->withExclusiveLock(function () use ($routeName): array {
+        return $this->withLock(LOCK_SH, function () use ($routeName): array {
             $out = [];
             foreach ($this->loadUnlocked() as $definition) {
                 if ($definition->routeName === $routeName) {
@@ -86,7 +88,7 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 
     public function save(RoutePathDefinition $definition): RoutePathDefinition
     {
-        return $this->withExclusiveLock(function () use ($definition): RoutePathDefinition {
+        return $this->withLock(LOCK_EX, function () use ($definition): RoutePathDefinition {
             $items = $this->loadUnlocked();
             $id    = $definition->id ?? uniqid('rk_', true);
 
@@ -109,7 +111,7 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 
     public function delete(string $id): void
     {
-        $this->withExclusiveLock(function () use ($id): void {
+        $this->withLock(LOCK_EX, function () use ($id): void {
             $items = $this->loadUnlocked();
             unset($items[$id]);
             $this->persistUnlocked($items);
@@ -118,7 +120,7 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 
     public function replaceAll(array $definitions): array
     {
-        return $this->withExclusiveLock(function () use ($definitions): array {
+        return $this->withLock(LOCK_EX, function () use ($definitions): array {
             $items = [];
             $seen  = [];
 
@@ -142,11 +144,12 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
     /**
      * @template T
      *
+     * @param LOCK_EX|LOCK_SH $operation
      * @param callable(): T $callback
      *
      * @return T
      */
-    private function withExclusiveLock(callable $callback): mixed
+    private function withLock(int $operation, callable $callback): mixed
     {
         $this->ensureDirectory();
 
@@ -156,7 +159,7 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
             throw new RuntimeException(sprintf('Unable to open storage lock "%s".', $lockPath)); // @codeCoverageIgnore
         }
 
-        if (!flock($handle, LOCK_EX)) {
+        if (!flock($handle, $operation)) {
             fclose($handle); // @codeCoverageIgnore
 
             throw new RuntimeException(sprintf('Unable to lock storage "%s".', $lockPath)); // @codeCoverageIgnore

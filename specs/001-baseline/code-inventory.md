@@ -2,29 +2,10 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/routing-kit-bundle`  
-**Last audited**: 2026-07-26  
+**Last audited**: 2026-09-25  
 **Coverage summary**: PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
 
-This is a 100% inventory of production files under `src/`: PHP, YAML configuration, Twig views, and translations. Every file maps to one or more baseline `FR-*` requirements.
-
-## Summary
-
-| Category | Files |
-| --- | ---: |
-| Bundle and dependency injection | 5 |
-| Attribute, discovery, validation | 4 |
-| Locale | 2 |
-| Model / enums | 4 |
-| Storage | 2 |
-| Routing | 3 |
-| Events and subscribers | 3 |
-| Service | 1 |
-| Controller | 1 |
-| Seo | 2 |
-| YAML configuration | 3 |
-| Twig views | 3 |
-| Translations | 7 |
-| **Total production files under `src/`** | **40/40** |
+Every production file under `src/` maps to one or more baseline `FR-*` requirements.
 
 ## Bundle and dependency injection
 
@@ -32,9 +13,10 @@ This is a 100% inventory of production files under `src/`: PHP, YAML configurati
 | --- | --- | --- |
 | `NowoRoutingKitBundle.php` | Registers extension and compiler passes. | FR-14, FR-16 |
 | `DependencyInjection/Configuration.php` | Defines the `nowo_routing_kit` configuration tree. | FR-07, FR-08, FR-09, FR-12, FR-16 |
-| `DependencyInjection/RoutingKitExtension.php` | Wires storage, locales, loader, panel, subscribers. | FR-06–FR-10, FR-12, FR-16 |
+| `DependencyInjection/RoutingKitExtension.php` | Wires storage, locales, loader, panel, subscribers. | FR-06–FR-10, FR-12, FR-16, FR-19 |
 | `DependencyInjection/Compiler/TwigPathsPass.php` | Registers Twig namespace; app overrides win. | FR-14 |
 | `DependencyInjection/Compiler/SeoKitBridgePass.php` | Decorates SeoKit path builder when enabled. | FR-16 |
+| `DependencyInjection/Compiler/PanelAccessGuardPass.php` | Wires panel access / token storage at compile time. | FR-08 |
 
 ## Attribute, discovery, validation
 
@@ -66,15 +48,16 @@ This is a 100% inventory of production files under `src/`: PHP, YAML configurati
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
 | `Storage/RoutePathStorageInterface.php` | Persistence contract. | FR-06 |
-| `Storage/FilesystemRoutePathStorage.php` | JSON filesystem storage. | FR-01, FR-06 |
+| `Storage/FilesystemRoutePathStorage.php` | JSON filesystem storage (`LOCK_SH` reads / `LOCK_EX` writes). | FR-01, FR-06, FR-19 |
 
 ## Routing
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Routing/PublicPathResolver.php` | Prefixed/unprefixed/canonical/alias paths + fallback. | FR-02, FR-03, FR-11, FR-13 |
-| `Routing/DbRouteLoader.php` | `nowo_routing_kit` route loader. | FR-02, FR-10 |
-| `Routing/RouteCacheInvalidator.php` | Clears/warms router cache. | FR-09 |
+| `Routing/PublicPathResolver.php` | Prefixed/unprefixed/canonical/alias paths + fallback (+ optional in-memory index). | FR-02, FR-03, FR-11, FR-13 |
+| `Routing/SafePublicPath.php` | Rejects unsafe public path strings. | FR-05 |
+| `Routing/DbRouteLoader.php` | `nowo_routing_kit` route loader (`ResetInterface`). | FR-02, FR-10, FR-19 |
+| `Routing/RouteCacheInvalidator.php` | Clears/warms router cache; route-table version + in-process router reset. | FR-09, FR-19 |
 
 ## Events and subscribers
 
@@ -83,13 +66,35 @@ This is a 100% inventory of production files under `src/`: PHP, YAML configurati
 | `Event/RoutePathsChangedEvent.php` | Dispatched on save/delete. | FR-15 |
 | `EventSubscriber/CanonicalRedirectSubscriber.php` | Redirects non-canonical twins / slash variants. | FR-11, FR-13 |
 | `EventSubscriber/RootRedirectSubscriber.php` | Optional `/` redirect. | FR-12 |
+| `EventSubscriber/RoutePathAuditSubscriber.php` | Logs path mutations when a security token exists. | FR-08 |
+| `EventSubscriber/RouteTableFreshnessSubscriber.php` | Rebuilds this worker's router when the route-table version changes. | FR-09, FR-19 |
+
+## Security
+
+| Path | Responsibility | Spec FR-* IDs |
+| --- | --- | --- |
+| `Security/PanelAccessGuard.php` | Panel gate. | FR-08 |
+| `Security/RoutingKitAccessCheckerInterface.php` | Access-checker contract. | FR-08 |
+| `Security/ConfigurableRoutingKitAccessChecker.php` | Role-based checker. | FR-08 |
+| `Security/AllowAllRoutingKitAccessChecker.php` | Unauthenticated allow. | FR-08 |
+
+## Form
+
+| Path | Responsibility | Spec FR-* IDs |
+| --- | --- | --- |
+| `Form/RoutePathDefinitionType.php` | Create/edit path form. | FR-08, FR-17 |
+| `Form/RoutingPanelActionType.php` | Export / clear-cache / delete CSRF forms. | FR-08, FR-17 |
+| `Form/RoutingPanelImportType.php` | Import form. | FR-08, FR-17 |
 
 ## Service and controller
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
 | `Service/RoutePathManager.php` | Validates, persists, invalidates cache, dispatches events. | FR-05, FR-08, FR-09, FR-15 |
+| `Service/RoutePathConflictDetector.php` | Detects colliding public paths. | FR-05 |
+| `Service/RoutePathImportExport.php` | Signed export/import. | FR-08 |
 | `Controller/RoutingPanelController.php` | Twig CRUD + CSRF + clear cache. | FR-08, FR-09, FR-17 |
+| `Twig/RoutingKitTwigExtension.php` | Panel Twig helpers / globals. | FR-08, FR-14 |
 
 ## Seo
 
@@ -102,7 +107,7 @@ This is a 100% inventory of production files under `src/`: PHP, YAML configurati
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Resources/config/services.yaml` | Service definitions. | FR-06–FR-10 |
+| `Resources/config/services.yaml` | Service definitions. | FR-06–FR-10, FR-19 |
 | `Resources/config/routes.yaml` | Panel routes. | FR-08 |
 | `Resources/config/packages/nowo_routing_kit.yaml` | Default config reference. | FR-07, FR-12, FR-16 |
 
@@ -110,9 +115,7 @@ This is a 100% inventory of production files under `src/`: PHP, YAML configurati
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Resources/views/panel/layout.html.twig` | Panel chrome. | FR-08, FR-14 |
-| `Resources/views/panel/index.html.twig` | Path list + clear cache. | FR-08, FR-09, FR-17 |
-| `Resources/views/panel/form.html.twig` | Create/edit form. | FR-08, FR-17 |
+| `Resources/views/panel/*` | Panel chrome, index, forms (Symfony Form Types). | FR-08, FR-09, FR-14, FR-17 |
 
 ## Translations
 

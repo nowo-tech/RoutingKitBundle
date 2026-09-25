@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.4.5] - 2026-09-25](#145---2026-09-25)
+- [[1.4.4] - 2026-08-24](#144---2026-08-24)
 - [[1.4.3] - 2026-08-20](#143---2026-08-20)
+- [[1.4.2] - 2026-08-19](#142---2026-08-19)
 - [[1.4.1] - 2026-08-18](#141---2026-08-18)
 - [[1.4.0] - 2026-08-12](#140---2026-08-12)
 - [[1.3.1] - 2026-08-07](#131---2026-08-07)
@@ -31,6 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-09-25
+
+### Fixed
+
+- **FrankenPHP / long-running workers (kernel not reset):** path edits, imports, deletes and "clear cache" in the panel now reach every worker without a restart. `RouteCacheInvalidator::invalidate()` writes a route-table version file (`%kernel.cache_dir%/nowo_routing_kit_route_table.version`), drops the router's memoized collection / matcher / generator (and the per-thread compiled-routes cache) before `warmUp()`, so the rebuild is effective in the editing worker. The new `RouteTableFreshnessSubscriber` (`kernel.request`, priority 4096, main requests) calls `RouteCacheInvalidator::refreshIfStale()` so other workers rebuild their router on their next request. `DbRouteLoader` implements `ResetInterface` so its duplicate-import guard allows the reload. Correctness does **not** depend on Symfony `services_resetter` / `kernel.reset`.
+- **Performance:** `FilesystemRoutePathStorage` reads take a shared lock (`LOCK_SH`) instead of an exclusive one; `CanonicalRedirectSubscriber` and `DbRouteLoader` load the storage once and resolve default-locale fallbacks from memory (`PublicPathResolver::resolveDefinition()` accepts an optional index built by `PublicPathResolver::indexDefinitions()`).
+- PHPStan (0 errors at level 8) now also analyses `SeoKitBridgePass`.
+
+### Documentation
+
+- [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md) (scenario B: no kernel reset); [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md) / [UPGRADING.md](UPGRADING.md) / baseline FR-19.
 
 ## [1.4.4] - 2026-08-24
 
@@ -382,9 +396,16 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...HEAD
+[1.4.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.4...v1.4.5
+[1.4.4]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.4
+[1.4.3]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.3
+[1.4.2]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.2
+[1.4.1]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.1
 [1.4.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.9...v1.2.0
 [1.1.9]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.1.6...v1.1.7

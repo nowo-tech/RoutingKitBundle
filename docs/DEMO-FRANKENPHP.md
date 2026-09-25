@@ -220,6 +220,16 @@ docker compose up -d --force-recreate
 make -C demo/symfony8 restart
 ```
 
+### Worker mode without kernel reset (1.4.5+)
+
+FrankenPHP worker boots the Symfony kernel once per worker and can serve many requests **without** rebooting the kernel and **without** relying on `services_resetter` / `kernel.reset`. Routing Kit is designed for that strict model:
+
+- Panel edits / import / delete / clear-cache write `%kernel.cache_dir%/nowo_routing_kit_route_table.version` and reset the editing worker’s router in-process before `warmUp()`.
+- `RouteTableFreshnessSubscriber` runs on every main `kernel.request` (priority 4096) so peer workers rebuild matching/generation from the new table on their next request — no FrankenPHP worker restart required when workers share the same cache directory.
+- Storage reads use `LOCK_SH` so concurrent worker threads do not serialize on exclusive locks for every request.
+
+Full findings and residuals: [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md). Upgrade notes: [UPGRADING.md](UPGRADING.md) **To 1.4.5**.
+
 ---
 
 ## Useful demo URLs

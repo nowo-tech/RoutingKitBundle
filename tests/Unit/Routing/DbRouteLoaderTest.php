@@ -235,6 +235,22 @@ PHP);
         $loader->load('.', 'nowo_routing_kit');
     }
 
+    public function testResetAllowsReloadingAfterPathChange(): void
+    {
+        $storage = new FilesystemRoutePathStorage($this->file);
+        $saved   = $storage->save(new RoutePathDefinition('app_home', 'en', '/start'));
+
+        $locales = new ConfigurableLocaleProvider('en', ['en']);
+        $loader  = new DbRouteLoader($storage, $locales, new PublicPathResolver($storage, $locales), new RoutableControllerDiscovery([$this->dir]));
+
+        self::assertSame('/start', $loader->load('.', 'nowo_routing_kit')->get('app_home.en')?->getPath());
+
+        $storage->save(new RoutePathDefinition('app_home', 'en', '/welcome', id: $saved->id));
+        $loader->reset();
+
+        self::assertSame('/welcome', $loader->load('.', 'nowo_routing_kit')->get('app_home.en')?->getPath());
+    }
+
     public function testSkipsDisabledAndControllerLessRoutes(): void
     {
         $storage = new FilesystemRoutePathStorage($this->file);

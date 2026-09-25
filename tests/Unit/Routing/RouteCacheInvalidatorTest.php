@@ -11,6 +11,7 @@ use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 final class RouteCacheInvalidatorTest extends TestCase
 {
@@ -66,6 +67,67 @@ final class RouteCacheInvalidatorTest extends TestCase
         $invalidator->invalidate();
 
         self::assertDirectoryExists($this->cacheDir);
+    }
+
+    public function testRefreshResetsResettableRouterAndLoaderOnlyWhenVersionChanges(): void
+    {
+        $router = new ResettableRouterForInvalidator();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')
+            ->with('RoutingKit: route table changed in another worker, router state reset.');
+
+        $invalidator = new RouteCacheInvalidator($router, $this->cacheDir, $logger);
+
+        self::assertFalse($invalidator->refreshIfStale(), 'First request only records the version.');
+        self::assertFalse($invalidator->refreshIfStale());
+
+        file_put_contents($invalidator->getVersionFile(), "  \n");
+        self::assertFalse($invalidator->refreshIfStale(), 'A blank version file equals a missing one.');
+
+        file_put_contents($invalidator->getVersionFile(), "v2\n");
+        self::assertTrue($invalidator->refreshIfStale());
+        self::assertFalse($invalidator->refreshIfStale());
+        self::assertSame(1, $router->resets);
+    }
+
+    public function testInvalidateWritesNewVersionEachTime(): void
+    {
+        $invalidator = new RouteCacheInvalidator(new ResettableRouterForInvalidator(), $this->cacheDir);
+
+        $invalidator->invalidate();
+        $first = file_get_contents($invalidator->getVersionFile());
+        $invalidator->invalidate();
+
+        self::assertNotSame($first, file_get_contents($invalidator->getVersionFile()));
+        self::assertSame($this->cacheDir . '/' . RouteCacheInvalidator::VERSION_FILE, $invalidator->getVersionFile());
+        self::assertFalse($invalidator->refreshIfStale(), 'The invalidating worker is already up to date.');
+    }
+
+    public function testWarnsWhenRouterCannotBeRebuiltInProcess(): void
+    {
+        $router = $this->createMock(RouterInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with(
+            'RoutingKit: router "{class}" cannot be rebuilt in-process; restart workers to apply path changes.',
+            self::callback(static fn (array $context): bool => isset($context['class'])),
+        );
+
+        (new RouteCacheInvalidator($router, $this->cacheDir, $logger))->invalidate();
+    }
+
+    public function testWarnsWhenVersionFileCannotBeWritten(): void
+    {
+        $missing = $this->cacheDir . '/missing/dir';
+        $logger  = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with(
+            'RoutingKit: unable to write "{file}", other workers keep their routes until restarted.',
+            ['file' => $missing . '/' . RouteCacheInvalidator::VERSION_FILE],
+        );
+
+        $invalidator = new RouteCacheInvalidator(new ResettableRouterForInvalidator(), $missing, $logger);
+        $invalidator->invalidate();
+
+        self::assertFileDoesNotExist($invalidator->getVersionFile());
     }
 
     private function removeDir(string $dir): void
@@ -146,5 +208,53 @@ final class WarmableRouterForInvalidator implements RouterInterface, WarmableInt
         $this->warmUps[] = $cacheDir;
 
         return [];
+    }
+}
+
+final class ResettableRouterForInvalidator implements RouterInterface, ResetInterface
+{
+    public int $resets = 0;
+
+    private RequestContext $context;
+
+    public function __construct()
+    {
+        $this->context = new RequestContext();
+    }
+
+    public function reset(): void
+    {
+        ++$this->resets;
+    }
+
+    public function setContext(RequestContext $context): void
+    {
+        $this->context = $context;
+    }
+
+    public function getContext(): RequestContext
+    {
+        return $this->context;
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    public function generate(string $name, array $parameters = [], int $referenceType = self::ABSOLUTE_PATH): string
+    {
+        return '/generated';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function match(string $pathinfo): array
+    {
+        return [];
+    }
+
+    public function getRouteCollection(): RouteCollection
+    {
+        return new RouteCollection();
     }
 }

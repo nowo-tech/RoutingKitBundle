@@ -1,5 +1,19 @@
 # Upgrading
 
+## To 1.4.5
+
+No configuration changes. Compatible with FrankenPHP **worker** mode when the kernel is **not** reset between requests (`services_resetter` / `kernel.reset` optional). Panel changes are applied by every worker that shares `%kernel.cache_dir%` on its next main request; restarting workers after editing paths is no longer needed. Notes:
+
+- The route-table version is stored in `%kernel.cache_dir%/nowo_routing_kit_route_table.version`. Workers that do not share the same cache directory (several hosts / containers with a shared storage file) still need a restart or a cache clear on each host.
+- In-process rebuild supports Symfony's FrameworkBundle router and any router service implementing `Symfony\Contracts\Service\ResetInterface`. With another router decorator, a warning is logged and workers must be restarted as before.
+- `RouteCacheInvalidator` has a new optional constructor argument `$routeLoader` (wired automatically) and a new public method `refreshIfStale()`.
+- See [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md) and [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md).
+
+```bash
+composer require nowo-tech/routing-kit-bundle:^1.4.5
+php bin/console cache:clear
+```
+
 ## To 1.4.3
 
 Review Flex `when@prod` (`allow_controller_override: false`) and `security_nowo_routing_kit.yaml`. Prefer **`^1.4.3`**.
@@ -99,6 +113,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 ## Table of contents
 
 
+- [Unreleased](#unreleased)
 - [From 1.4.3 to 1.4.4](#from-143-to-144)
 - [To 1.4.2](#to-142)
 - [To 1.4.1](#to-141)

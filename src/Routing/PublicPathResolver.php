@@ -27,9 +27,30 @@ final class PublicPathResolver
     ) {
     }
 
-    public function resolveDefinition(string $routeName, string $locale): ?RoutePathDefinition
+    /**
+     * Indexes definitions by route name and locale for {@see resolveDefinition()}.
+     *
+     * @param iterable<RoutePathDefinition> $definitions
+     *
+     * @return array<string, array<string, RoutePathDefinition>>
+     */
+    public static function indexDefinitions(iterable $definitions): array
     {
-        $direct = $this->storage->find($routeName, $locale);
+        $index = [];
+        foreach ($definitions as $definition) {
+            $index[$definition->routeName][$definition->locale] = $definition;
+        }
+
+        return $index;
+    }
+
+    /**
+     * @param array<string, array<string, RoutePathDefinition>>|null $index Pre-loaded definitions ({@see indexDefinitions()});
+     *                                                                      when null, the storage is queried
+     */
+    public function resolveDefinition(string $routeName, string $locale, ?array $index = null): ?RoutePathDefinition
+    {
+        $direct = $this->lookup($routeName, $locale, $index);
         if ($direct instanceof RoutePathDefinition && $direct->enabled) {
             return $direct;
         }
@@ -39,7 +60,7 @@ final class PublicPathResolver
             return null;
         }
 
-        $fallback = $this->storage->find($routeName, $defaultLocale);
+        $fallback = $this->lookup($routeName, $defaultLocale, $index);
         if ($fallback instanceof RoutePathDefinition && $fallback->enabled) {
             // Re-bind fallback path under requested locale (same path segment)
             return new RoutePathDefinition(
@@ -56,6 +77,18 @@ final class PublicPathResolver
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string, array<string, RoutePathDefinition>>|null $index
+     */
+    private function lookup(string $routeName, string $locale, ?array $index): ?RoutePathDefinition
+    {
+        if ($index === null) {
+            return $this->storage->find($routeName, $locale);
+        }
+
+        return $index[$routeName][$locale] ?? null;
     }
 
     public function prefixedPath(RoutePathDefinition $definition): string

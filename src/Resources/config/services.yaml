@@ -44,6 +44,7 @@ services:
     Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber: ~
+    Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber: ~
 
     Nowo\RoutingKitBundle\Controller\RoutingPanelController:
         public: true

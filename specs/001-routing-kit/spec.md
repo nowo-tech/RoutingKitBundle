@@ -8,6 +8,7 @@ Provide DB-driven (pluggable storage) locale-aware public paths for Symfony appl
 - Default locale published **without** `{_locale}` when configured
 - Dual access (`/foo` and `/{locale}/foo`) with **admin-defined canonical**
 - CRUD Twig panel + automatic and manual route-cache invalidation
+- Safe under FrankenPHP **worker** when the kernel is **not** reset between requests (route-table version sync across workers sharing `%kernel.cache_dir%`)
 - `#[Routable]` discovery for offerable controllers (name + required params + constraints)
 - Compatibility with **SeoKitBundle** (paths feed canonical / hreflang)
 

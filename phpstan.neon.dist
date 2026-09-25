@@ -12,7 +12,6 @@ parameters:
         - vendor/*
         # Optional SeoKit bridge (class exists only when nowo-tech/seo-kit-bundle is installed)
         - src/Seo/RoutingKitSeoPathBuilderDecorator.php
-        - src/DependencyInjection/Compiler/SeoKitBridgePass.php
     reportUnmatchedIgnoredErrors: false
     treatPhpDocTypesAsCertain: false
     ignoreErrors: []
