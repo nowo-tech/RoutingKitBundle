@@ -156,6 +156,7 @@ final class RoutingPanelController
             return new Response('Invalid CSRF token.', 403);
         }
 
+        // @igor-ignore - HTTP handler delegates to services; no controller worker state.
         $this->manager->clearCache();
 
         return new RedirectResponse($this->pathPrefix . '/');
@@ -220,6 +221,7 @@ final class RoutingPanelController
         /* @var array{payload?: mixed, signature?: mixed, version?: mixed} $decoded */
         try {
             $this->importExport->import($decoded, (bool) ($data['replace_all'] ?? false));
+            // @igor-ignore - HTTP handler delegates to services; no controller worker state.
             $this->manager->clearCache();
         } catch (Throwable $e) {
             $message = $e instanceof RuntimeException ? $e->getMessage() : 'Import failed.';

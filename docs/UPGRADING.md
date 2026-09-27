@@ -1,5 +1,19 @@
 # Upgrading
 
+
+## Unreleased
+
+## To 1.4.6
+
+From **1.4.5** — REQ-CS-008 Igor FrankenPHP worker audit (igor-php require-dev, igor.json, make igor).
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+- No application upgrade steps for require-dev Igor tooling (REQ-CS-008). Consumers do not pull `igor-php/igor-php` transitively.
+
 ## To 1.4.5
 
 No configuration changes. Compatible with FrankenPHP **worker** mode when the kernel is **not** reset between requests (`services_resetter` / `kernel.reset` optional). Panel changes are applied by every worker that shares `%kernel.cache_dir%` on its next main request; restarting workers after editing paths is no longer needed. Notes:
@@ -114,6 +128,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 
 - [Unreleased](#unreleased)
+- [To 1.4.6](#to-146)
 - [From 1.4.3 to 1.4.4](#from-143-to-144)
 - [To 1.4.2](#to-142)
 - [To 1.4.1](#to-141)

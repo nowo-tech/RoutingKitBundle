@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.4.6] - 2026-09-27](#146---2026-09-27)
 - [[1.4.5] - 2026-09-25](#145---2026-09-25)
 - [[1.4.4] - 2026-08-24](#144---2026-08-24)
 - [[1.4.3] - 2026-08-20](#143---2026-08-20)
@@ -33,6 +34,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.4.6] - 2026-09-27
+
+### Added
+
+- **REQ-CS-008:** `igor-php/igor-php` (require-dev only), root `igor.json`, Composer/`Makefile` `igor` target, and `release-check` wiring for FrankenPHP worker-state audit.
+
+### Changed
+
+- **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
+
+[1.4.6]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.6
 
 ## [1.4.5] - 2026-09-25
 

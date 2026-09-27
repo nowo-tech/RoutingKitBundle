@@ -77,8 +77,10 @@ final class RouteCacheInvalidator
             }
         }
 
+        // @igor-ignore - Per-worker route version tracking; synchronized via filesystem version file.
         $this->appliedVersion = $this->writeVersion();
-        $this->versionKnown   = true;
+        // @igor-ignore - Per-worker route version tracking; synchronized via filesystem version file.
+        $this->versionKnown = true;
         $this->resetRouter();
 
         if ($this->router instanceof WarmableInterface) {
@@ -102,7 +104,9 @@ final class RouteCacheInvalidator
         $current = $this->readVersion();
 
         if (!$this->versionKnown) {
-            $this->versionKnown   = true;
+            // @igor-ignore - Per-worker route version tracking; synchronized via filesystem version file.
+            $this->versionKnown = true;
+            // @igor-ignore - Per-worker route version tracking; synchronized via filesystem version file.
             $this->appliedVersion = $current;
 
             return false;
@@ -112,6 +116,7 @@ final class RouteCacheInvalidator
             return false;
         }
 
+        // @igor-ignore - Per-worker route version tracking; synchronized via filesystem version file.
         $this->appliedVersion = $current;
         $this->resetRouter();
         $this->logger?->info('RoutingKit: route table changed in another worker, router state reset.');
