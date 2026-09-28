@@ -13,8 +13,8 @@ use function is_object;
 /**
  * Optional in-bundle role gate for the CRUD panel (apps should still firewall the prefix).
  *
- * Delegates to {@see RoutingKitAccessCheckerInterface}. Empty access_roles / allow_unauthenticated
- * disables the in-bundle check (REQ-UI-002).
+ * Delegates to {@see RoutingKitAccessCheckerInterface}. Empty access_roles is fail-closed
+ * via the checker; only allow_unauthenticated skips the in-bundle check (REQ-UI-002).
  */
 final class PanelAccessGuard
 {

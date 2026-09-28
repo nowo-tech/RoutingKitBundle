@@ -59,12 +59,12 @@ final class PanelAccessGuardTest extends TestCase
         (new PanelAccessGuard($checker, $storage, false, false))->assertGranted();
     }
 
-    public function testConfigurableAllowsEmptyRoles(): void
+    public function testConfigurableDeniesEmptyRoles(): void
     {
         $auth = $this->createMock(AuthorizationCheckerInterface::class);
         $auth->expects(self::never())->method('isGranted');
 
-        self::assertTrue((new ConfigurableRoutingKitAccessChecker($auth, []))->canAccess(new stdClass()));
+        self::assertFalse((new ConfigurableRoutingKitAccessChecker($auth, []))->canAccess(new stdClass()));
     }
 
     public function testConfigurableDeniesWhenNoRoleGranted(): void

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.5.0] - 2026-09-28](#150---2026-09-28)
 - [[1.4.6] - 2026-09-27](#146---2026-09-27)
 - [[1.4.5] - 2026-09-25](#145---2026-09-25)
 - [[1.4.4] - 2026-08-24](#144---2026-08-24)
@@ -35,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-28
+
+### Security
+
+- Empty `security.access_roles` is fail-closed via the access checker; empty roles no longer disable the in-bundle gate (`roleGateDisabled` is not used to open access).
+
 ## [1.4.6] - 2026-09-27
 
 ### Added
@@ -45,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
 
+[1.5.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.5.0
 [1.4.6]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.6
 
 ## [1.4.5] - 2026-09-25

@@ -182,9 +182,26 @@ final class RoutingKitExtensionTest extends TestCase
 
         $guard = $container->getDefinition(PanelAccessGuard::class);
         self::assertTrue($guard->getArgument('$allowUnauthenticated'));
-        self::assertTrue($guard->getArgument('$roleGateDisabled'));
-        self::assertTrue($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
+        self::assertFalse($guard->getArgument('$roleGateDisabled'));
+        self::assertFalse($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
         self::assertTrue($container->hasDefinition('nowo.routing_kit.access_checker.allow_all'));
+    }
+
+    public function testEmptyAccessRolesKeepsRoleGateEnabled(): void
+    {
+        $container = $this->createContainer();
+        $extension = new RoutingKitExtension();
+        $extension->load([[
+            'security' => [
+                'access_roles'          => [],
+                'allow_unauthenticated' => false,
+            ],
+        ]], $container);
+
+        $guard = $container->getDefinition(PanelAccessGuard::class);
+        self::assertFalse($guard->getArgument('$allowUnauthenticated'));
+        self::assertFalse($guard->getArgument('$roleGateDisabled'));
+        self::assertFalse($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
     }
 
     public function testPanelRequiresSecurityBundleWhenAuthenticated(): void

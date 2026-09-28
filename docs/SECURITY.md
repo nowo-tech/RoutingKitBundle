@@ -13,7 +13,7 @@
 | Control | Behaviour |
 | --- | --- |
 | CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
-| `security.access_roles` | Default `[ROLE_ADMIN]` via `RoutingKitAccessCheckerInterface` / `ConfigurableRoutingKitAccessChecker`. Empty list / `allow_unauthenticated: true` disables the in-bundle gate (firewall still required). `PanelAccessGuardPass` wires `security.token_storage` at compile time. |
+| `security.access_roles` | Default `[ROLE_ADMIN]` via `RoutingKitAccessCheckerInterface` / `ConfigurableRoutingKitAccessChecker`. **Empty list is fail-closed (deny).** Use `allow_unauthenticated: true` (dev/demo only) or a custom `access_checker` to relax. `PanelAccessGuard` always runs the checker unless `allow_unauthenticated`. |
 | `panel.role` | BC alias for `security.access_roles` (`null` → empty roles). Prefer `security.access_roles`. |
 | Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |
 | Controller override | Off by default; when on, only discovery controllers are accepted. Loader ignores stored overrides when off. |
@@ -32,7 +32,7 @@
 | `path_prefix` | Restricted to `/[A-Za-z0-9/_-]+`. |
 | Storage | Corrupt JSON fails closed; exclusive lock on mutations. |
 | List pagination | `panel.list_page_size` (default 50) on the index; storage hard-capped by `max_definitions`. |
-| `security.access_roles: []` / `panel.role: null` | Allowed but panel shows UNSAFE banner; still firewall the prefix. |
+| `security.access_roles: []` / `panel.role: null` | Fail-closed deny in-bundle. Prefer explicit roles; demos may use `allow_unauthenticated`. Still firewall the prefix. |
 
 ## Application checklist
 

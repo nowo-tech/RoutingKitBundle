@@ -352,27 +352,6 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
     /**
      * @param array<string, mixed> $config
-     *
-     * @return list<string>
-     */
-    private function resolveAccessRoles(array $config): array
-    {
-        if ((bool) $config['security']['allow_unauthenticated']) {
-            return [];
-        }
-
-        $roles = [];
-        foreach ($config['security']['access_roles'] as $role) {
-            if (is_string($role) && $role !== '') {
-                $roles[] = $role;
-            }
-        }
-
-        return $roles;
-    }
-
-    /**
-     * @param array<string, mixed> $config
      */
     private function configurePanel(ContainerBuilder $container, array $config): void
     {
@@ -385,16 +364,15 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
         $this->registerAccessChecker($container, $config['security']);
 
-        $accessRoles = $this->resolveAccessRoles($config);
-
+        // Empty access_roles must NOT disable the gate — fail-closed via the access checker.
         $container->getDefinition(PanelAccessGuard::class)
             ->setArgument('$allowUnauthenticated', (bool) $config['security']['allow_unauthenticated'])
-            ->setArgument('$roleGateDisabled', $accessRoles === []);
+            ->setArgument('$roleGateDisabled', false);
 
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
             ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
-            ->setArgument('$roleGateDisabled', $accessRoles === [])
+            ->setArgument('$roleGateDisabled', false)
             ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');

@@ -3,6 +3,17 @@
 
 ## Unreleased
 
+## To 1.5.0
+
+From **1.4.6** — `access_roles` fail-closed.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+- Empty `security.access_roles` / `panel.role: null` no longer disables the in-bundle gate. Set at least one role, a custom checker, or demo-only `allow_unauthenticated`.
+
 ## To 1.4.6
 
 From **1.4.5** — REQ-CS-008 Igor FrankenPHP worker audit (igor-php require-dev, igor.json, make igor).
@@ -128,6 +139,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 
 - [Unreleased](#unreleased)
+- [To 1.5.0](#to-150)
 - [To 1.4.6](#to-146)
 - [From 1.4.3 to 1.4.4](#from-143-to-144)
 - [To 1.4.2](#to-142)
