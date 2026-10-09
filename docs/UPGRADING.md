@@ -3,6 +3,16 @@
 
 ## Unreleased
 
+## To 1.5.1
+
+From **1.5.0** — dependency updates only.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+No breaking changes. **No application upgrade steps.**
+
 ## To 1.5.0
 
 From **1.4.6** — `access_roles` fail-closed.
@@ -139,6 +149,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 
 
 - [Unreleased](#unreleased)
+- [To 1.5.1](#to-151)
 - [To 1.5.0](#to-150)
 - [To 1.4.6](#to-146)
 - [From 1.4.3 to 1.4.4](#from-143-to-144)

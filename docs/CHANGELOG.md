@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.5.1] - 2026-10-09](#151---2026-10-09)
 - [[1.5.0] - 2026-09-28](#150---2026-09-28)
 - [[1.4.6] - 2026-09-27](#146---2026-09-27)
 - [[1.4.5] - 2026-09-25](#145---2026-09-25)
@@ -36,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-10-09
+
+### Dependencies
+
+- Symfony group bumps (Dependabot) and lockfile refresh: Symfony 8.1.8, `twig/twig` 3.30.0, `nowo-tech/form-kit-bundle` 2.6.1, `nowo-tech/ui-kit-bundle` 1.9.1; dev `nowo-tech/phpstan-frankenphp` 1.2.3, `phpunit/phpunit` 10.5.66.
+- Demo (`demo/symfony8`): regenerated `config/reference.php`.
+
 ## [1.5.0] - 2026-09-28
 
 ### Security
@@ -52,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
 
+[1.5.1]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.5.1
 [1.5.0]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.5.0
 [1.4.6]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.6
 
