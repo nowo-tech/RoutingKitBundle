@@ -6,6 +6,7 @@
 - [Path rows](#path-rows)
 - [Panel](#panel)
 - [SeoKitBundle](#seokitbundle)
+- [URL redirects](#url-redirects)
 - [Custom storage / locales](#custom-storage--locales)
 - [Overriding templates (REQ-TWIG-001)](#overriding-templates-req-twig-001)
 
@@ -72,6 +73,10 @@ Nowo\RoutingKitBundle\Seo\RoutingKitSeoPathProvider::pagePath($route, $locale)
 ```
 
 Prefer a single route loader owner (RoutingKit) for the same pages.
+
+## URL redirects
+
+Opt-in (`url_redirects.enabled: true`): operators redirect retired public URLs to a new path or URL from `{panel.path_prefix}/redirects`. Slug routes need a `LivePathCheckerInterface` so deleted content can be redirected. Full guide: [REDIRECTS.md](REDIRECTS.md).
 
 ## Custom storage / locales
 

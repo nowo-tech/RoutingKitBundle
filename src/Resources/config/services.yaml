@@ -13,6 +13,7 @@ services:
             - '../../Attribute/'
             - '../../Resources/'
             - '../../Seo/RoutingKitSeoPathBuilderDecorator.php'
+            - '../../Redirect/Message/RecordRedirectHit.php'
             - '../../NowoRoutingKitBundle.php'
 
     Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider: ~
@@ -20,6 +21,11 @@ services:
     Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage:
         arguments:
             $filePath: '%nowo.routing_kit.storage.paths_file%'
+
+    # Operator URL redirects (url_redirects.*): removed by the extension unless enabled.
+    Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage:
+        arguments:
+            $filePath: '%kernel.project_dir%/var/routing_kit/redirects.json'
 
     Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery:
         arguments:
@@ -47,5 +53,9 @@ services:
     Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber: ~
 
     Nowo\RoutingKitBundle\Controller\RoutingPanelController:
+        public: true
+        tags: ['controller.service_arguments']
+
+    Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController:
         public: true
         tags: ['controller.service_arguments']

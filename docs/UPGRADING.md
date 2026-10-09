@@ -1,7 +1,23 @@
 # Upgrading
 
 
-## Unreleased
+## To 1.6.0
+
+No breaking changes. The new operator URL redirect manager is **off by default**; existing apps need no change.
+
+To adopt it:
+
+```yaml
+nowo_routing_kit:
+    url_redirects:
+        enabled: true
+```
+
+- Default storage is a JSON file (`var/routing_kit/redirects.json`, not web-accessible). For a database, implement `UrlRedirectStorageInterface` in the host, set `url_redirects.storage`, and generate the migration in the host (`doctrine:migrations:diff`); the bundle ships no entity. See [REDIRECTS.md](REDIRECTS.md#storage).
+- Register a `LivePathCheckerInterface` for slug routes (`/blog/{slug}`…) so retired posts can be redirected.
+- Review `url_redirects.protected_prefixes` / `protected_starts`: setting either **replaces** the defaults; keep your back-office and auth prefixes.
+- Optional async hit counting: `url_redirects.hits.message_bus` + route `Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHit` to an async transport.
+- Panel templates that override `panel/index.html.twig` may include `@NowoRoutingKitBundle/panel/_nav.html.twig` (`{current: 'routes', path_prefix: path_prefix}`) to show the Routes | Redirects switcher.
 
 ## To 1.5.1
 
@@ -148,7 +164,7 @@ Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fi
 ## Table of contents
 
 
-- [Unreleased](#unreleased)
+- [To 1.6.0](#to-160)
 - [To 1.5.1](#to-151)
 - [To 1.5.0](#to-150)
 - [To 1.4.6](#to-146)

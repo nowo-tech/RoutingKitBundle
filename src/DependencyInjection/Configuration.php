@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
+use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -15,6 +16,7 @@ use function is_array;
 use function is_string;
 use function preg_match;
 use function str_contains;
+use function str_starts_with;
 use function strlen;
 
 final class Configuration implements ConfigurationInterface
@@ -217,6 +219,7 @@ final class Configuration implements ConfigurationInterface
                         ->integerNode('root_status')->defaultValue(302)->min(301)->max(308)->end()
                     ->end()
                 ->end()
+                ->append($this->urlRedirectsNode())
                 ->booleanNode('auto_invalidate_cache')
                     ->defaultTrue()
                 ->end()
@@ -230,5 +233,89 @@ final class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    /**
+     * Operator URL redirect manager (REQ-REDIR-*). Opt-in: adds a kernel.request listener and a
+     * panel section under {panel.path_prefix}/redirects.
+     */
+    private function urlRedirectsNode(): ArrayNodeDefinition
+    {
+        /** @var ArrayNodeDefinition $node */
+        $node = (new TreeBuilder('url_redirects'))->getRootNode();
+
+        $isPathList = static function (mixed $v): bool {
+            if (!is_array($v)) {
+                return true; // @codeCoverageIgnore
+            }
+            foreach ($v as $item) {
+                if (!is_string($item) || !str_starts_with($item, '/') || str_contains($item, '\\')) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $node
+            ->info('Operator-managed redirects (old public path → new path or URL), applied before routing.')
+            ->addDefaultsIfNotSet()
+            ->children()
+                ->booleanNode('enabled')
+                    ->info('Opt-in. Registers the request listener (priority 33) and the panel section.')
+                    ->defaultFalse()
+                ->end()
+                ->scalarNode('storage')
+                    ->info('Service id implementing UrlRedirectStorageInterface (e.g. a Doctrine repository). null = JSON file.')
+                    ->defaultNull()
+                ->end()
+                ->scalarNode('file')
+                    ->info('JSON file used by the default FilesystemUrlRedirectStorage.')
+                    ->defaultValue('%kernel.project_dir%/var/routing_kit/redirects.json')
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('cache_pool')
+                    ->info('Cache pool (Symfony Contracts CacheInterface) for the enabled-redirects map. null = storage read once per request.')
+                    ->defaultValue('cache.app')
+                ->end()
+                ->integerNode('cache_ttl')
+                    ->info('Seconds the cached map lives; bounds staleness after writes made outside the panel.')
+                    ->min(0)
+                    ->defaultValue(3600)
+                ->end()
+                ->arrayNode('protected_prefixes')
+                    ->info('Whole-segment prefixes never redirected (also behind a /{locale} segment). Replaces the default list; panel.path_prefix is always added.')
+                    ->scalarPrototype()->end()
+                    ->defaultValue(ProtectedPaths::DEFAULT_PREFIXES)
+                    ->validate()
+                        ->ifTrue($isPathList)
+                        ->thenInvalid('url_redirects.protected_prefixes entries must start with "/".')
+                    ->end()
+                ->end()
+                ->arrayNode('protected_starts')
+                    ->info('Raw string prefixes never redirected (e.g. "/_" covers /_profiler). Replaces the default list.')
+                    ->scalarPrototype()->end()
+                    ->defaultValue(ProtectedPaths::DEFAULT_STARTS)
+                    ->validate()
+                        ->ifTrue($isPathList)
+                        ->thenInvalid('url_redirects.protected_starts entries must start with "/".')
+                    ->end()
+                ->end()
+                ->arrayNode('hits')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')
+                            ->info('Count hits / last hit per redirect.')
+                            ->defaultTrue()
+                        ->end()
+                        ->scalarNode('message_bus')
+                            ->info('Messenger bus service id (e.g. messenger.default_bus) to count hits asynchronously. null = synchronous write.')
+                            ->defaultNull()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end();
+
+        return $node;
     }
 }

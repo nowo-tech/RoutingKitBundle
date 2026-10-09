@@ -6,6 +6,7 @@ namespace Nowo\RoutingKitBundle\Tests\Unit\DependencyInjection;
 
 use LogicException;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
+use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\PanelAccessGuardPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
 use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
@@ -13,10 +14,17 @@ use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\UrlRedirectSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
+use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
+use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
+use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -25,9 +33,13 @@ use Nowo\RoutingKitBundle\Security\RoutingKitAccessCheckerInterface;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
+use Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
+use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -296,6 +308,101 @@ final class RoutingKitExtensionTest extends TestCase
         ]], $container);
 
         self::assertFalse($container->hasDefinition(RoutingPanelController::class));
+        self::assertFalse($container->hasDefinition(UrlRedirectPanelController::class));
+    }
+
+    public function testUrlRedirectsAreOptIn(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[]], $container);
+
+        self::assertFalse($container->getParameter('nowo.routing_kit.url_redirects.enabled'));
+        self::assertTrue($container->hasDefinition(UrlRedirectPanelController::class), 'Kept so its routes answer 404, not 500.');
+        self::assertFalse($container->hasAlias(UrlRedirectStorageInterface::class));
+        foreach ([FilesystemUrlRedirectStorage::class, UrlRedirectMatcher::class, UrlRedirectSubscriber::class, UrlRedirectValidator::class,
+            ProtectedPaths::class, LivePublicPaths::class, RecordRedirectHitHandler::class] as $id) {
+            self::assertFalse($container->hasDefinition($id), $id);
+        }
+        self::assertFalse($container->getDefinition(RoutingKitTwigExtension::class)->getArgument('$urlRedirectsEnabled'));
+    }
+
+    public function testUrlRedirectsEnabledWithFilesystemDefaults(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'panel'         => ['path_prefix' => '/_admin/routing', 'list_page_size' => 20],
+            'url_redirects' => ['enabled' => true, 'file' => '/tmp/r.json', 'protected_prefixes' => ['/admin', '/admin']],
+        ]], $container);
+
+        self::assertSame(FilesystemUrlRedirectStorage::class, (string) $container->getAlias(UrlRedirectStorageInterface::class));
+        self::assertSame('/tmp/r.json', $container->getDefinition(FilesystemUrlRedirectStorage::class)->getArgument('$filePath'));
+        self::assertTrue($container->hasDefinition(UrlRedirectSubscriber::class));
+        self::assertTrue($container->hasDefinition(UrlRedirectValidator::class));
+
+        $protected = $container->getDefinition(ProtectedPaths::class);
+        self::assertSame(['/admin', '/_admin/routing'], $protected->getArgument('$prefixes'));
+        self::assertSame(ProtectedPaths::DEFAULT_STARTS, $protected->getArgument('$starts'));
+
+        $live = $container->getDefinition(LivePublicPaths::class);
+        self::assertSame('router', (string) $live->getArgument('$router'));
+        $checkers = $live->getArgument('$checkers');
+        self::assertInstanceOf(TaggedIteratorArgument::class, $checkers);
+        self::assertSame(LivePathCheckerInterface::TAG, $checkers->getTag());
+        self::assertArrayHasKey(LivePathCheckerInterface::class, $container->getAutoconfiguredInstanceof());
+
+        $matcher = $container->getDefinition(UrlRedirectMatcher::class);
+        self::assertSame('cache.app', (string) $matcher->getArgument('$cache'));
+        self::assertNull($matcher->getArgument('$bus'));
+        self::assertSame(3600, $matcher->getArgument('$cacheTtl'));
+        self::assertTrue($matcher->getArgument('$trackHits'));
+        self::assertFalse($container->hasDefinition(RecordRedirectHitHandler::class), 'No bus: synchronous hits, no handler.');
+
+        $controller = $container->getDefinition(UrlRedirectPanelController::class);
+        self::assertSame('/_admin/routing', $controller->getArgument('$pathPrefix'));
+        self::assertSame(20, $controller->getArgument('$listPageSize'));
+        self::assertTrue($container->getDefinition(RoutingKitTwigExtension::class)->getArgument('$urlRedirectsEnabled'));
+    }
+
+    public function testUrlRedirectsWithCustomStorageBusAndNoCache(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'url_redirects' => [
+                'enabled'    => true,
+                'storage'    => 'app.redirect_storage',
+                'cache_pool' => null,
+                'hits'       => ['message_bus' => 'messenger.default_bus'],
+            ],
+        ]], $container);
+
+        self::assertSame('app.redirect_storage', (string) $container->getAlias(UrlRedirectStorageInterface::class));
+        $matcher = $container->getDefinition(UrlRedirectMatcher::class);
+        self::assertNull($matcher->getArgument('$cache'));
+        self::assertSame('messenger.default_bus', (string) $matcher->getArgument('$bus'));
+        self::assertTrue($container->getDefinition(RecordRedirectHitHandler::class)->hasTag('messenger.message_handler'));
+    }
+
+    public function testUrlRedirectsHitsDisabledDropsHandler(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'url_redirects' => ['enabled' => true, 'hits' => ['enabled' => false, 'message_bus' => 'messenger.default_bus']],
+        ]], $container);
+
+        self::assertFalse($container->hasDefinition(RecordRedirectHitHandler::class));
+        self::assertFalse($container->getDefinition(UrlRedirectMatcher::class)->getArgument('$trackHits'));
+    }
+
+    public function testUrlRedirectsWithPanelDisabledKeepsListenerOnly(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'panel'         => ['enabled' => false],
+            'url_redirects' => ['enabled' => true],
+        ]], $container);
+
+        self::assertTrue($container->hasDefinition(UrlRedirectSubscriber::class));
+        self::assertFalse($container->hasDefinition(UrlRedirectPanelController::class));
     }
 
     public function testLoadDisablesBundleWhenEnabledFalse(): void
@@ -303,9 +410,11 @@ final class RoutingKitExtensionTest extends TestCase
         $container = $this->createContainer();
         $extension = new RoutingKitExtension();
 
-        $extension->load([['enabled' => false]], $container);
+        $extension->load([['enabled' => false, 'url_redirects' => ['enabled' => true]]], $container);
 
         self::assertFalse($container->hasDefinition(RoutingPanelController::class));
+        self::assertFalse($container->hasDefinition(UrlRedirectPanelController::class));
+        self::assertFalse($container->hasDefinition(UrlRedirectSubscriber::class));
         self::assertFalse($container->hasDefinition(DbRouteLoader::class));
         self::assertFalse($container->hasDefinition(RouteTableFreshnessSubscriber::class));
         self::assertFalse($container->hasDefinition(CanonicalRedirectSubscriber::class));

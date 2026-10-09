@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+
+- [[1.6.0] - 2026-10-09](#160---2026-10-09)
 - [[1.5.1] - 2026-10-09](#151---2026-10-09)
 - [[1.5.0] - 2026-09-28](#150---2026-09-28)
 - [[1.4.6] - 2026-09-27](#146---2026-09-27)
@@ -36,6 +38,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.6.0] - 2026-10-09
+
+### Added
+
+- **Operator URL redirect manager** (opt-in, `url_redirects.enabled: false` by default; REQ-REDIR-001…008, [docs/REDIRECTS.md](REDIRECTS.md)):
+  - `UrlRedirectSubscriber` (`kernel.request`, priority 33, before routing): main GET/HEAD requests; skips protected paths and live pages; visitor query string only for internal targets; unsafe stored targets ignored.
+  - `UrlRedirect` model (`normalizePath()` percent-decodes, `isInternalTarget()`, `isExternalTarget()`), `UrlRedirectStorageInterface` + `FilesystemUrlRedirectStorage` (JSON, locked, fail-closed); `url_redirects.storage` for a host (e.g. Doctrine) implementation.
+  - `UrlRedirectMatcher`: enabled-redirect map cached in `url_redirects.cache_pool` (`cache.app`, TTL `cache_ttl` 3600 s), invalidated by panel writes, `ResetInterface` for worker mode; failures degrade to "no redirect".
+  - `ProtectedPaths` with configurable `protected_prefixes` / `protected_starts` (locale-prefix aware via `LocaleProviderInterface`; `panel.path_prefix` always protected).
+  - `LivePublicPaths` + tagged `LivePathCheckerInterface` (`nowo_routing_kit.live_path_checker`, autoconfigured) so retired slug URLs can be redirected while live pages always win.
+  - Hit counter (`hits`, `lastHitAt`): synchronous, or async through Messenger (`hits.message_bus`, `RecordRedirectHit` + handler).
+  - Panel section `{panel.path_prefix}/redirects` (`UrlRedirectPanelController`, `UrlRedirectType`, `UrlRedirectValidator`): list with pagination, create / edit / delete with CSRF, delete confirmation page without inline JavaScript, protected / live / loop / chain / duplicate checks, audit by user identifier. Routes | Redirects switcher in both panel sections.
+  - Translations (`redirects.*`, `nav.*`) in en, es, fr, de, it, pt, nl.
+- `PanelAccessGuard::userIdentifier()`; Twig global `nowo_routing_kit_url_redirects_enabled`.
+
+### Dev
+
+- `symfony/messenger` added to `require-dev`; kernel integration test (`tests/Integration/Redirect`) for the panel and listener; `igor.json` excludes `src/Model` (value objects, not services).
 
 ## [1.5.1] - 2026-10-09
 
@@ -426,7 +447,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...v1.6.0
 [1.4.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.4
 [1.4.3]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.3

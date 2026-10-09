@@ -219,4 +219,54 @@ final class ConfigurationTest extends TestCase
             'redirects' => ['root_home_path' => '//evil.example'],
         ]]);
     }
+
+    public function testUrlRedirectsDefaultsAndOverrides(): void
+    {
+        $processor = new Processor();
+        $defaults  = $processor->processConfiguration(new Configuration(), [[]])['url_redirects'];
+
+        self::assertFalse($defaults['enabled']);
+        self::assertNull($defaults['storage']);
+        self::assertSame('%kernel.project_dir%/var/routing_kit/redirects.json', $defaults['file']);
+        self::assertSame('cache.app', $defaults['cache_pool']);
+        self::assertSame(3600, $defaults['cache_ttl']);
+        self::assertContains('/admin', $defaults['protected_prefixes']);
+        self::assertContains('/_', $defaults['protected_starts']);
+        self::assertSame(['enabled' => true, 'message_bus' => null], $defaults['hits']);
+
+        $custom = $processor->processConfiguration(new Configuration(), [[
+            'url_redirects' => [
+                'enabled'            => true,
+                'storage'            => 'app.redirect_storage',
+                'cache_pool'         => null,
+                'cache_ttl'          => 0,
+                'protected_prefixes' => ['/panel'],
+                'protected_starts'   => ['/llms'],
+                'hits'               => ['enabled' => false, 'message_bus' => 'messenger.default_bus'],
+            ],
+        ]])['url_redirects'];
+
+        self::assertTrue($custom['enabled']);
+        self::assertSame('app.redirect_storage', $custom['storage']);
+        self::assertNull($custom['cache_pool']);
+        self::assertSame(['/panel'], $custom['protected_prefixes']);
+        self::assertSame(['/llms'], $custom['protected_starts']);
+        self::assertSame(['enabled' => false, 'message_bus' => 'messenger.default_bus'], $custom['hits']);
+    }
+
+    public function testUrlRedirectsRejectsRelativeProtectedPrefix(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('protected_prefixes');
+
+        (new Processor())->processConfiguration(new Configuration(), [['url_redirects' => ['protected_prefixes' => ['admin']]]]);
+    }
+
+    public function testUrlRedirectsRejectsBackslashProtectedStart(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('protected_starts');
+
+        (new Processor())->processConfiguration(new Configuration(), [['url_redirects' => ['protected_starts' => ['/\\x']]]]);
+    }
 }

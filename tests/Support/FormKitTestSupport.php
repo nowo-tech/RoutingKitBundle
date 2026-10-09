@@ -9,6 +9,7 @@ use Nowo\FormKitBundle\Form\FormOptionsMerger;
 use Nowo\RoutingKitBundle\Form\RoutePathDefinitionType;
 use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
 use Nowo\RoutingKitBundle\Form\RoutingPanelImportType;
+use Nowo\RoutingKitBundle\Form\UrlRedirectType;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Symfony\Component\Form\Extension\Csrf\CsrfExtension;
 use Symfony\Component\Form\Extension\HttpFoundation\HttpFoundationExtension;
@@ -72,6 +73,7 @@ final class FormKitTestSupport
             ->addType(new RoutingPanelActionType())
             ->addType(self::withMerger(new RoutingPanelImportType()))
             ->addType(self::withMerger(new RoutePathDefinitionType()))
+            ->addType(self::withMerger(new UrlRedirectType()))
             ->getFormFactory();
     }
 }

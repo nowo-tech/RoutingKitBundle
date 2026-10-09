@@ -34,6 +34,10 @@ nowo_routing_kit:
         root_enabled: false
         root_canonical_style: without_prefix
         root_home_path: /
+    # Operator URL redirects (opt-in): panel section at /_routing/redirects.
+    url_redirects:
+        enabled: true
+        file: '%kernel.project_dir%/var/routing_kit/redirects.json'
     auto_invalidate_cache: true
     register_unprefixed_default: true
     seo_kit_bridge: true

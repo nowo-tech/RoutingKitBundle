@@ -7,6 +7,7 @@
 - Filesystem JSON under `var/routing_kit/` — must not be web-accessible.
 - DB loader registers `{name}.{locale}` with `_canonical_route`.
 - Canonical / root redirect subscribers (open-redirect hardened).
+- Optional operator URL redirects (`url_redirects.enabled`, off by default): panel section `{path_prefix}/redirects` and a `kernel.request` listener.
 
 ## Built-in controls (1.1.4+)
 
@@ -32,6 +33,7 @@
 | `path_prefix` | Restricted to `/[A-Za-z0-9/_-]+`. |
 | Storage | Corrupt JSON fails closed; exclusive lock on mutations. |
 | List pagination | `panel.list_page_size` (default 50) on the index; storage hard-capped by `max_definitions`. |
+| URL redirects (opt-in) | Same panel guard + CSRF on create / edit / delete (delete via confirmation page, no inline JS). Sources: protected prefixes (incl. `/{locale}/…` and `panel.path_prefix`) and live pages refused; loops, chains, duplicates refused. Targets: internal paths without `//`, `\`, `%5c`, `%2f`, controls, or absolute `http(s)://host` URLs only — re-checked at request time for rows written outside the panel. Visitor query strings never forwarded to external hosts. GET/HEAD main requests only. |
 | `security.access_roles: []` / `panel.role: null` | Fail-closed deny in-bundle. Prefer explicit roles; demos may use `allow_unauthenticated`. Still firewall the prefix. |
 
 ## Application checklist

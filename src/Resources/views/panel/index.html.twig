@@ -5,6 +5,7 @@
 {% block title %}{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
 
 {% block body %}
+{{ include('@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'routes', path_prefix: path_prefix}) }}
 <header class="nowo-ui-page-header">
     <h1>{{ 'panel.title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
     <p class="nowo-ui-muted muted">{{ 'panel.subtitle'|trans({'%default%': default}, 'NowoRoutingKitBundle') }}</p>

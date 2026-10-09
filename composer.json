@@ -61,6 +61,7 @@
         "rector/rector": "^2.0",
         "symfony/asset": "^7.0 || ^8.0",
         "symfony/framework-bundle": "^7.0 || ^8.0",
+        "symfony/messenger": "^7.0 || ^8.0",
         "symfony/twig-bundle": "^7.0 || ^8.0",
         "twig/twig": "^3.12",
         "vincentlanglet/twig-cs-fixer": "^3.0"
@@ -72,7 +73,8 @@
         "symfony/security-bundle": "Recommended: firewall + ROLE_ADMIN for /_routing",
         "nowo-tech/seo-kit-bundle": "Bridge: RoutingKit paths feed SeoKit canonical/hreflang (requires SeoPathBuilderInterface)",
         "doctrine/orm": "Implement RoutePathStorageInterface against Doctrine entities",
-        "symfony/asset": "Required for the nowo_routing_kit named asset package (panel CSS via assets:install)"
+        "symfony/asset": "Required for the nowo_routing_kit named asset package (panel CSS via assets:install)",
+        "symfony/messenger": "Async hit counting for operator URL redirects (url_redirects.hits.message_bus)"
     },
     "autoload": {
         "psr-4": {

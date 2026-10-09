@@ -16,15 +16,17 @@ final class RoutingKitTwigExtension extends AbstractExtension implements Globals
         private readonly string $layoutTemplate = '@NowoRoutingKitBundle/panel/layout.html.twig',
         private readonly string $cssFramework = 'custom',
         private readonly string $iconSet = 'none',
+        private readonly bool $urlRedirectsEnabled = false,
     ) {
     }
 
     public function getGlobals(): array
     {
         return [
-            'nowo_routing_kit_layout_template' => $this->layoutTemplate,
-            'nowo_routing_kit_css_framework'   => $this->cssFramework,
-            'nowo_routing_kit_icon_set'        => $this->iconSet,
+            'nowo_routing_kit_layout_template'       => $this->layoutTemplate,
+            'nowo_routing_kit_css_framework'         => $this->cssFramework,
+            'nowo_routing_kit_icon_set'              => $this->iconSet,
+            'nowo_routing_kit_url_redirects_enabled' => $this->urlRedirectsEnabled,
         ];
     }
 }

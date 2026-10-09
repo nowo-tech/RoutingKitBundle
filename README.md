@@ -21,6 +21,7 @@ This bundle is **FrankenPHP worker mode friendly**.
 - **Loader** — `type: nowo_routing_kit` registers `{name}.{locale}` with `_canonical_route` (import last).
 - **Panel** — Twig CRUD under `/_routing` + Symfony forms (FormKit + UiKit) for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete). Protect with `security.access_roles` (default `[ROLE_ADMIN]`) / `allow_unauthenticated`.
 - **SeoKit** — Optional bridge decorates `SeoPathBuilderInterface` for canonical/hreflang paths.
+- **URL redirects** (opt-in, `url_redirects.enabled`) — Operator-managed old path → new path / URL redirects applied before routing, with a panel section at `/_routing/redirects`, protected paths, live-page detection (`LivePathCheckerInterface`), hit counting (sync or Messenger) and pluggable storage. See [docs/REDIRECTS.md](docs/REDIRECTS.md).
 
 ## Installation
 
@@ -61,6 +62,8 @@ nowo_routing_kit:
     redirects:
         canonical_enabled: true
     seo_kit_bridge: true
+    url_redirects:
+        enabled: false   # opt-in operator redirects (docs/REDIRECTS.md)
 ```
 
 ## Usage
@@ -108,6 +111,7 @@ Open http://localhost:8058 — panel at `/_routing`. FrankenPHP mode is controll
 - [Configuration](docs/CONFIGURATION.md)
 - [PSR evaluation (REQ-CS-007)](docs/PSR.md)
 - [Usage](docs/USAGE.md)
+- [URL redirects](docs/REDIRECTS.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Changelog](docs/CHANGELOG.md)

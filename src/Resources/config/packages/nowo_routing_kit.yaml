@@ -35,6 +35,17 @@ nowo_routing_kit:
         root_canonical_style: without_prefix
         root_home_path: /
         root_status: 302
+    url_redirects:
+        enabled: false   # opt-in operator redirects, panel at {path_prefix}/redirects (docs/REDIRECTS.md)
+        # storage: App\Redirect\DoctrineUrlRedirectStorage
+        file: '%kernel.project_dir%/var/routing_kit/redirects.json'
+        cache_pool: cache.app
+        cache_ttl: 3600
+        # protected_prefixes: [/admin, /login, /logout, /register, /reset-password, /api, /health, /build, /bundles, /media, /.well-known]
+        # protected_starts: ['/_', /robots.txt, /sitemap, /favicon]
+        hits:
+            enabled: true
+            # message_bus: messenger.default_bus
     auto_invalidate_cache: true
     register_unprefixed_default: true
     seo_kit_bridge: true

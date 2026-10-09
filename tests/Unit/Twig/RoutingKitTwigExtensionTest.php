@@ -15,12 +15,15 @@ final class RoutingKitTwigExtensionTest extends TestCase
             layoutTemplate: 'base.html.twig',
             cssFramework: 'bootstrap5',
             iconSet: 'bootstrap-icons',
+            urlRedirectsEnabled: true,
         );
 
         self::assertSame([
-            'nowo_routing_kit_layout_template' => 'base.html.twig',
-            'nowo_routing_kit_css_framework'   => 'bootstrap5',
-            'nowo_routing_kit_icon_set'        => 'bootstrap-icons',
+            'nowo_routing_kit_layout_template'       => 'base.html.twig',
+            'nowo_routing_kit_css_framework'         => 'bootstrap5',
+            'nowo_routing_kit_icon_set'              => 'bootstrap-icons',
+            'nowo_routing_kit_url_redirects_enabled' => true,
         ], $ext->getGlobals());
+        self::assertFalse((new RoutingKitTwigExtension())->getGlobals()['nowo_routing_kit_url_redirects_enabled']);
     }
 }

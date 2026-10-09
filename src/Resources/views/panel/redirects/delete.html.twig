@@ -1,0 +1,23 @@
+{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
+{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
+
+{% block title %}{{ 'redirects.delete_title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
+
+{% block body %}
+{{ include('@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}
+<main class="nowo-ui-confirm__panel">
+    <header class="nowo-ui-confirm__header">
+        <h1 class="nowo-ui-confirm__title">{{ 'redirects.delete_title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
+    </header>
+    <div class="nowo-ui-confirm__body">
+        <p>{{ 'redirects.delete_confirm'|trans({'%source%': redirect.sourcePath, '%target%': redirect.targetUrl}, 'NowoRoutingKitBundle') }}</p>
+    </div>
+    {# Confirmation page instead of an inline confirm() handler: works under a strict CSP. #}
+    {{ form_start(form, {action: path_prefix ~ '/redirects/' ~ redirect.id ~ '/delete', method: 'POST', attr: {class: 'nowo-ui-confirm__footer nowo-ui-actions actions', 'data-testid': 'redirect-delete-form'}}) }}
+        {{ form_rest(form) }}
+        <button type="submit" class="{{ ui.btn('danger', null, _css_fw) }}">{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</button>
+        <a class="{{ ui.btn('secondary', null, _css_fw) }}" href="{{ path_prefix }}/redirects">{{ 'panel.cancel'|trans({}, 'NowoRoutingKitBundle') }}</a>
+    {{ form_end(form, {render_rest: false}) }}
+</main>
+{% endblock %}

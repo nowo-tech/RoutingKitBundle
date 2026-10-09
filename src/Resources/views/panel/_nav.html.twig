@@ -1,0 +1,9 @@
+{# Panel section switcher: Routes | Redirects (redirects only when url_redirects.enabled). #}
+{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
+{% if nowo_routing_kit_url_redirects_enabled|default(false) %}
+<nav class="nowo-ui-actions actions nowo-ui-routing-kit-nav" aria-label="{{ 'nav.label'|trans({}, 'NowoRoutingKitBundle') }}">
+    <a class="{{ ui.btn(current == 'routes' ? 'primary' : 'secondary', 'sm', _css_fw) }}" href="{{ path_prefix }}/"{% if current == 'routes' %} aria-current="page"{% endif %}>{{ 'nav.routes'|trans({}, 'NowoRoutingKitBundle') }}</a>
+    <a class="{{ ui.btn(current == 'redirects' ? 'primary' : 'secondary', 'sm', _css_fw) }}" href="{{ path_prefix }}/redirects"{% if current == 'redirects' %} aria-current="page"{% endif %}>{{ 'nav.redirects'|trans({}, 'NowoRoutingKitBundle') }}</a>
+</nav>
+{% endif %}

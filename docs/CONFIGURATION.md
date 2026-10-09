@@ -31,6 +31,15 @@ Root key: `nowo_routing_kit`.
 | `redirects.root_enabled` | `false` | Redirect `/` to default-locale home |
 | `redirects.root_canonical_style` | `without_prefix` | `without_prefix` \| `with_prefix` |
 | `redirects.root_home_path` | `/` | Home path segment (must be a safe public path) |
+| `url_redirects.enabled` | `false` | Opt-in operator URL redirects (listener at priority 33 + panel section `{path_prefix}/redirects`). See [REDIRECTS.md](REDIRECTS.md) |
+| `url_redirects.storage` | `null` | Custom `UrlRedirectStorageInterface` service id (`null` = JSON file) |
+| `url_redirects.file` | `%kernel.project_dir%/var/routing_kit/redirects.json` | JSON file for the default storage |
+| `url_redirects.cache_pool` | `cache.app` | Cache pool for the enabled-redirect map (`null` = storage read once per request) |
+| `url_redirects.cache_ttl` | `3600` | Seconds; bounds staleness after writes made outside the panel |
+| `url_redirects.protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` | Whole-segment prefixes never redirected (also behind `/{locale}`); replaces defaults; `panel.path_prefix` always added |
+| `url_redirects.protected_starts` | `/_`, `/robots.txt`, `/sitemap`, `/favicon` | Raw string prefixes never redirected; replaces defaults |
+| `url_redirects.hits.enabled` | `true` | Count hits / last hit |
+| `url_redirects.hits.message_bus` | `null` | Messenger bus id for async hit counting (`null` = synchronous write) |
 | `auto_invalidate_cache` | `true` | Clear router cache after CRUD |
 | `register_unprefixed_default` | `true` | Register unprefixed routes for default locale |
 | `seo_kit_bridge` | `true` | Decorate SeoKit `SeoPathBuilderInterface` when present |

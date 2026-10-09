@@ -6,15 +6,23 @@ namespace Nowo\RoutingKitBundle\DependencyInjection;
 
 use LogicException;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
+use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\UrlRedirectSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
+use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
+use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
+use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -24,11 +32,14 @@ use Nowo\RoutingKitBundle\Security\RoutingKitAccessCheckerInterface;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
+use Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Symfony\Component\Asset\Package;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -38,6 +49,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 use function array_key_exists;
+use function array_unique;
 use function array_values;
 use function is_array;
 use function is_string;
@@ -207,6 +219,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->setParameter('nowo.routing_kit.register_unprefixed_default', $config['register_unprefixed_default']);
         $container->setParameter('nowo.routing_kit.redirects', $config['redirects']);
         $container->setParameter('nowo.routing_kit.seo_kit_bridge', $config['seo_kit_bridge']);
+        $container->setParameter('nowo.routing_kit.url_redirects', $config['url_redirects']);
+        $container->setParameter('nowo.routing_kit.url_redirects.enabled', (bool) $config['url_redirects']['enabled']);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
@@ -233,6 +247,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $this->configureLoader($container, $config);
         $this->configureSubscribers($container, $config);
         $this->configurePanel($container, $config);
+        $this->configureUrlRedirects($container, $config);
         $this->configureWebUi($container, $config);
         $this->configureImportExport($container, $config);
         $this->configureCacheInvalidator($container);
@@ -254,8 +269,87 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->removeDefinition(RouteTableFreshnessSubscriber::class);
         $container->removeDefinition(PanelAccessGuard::class);
         $container->removeDefinition(RoutePathImportExport::class);
+        $container->removeDefinition(UrlRedirectPanelController::class);
+        $this->removeUrlRedirectServices($container);
         if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
             $container->removeDefinition(RoutingKitTwigExtension::class);
+        }
+    }
+
+    private function removeUrlRedirectServices(ContainerBuilder $container): void
+    {
+        foreach ([
+            FilesystemUrlRedirectStorage::class,
+            UrlRedirectMatcher::class,
+            UrlRedirectSubscriber::class,
+            UrlRedirectValidator::class,
+            ProtectedPaths::class,
+            LivePublicPaths::class,
+            RecordRedirectHitHandler::class,
+        ] as $id) {
+            $container->removeDefinition($id);
+        }
+        // Resource loading aliases singly-implemented interfaces: drop it with its target.
+        $container->removeAlias(UrlRedirectStorageInterface::class);
+    }
+
+    /**
+     * Operator URL redirects (REQ-REDIR-*). Disabled: services removed, panel actions answer 404.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function configureUrlRedirects(ContainerBuilder $container, array $config): void
+    {
+        /** @var array{enabled: bool, storage: ?string, file: string, cache_pool: ?string, cache_ttl: int, protected_prefixes: list<string>, protected_starts: list<string>, hits: array{enabled: bool, message_bus: ?string}} $redirects */
+        $redirects = $config['url_redirects'];
+
+        if (!$redirects['enabled']) {
+            $this->removeUrlRedirectServices($container);
+
+            return;
+        }
+
+        $container->getDefinition(FilesystemUrlRedirectStorage::class)
+            ->setArgument('$filePath', $redirects['file']);
+        $storage = $redirects['storage'];
+        $container->setAlias(
+            UrlRedirectStorageInterface::class,
+            is_string($storage) && $storage !== '' ? $storage : FilesystemUrlRedirectStorage::class,
+        )->setPublic(false);
+
+        $prefixes   = $redirects['protected_prefixes'];
+        $prefixes[] = (string) $config['panel']['path_prefix'];
+        $container->getDefinition(ProtectedPaths::class)
+            ->setArgument('$locales', new Reference(LocaleProviderInterface::class))
+            ->setArgument('$prefixes', array_values(array_unique($prefixes)))
+            ->setArgument('$starts', array_values($redirects['protected_starts']));
+
+        $container->registerForAutoconfiguration(LivePathCheckerInterface::class)
+            ->addTag(LivePathCheckerInterface::TAG);
+        $container->getDefinition(LivePublicPaths::class)
+            ->setArgument('$router', new Reference('router'))
+            ->setArgument('$checkers', new TaggedIteratorArgument(LivePathCheckerInterface::TAG));
+
+        $cachePool = $redirects['cache_pool'];
+        $bus       = $redirects['hits']['message_bus'];
+        $container->getDefinition(UrlRedirectMatcher::class)
+            ->setArgument('$storage', new Reference(UrlRedirectStorageInterface::class))
+            ->setArgument('$cache', is_string($cachePool) && $cachePool !== '' ? new Reference($cachePool, ContainerInterface::NULL_ON_INVALID_REFERENCE) : null)
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$bus', is_string($bus) && $bus !== '' ? new Reference($bus) : null)
+            ->setArgument('$cacheTtl', $redirects['cache_ttl'])
+            ->setArgument('$trackHits', $redirects['hits']['enabled']);
+
+        if (is_string($bus) && $bus !== '' && $redirects['hits']['enabled']) {
+            $container->getDefinition(RecordRedirectHitHandler::class)->addTag('messenger.message_handler');
+        } else {
+            $container->removeDefinition(RecordRedirectHitHandler::class);
+        }
+
+        if ($container->hasDefinition(UrlRedirectPanelController::class)) {
+            $container->getDefinition(UrlRedirectPanelController::class)
+                ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
+                ->setArgument('$listPageSize', (int) $config['panel']['list_page_size']);
         }
     }
 
@@ -357,6 +451,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
     {
         if (!$config['panel']['enabled']) {
             $container->removeDefinition(RoutingPanelController::class);
+            $container->removeDefinition(UrlRedirectPanelController::class);
             $container->removeDefinition(PanelAccessGuard::class);
 
             return;
@@ -440,7 +535,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->getDefinition(RoutingKitTwigExtension::class)
             ->setArgument('$layoutTemplate', $webUi['layout_template'])
             ->setArgument('$cssFramework', $webUi['css_framework'])
-            ->setArgument('$iconSet', $webUi['icon_set']);
+            ->setArgument('$iconSet', $webUi['icon_set'])
+            ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled']);
     }
 
     /**
