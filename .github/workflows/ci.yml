@@ -72,10 +72,10 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php }}-symfony-${{ matrix.symfony }}-composer-
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
-      # Symfony 8.1 requires php >=8.4.1; Composer treats "8.4" as 8.4.0 and rejects it.
-      - name: Override platform for Symfony 8 (requires PHP 8.4.1+)
-        if: startsWith(matrix.symfony, '8.')
-        run: composer config platform.php 8.4.1
+      # composer.json pins platform.php to the minimum (8.2.0) for the committed lock; each cell
+      # resolves for its own PHP. "X.Y.99" also satisfies Symfony 8.x (php >=8.4.1) on PHP 8.4.
+      - name: Override Composer platform PHP (composer.json pins the minimum PHP for the lock)
+        run: composer config platform.php "${{ matrix.php }}.99"
 
       - name: Install dependencies with Symfony ${{ matrix.symfony }}
         run: |
