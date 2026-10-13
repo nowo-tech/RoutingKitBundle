@@ -510,7 +510,9 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.2...v1.8.0
+[1.7.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...v1.6.0
