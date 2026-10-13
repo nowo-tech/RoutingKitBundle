@@ -71,7 +71,7 @@ nowo_routing_kit:
 | Output escaping | Twig auto-escape |
 | `composer audit` | run before release |
 | CSRF | fail-closed |
-| Permissions / exposure | firewall + in-bundle role + UNSAFE banner if role null |
+| Permissions / exposure | firewall + in-bundle role (empty roles fail closed) + UNSAFE banner when `allow_unauthenticated: true` |
 | Limits / DoS | `max_definitions` + import payload ≤ 1 MiB |
 | Storage integrity | corrupt JSON fail-closed + flock |
 | Export HMAC | key length ≥32 |

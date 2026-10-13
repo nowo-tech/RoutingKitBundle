@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/SECURITY.md`: the release checklist no longer says the UNSAFE banner shows when the role is null (empty roles fail closed); it shows when `security.allow_unauthenticated: true`, as shipped in 1.8.0.
+
 ## [1.8.0] - 2026-10-13
 
 ### Added
