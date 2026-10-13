@@ -29,6 +29,7 @@ final class RoutingKitTwigExtension extends AbstractExtension implements Globals
         private readonly bool $showRowCount = true,
         private readonly bool $primaryActionLast = false,
         private readonly array $deleteConfirmAttr = [],
+        private readonly bool $mainLandmark = true,
     ) {
     }
 
@@ -46,6 +47,7 @@ final class RoutingKitTwigExtension extends AbstractExtension implements Globals
             'nowo_routing_kit_show_row_count'        => $this->showRowCount,
             'nowo_routing_kit_primary_action_last'   => $this->primaryActionLast,
             'nowo_routing_kit_delete_confirm_attr'   => $this->deleteConfirmAttr,
+            'nowo_routing_kit_main_landmark'         => $this->mainLandmark,
         ];
     }
 }

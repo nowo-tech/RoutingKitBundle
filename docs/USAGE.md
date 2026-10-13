@@ -114,7 +114,7 @@ Since **1.7.0** (spec [`003-admin-chrome-hooks`](../specs/003-admin-chrome-hooks
 Pick the lightest tool:
 
 1. **Class map** (`web_ui.classes`) — buttons, row actions, table, badges, empty row, forms, alerts, import.
-2. **Options** — `ui_kit_assets: false`, `import_display: modal`, `show_row_count: false`, `primary_action_last: true`, `delete_confirm_attr` (CSP-friendly confirmation instead of the inline `onsubmit`).
+2. **Options** — `ui_kit_assets: false`, `import_display: modal`, `show_row_count: false`, `primary_action_last: true`, `delete_confirm_attr` (CSP-friendly confirmation instead of the inline `onsubmit`), `main_landmark: false` (1.7.2: the page wrapper becomes a `<div>` when your layout already renders `<main>`).
 3. **Partial paths** (`web_ui.partials`) — `nav`, `pagination`, `action_inner`, `modal_shell`.
 4. **Layout slots** — your `layout_template` renders `block('rk_page_title')`, `block('rk_page_intro')`, `block('rk_page_actions')`, `block('rk_back_link')` and sets `rk_page_header_in_layout` / `rk_title_suffix`.
 5. **Block overrides** — an app override extends `@!NowoRoutingKitBundle/...` and redefines one block.
@@ -170,6 +170,7 @@ nowo_routing_kit:
         import_display: modal
         show_row_count: false
         primary_action_last: true
+        main_landmark: false          # the admin layout already renders <main>
         delete_confirm_attr:
             data-controller: confirm-submit
             data-action: 'submit->confirm-submit#confirm'

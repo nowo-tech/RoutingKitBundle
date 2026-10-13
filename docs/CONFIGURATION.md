@@ -29,6 +29,7 @@ Root key: `nowo_routing_kit`.
 | `web_ui.import_display` | `inline` | `inline` (section under the table) or `modal` (`#modal-routing-import`, opened from the page actions) |
 | `web_ui.show_row_count` | `true` | Show the "N row(s)" line |
 | `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
+| `web_ui.main_landmark` | `true` | *(1.7.2)* Wrap panel pages (definitions index / form, redirects index / form / delete) in `<main>`. `false` renders a `<div>` with the same classes, for host layouts that already own `<main>` (no nested landmarks). Twig global `nowo_routing_kit_main_landmark` |
 | `web_ui.delete_confirm_attr` | `{}` | Attributes for the row delete form; `%message%` → translated confirmation. When set, the inline `onsubmit="return confirm(…)"` is not rendered (CSP-friendly) |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = no in-bundle gate (still firewall the prefix) |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |

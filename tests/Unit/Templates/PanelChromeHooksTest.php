@@ -138,6 +138,33 @@ final class PanelChromeHooksTest extends TestCase
         self::assertStringContainsString('class="btn-danger btn-icon" href="/_routing-kit/redirects/r1/delete" data-testid="redirect-delete" title="Delete" aria-label="Delete">', $html);
     }
 
+    public function testMainLandmarkCanBeDisabledForHostsWithTheirOwnMain(): void
+    {
+        $renderer = $this->hostRenderer(['nowo_routing_kit_url_redirects_enabled' => true, 'nowo_routing_kit_main_landmark' => false]);
+        $pages    = [
+            ['@NowoRoutingKitBundle/panel/index.html.twig', PanelDefaultOutputTest::indexContext([new RoutePathDefinition('app_home', 'en', '/home', id: 'rk_1')])],
+            ['@NowoRoutingKitBundle/panel/form.html.twig', PanelDefaultOutputTest::formContext(null, [], [])],
+            ['@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelDefaultOutputTest::redirectsContext([PanelDefaultOutputTest::redirect('r1', true)], null)],
+            ['@NowoRoutingKitBundle/panel/redirects/form.html.twig', ['redirect' => null, 'form' => PanelTemplateRenderer::form('url_redirect', ['sourcePath', 'targetUrl']), 'path_prefix' => '/_routing-kit']],
+            ['@NowoRoutingKitBundle/panel/redirects/delete.html.twig', ['redirect' => PanelDefaultOutputTest::redirect('r1', true), 'form' => PanelTemplateRenderer::form('', ['_token']), 'path_prefix' => '/_routing-kit']],
+        ];
+
+        foreach ($pages as [$template, $context]) {
+            $html = $renderer->render($template, $context);
+            // Only the host layout <main class="kit-admin"> remains: no nested main landmark.
+            self::assertSame(1, substr_count($html, '<main'), $template);
+            self::assertSame(1, substr_count($html, '</main>'), $template);
+            self::assertStringContainsString('<main class="kit-admin">', $html, $template);
+        }
+
+        $delete = $renderer->render($pages[4][0], $pages[4][1]);
+        self::assertMatchesRegularExpression('#<div class="nowo-ui-confirm__panel">\s*<header class="nowo-ui-confirm__header">#', $delete, 'Same classes on the div wrapper.');
+
+        $default = $this->hostRenderer(['nowo_routing_kit_url_redirects_enabled' => true]);
+        self::assertSame(2, substr_count($default->render($pages[0][0], $pages[0][1]), '<main'), 'Default keeps the bundle <main>.');
+        self::assertStringContainsString('<main class="nowo-ui-confirm__panel">', $default->render($pages[4][0], $pages[4][1]));
+    }
+
     public function testModalImportWithDefaultShellAndAssets(): void
     {
         $html = (new PanelTemplateRenderer([], ['nowo_routing_kit_import_display' => 'modal']))

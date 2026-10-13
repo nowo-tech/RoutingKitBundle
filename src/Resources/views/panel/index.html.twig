@@ -11,6 +11,8 @@
 #}
 {% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
 {% set _rk_c = nowo_routing_kit_classes|default({}) %}
+{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
+{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
 {% set _rk_p = nowo_routing_kit_partials|default({}) %}
 {% set _rk_display = nowo_ui_kit_row_actions_display|default('text') %}
 {% set _rk_import_modal = (nowo_routing_kit_import_display ?? 'inline') == 'modal' %}
@@ -58,7 +60,7 @@
         </header>
     {% endif %}
 {% endblock %}
-<main>
+<{{ _rk_main }}>
     {% block rk_results %}
         {% if _rk_c.results is defined %}<section class="{{ _rk_c.results }}" data-testid="routing-kit-definitions-table">{% endif %}
         {% block rk_count %}
@@ -161,7 +163,7 @@
             {{ form_end(import_form) }}
         {% endif %}
     {% endblock %}
-</main>
+</{{ _rk_main }}>
 {% endblock %}
 
 {# Row actions for definition `row`. #}

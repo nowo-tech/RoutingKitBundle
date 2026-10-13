@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Spec 003: web_ui.classes / partials / ui_kit_assets / import_display / show_row_count / primary_action_last /
- * delete_confirm_attr.
+ * delete_confirm_attr / main_landmark (1.7.2).
  */
 final class PanelChromeConfigTest extends TestCase
 {
@@ -29,6 +29,7 @@ final class PanelChromeConfigTest extends TestCase
         self::assertTrue($webUi['show_row_count']);
         self::assertFalse($webUi['primary_action_last']);
         self::assertSame([], $webUi['delete_confirm_attr']);
+        self::assertTrue($webUi['main_landmark']);
     }
 
     public function testUnknownClassKeyIsRejected(): void
@@ -73,6 +74,7 @@ final class PanelChromeConfigTest extends TestCase
                 'show_row_count'      => false,
                 'primary_action_last' => true,
                 'delete_confirm_attr' => ['data-controller' => 'confirm-submit', 'data-confirm-submit-message-value' => '%message%'],
+                'main_landmark'       => false,
             ],
         ]], $container);
 
@@ -84,6 +86,7 @@ final class PanelChromeConfigTest extends TestCase
         self::assertFalse($arguments['$showRowCount']);
         self::assertTrue($arguments['$primaryActionLast']);
         self::assertSame(['data-controller' => 'confirm-submit', 'data-confirm-submit-message-value' => '%message%'], $arguments['$deleteConfirmAttr']);
+        self::assertFalse($arguments['$mainLandmark']);
     }
 
     /**

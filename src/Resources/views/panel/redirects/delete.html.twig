@@ -4,6 +4,8 @@
 {# Admin chrome hooks: slot block rk_page_title; page blocks rk_nav, rk_confirm. Classes: btn_danger, btn_secondary. #}
 {% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
 {% set _rk_c = nowo_routing_kit_classes|default({}) %}
+{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
+{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
 {% set _rk_p = nowo_routing_kit_partials|default({}) %}
 
 {% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
@@ -12,7 +14,7 @@
 {% block body %}
 {% block rk_nav %}{{ include(_rk_p.nav ?? '@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}{% endblock %}
 {% block rk_confirm %}
-<main class="nowo-ui-confirm__panel">
+<{{ _rk_main }} class="nowo-ui-confirm__panel">
     <header class="nowo-ui-confirm__header">
         <h1 class="nowo-ui-confirm__title">{{ block('rk_page_title') }}</h1>
     </header>
@@ -25,6 +27,6 @@
         <button type="submit" class="{{ _rk_c.btn_danger ?? ui.btn('danger', null, _css_fw) }}">{{ 'panel.delete'|trans }}</button>
         <a class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}" href="{{ path_prefix }}/redirects">{{ 'panel.cancel'|trans }}</a>
     {{ form_end(form, {render_rest: false}) }}
-</main>
+</{{ _rk_main }}>
 {% endblock %}
 {% endblock %}

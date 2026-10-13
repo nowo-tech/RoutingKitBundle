@@ -1,5 +1,15 @@
 # Upgrading
 
+## To 1.7.2
+
+From **1.7.1** — no breaking changes; default markup is unchanged.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+- Optional: if your `web_ui.layout_template` wraps the content block in its own `<main>`, set `web_ui.main_landmark: false` so the panel pages render a `<div>` wrapper instead of a nested `<main>`.
+
 ## To 1.7.1
 
 From **1.7.0** — dependency refresh and repository maintenance.

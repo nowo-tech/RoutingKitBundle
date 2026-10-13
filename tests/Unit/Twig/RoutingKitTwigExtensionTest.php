@@ -30,6 +30,7 @@ final class RoutingKitTwigExtensionTest extends TestCase
             'nowo_routing_kit_show_row_count'        => true,
             'nowo_routing_kit_primary_action_last'   => false,
             'nowo_routing_kit_delete_confirm_attr'   => [],
+            'nowo_routing_kit_main_landmark'         => true,
         ], $ext->getGlobals());
         self::assertFalse((new RoutingKitTwigExtension())->getGlobals()['nowo_routing_kit_url_redirects_enabled']);
     }
@@ -44,6 +45,7 @@ final class RoutingKitTwigExtensionTest extends TestCase
             showRowCount: false,
             primaryActionLast: true,
             deleteConfirmAttr: ['data-controller' => 'confirm-submit'],
+            mainLandmark: false,
         ))->getGlobals();
 
         self::assertSame(['table' => 'data-table'], $globals['nowo_routing_kit_classes']);
@@ -53,5 +55,6 @@ final class RoutingKitTwigExtensionTest extends TestCase
         self::assertFalse($globals['nowo_routing_kit_show_row_count']);
         self::assertTrue($globals['nowo_routing_kit_primary_action_last']);
         self::assertSame(['data-controller' => 'confirm-submit'], $globals['nowo_routing_kit_delete_confirm_attr']);
+        self::assertFalse($globals['nowo_routing_kit_main_landmark']);
     }
 }

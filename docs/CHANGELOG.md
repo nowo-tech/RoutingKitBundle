@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [[Unreleased]](#unreleased)
 
+- [[1.7.2] - 2026-10-13](#172---2026-10-13)
 - [[1.7.1] - 2026-10-13](#171---2026-10-13)
 - [[1.7.0] - 2026-10-13](#170---2026-10-13)
 - [[1.6.0] - 2026-10-09](#160---2026-10-09)
@@ -40,6 +41,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.7.2] - 2026-10-13
+
+### Added
+
+- **`web_ui.main_landmark`** (bool, default `true`): set `false` when the host layout already renders its own `<main>`. The page wrapper of `panel/index`, `panel/form`, `panel/redirects/index`, `panel/redirects/form` and `panel/redirects/delete` then renders as a `<div>` with the same classes (e.g. `nowo-ui-confirm__panel` on the delete page), avoiding nested `main` landmarks. Exposed as the Twig global `nowo_routing_kit_main_landmark`. Default output is byte-identical.
+
+### Changed
+
+- Dev lock: `rector/rector` 2.5.7 → 2.7.0 (2.5.7 crashed with phpstan 2.3.1, so `make rector-dry` failed on main).
 
 ## [1.7.1] - 2026-10-13
 

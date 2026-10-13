@@ -544,7 +544,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$importDisplay', (string) $webUi['import_display'])
             ->setArgument('$showRowCount', (bool) $webUi['show_row_count'])
             ->setArgument('$primaryActionLast', (bool) $webUi['primary_action_last'])
-            ->setArgument('$deleteConfirmAttr', PanelChrome::clean($webUi['delete_confirm_attr']));
+            ->setArgument('$deleteConfirmAttr', PanelChrome::clean($webUi['delete_confirm_attr']))
+            ->setArgument('$mainLandmark', (bool) $webUi['main_landmark']);
     }
 
     /**

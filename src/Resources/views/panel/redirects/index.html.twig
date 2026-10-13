@@ -8,6 +8,8 @@
 #}
 {% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
 {% set _rk_c = nowo_routing_kit_classes|default({}) %}
+{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
+{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
 {% set _rk_p = nowo_routing_kit_partials|default({}) %}
 {% set _rk_display = nowo_ui_kit_row_actions_display|default('text') %}
 
@@ -32,7 +34,7 @@
         </header>
     {% endif %}
 {% endblock %}
-<main>
+<{{ _rk_main }}>
     {% block rk_status %}
         {% if status %}
             <div class="{{ _rk_c.flash ?? ui.flash('success', _css_fw) }}" role="status" data-testid="redirect-status">{{ ('redirects.status.' ~ status)|trans }}</div>
@@ -104,7 +106,7 @@
         {% endblock %}
         {% if _rk_c.results is defined %}</section>{% endif %}
     {% endblock %}
-</main>
+</{{ _rk_main }}>
 {% endblock %}
 
 {# Row actions for `redirect`. #}
