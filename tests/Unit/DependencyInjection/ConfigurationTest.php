@@ -61,6 +61,7 @@ final class ConfigurationTest extends TestCase
             'root_canonical_style' => 'with_prefix',
             'root_home_path'       => '/inicio',
             'root_status'          => 307,
+            'canonical_cache_pool' => 'cache.app',
         ], $config['redirects']);
         self::assertFalse($config['auto_invalidate_cache']);
         self::assertFalse($config['register_unprefixed_default']);
@@ -99,6 +100,7 @@ final class ConfigurationTest extends TestCase
         self::assertSame([
             'canonical_enabled'    => true,
             'canonical_status'     => 301,
+            'canonical_cache_pool' => 'cache.app',
             'root_enabled'         => false,
             'root_canonical_style' => 'without_prefix',
             'root_home_path'       => '/',

@@ -124,6 +124,14 @@ final class RouteCacheInvalidator
         return true;
     }
 
+    /**
+     * Route-table version currently published by any worker (null until the first invalidation).
+     */
+    public function currentVersion(): ?string
+    {
+        return $this->readVersion();
+    }
+
     public function getVersionFile(): string
     {
         return $this->cacheDir . '/' . self::VERSION_FILE;

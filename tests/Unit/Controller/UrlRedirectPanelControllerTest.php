@@ -18,6 +18,7 @@ use Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -130,12 +131,26 @@ final class UrlRedirectPanelControllerTest extends TestCase
     {
         $storage = $this->createStub(UrlRedirectStorageInterface::class);
         $storage->method('findBySource')->willReturn(null);
-        $storage->method('save')->willThrowException(new RuntimeException('disk full'));
-        [$controller] = $this->controller(storage: $storage);
+        $storage->method('save')->willThrowException(new RuntimeException('disk full at /var/www/app/var/routing_kit/redirects.json'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'RoutingKit: URL redirect not saved: {message}',
+            self::callback(static fn (array $context): bool => $context['message'] === 'disk full at /var/www/app/var/routing_kit/redirects.json'),
+        );
+        [$controller] = $this->controller(storage: $storage, logger: $logger);
 
         $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/a', 'target_url' => '/x', 'status_code' => '301']));
 
-        self::assertSame('disk full', $this->rendered[0][1]['form']->vars['errors'][0]->getMessage());
+        // Generic, translated message: never the raw storage exception (file paths, SQL).
+        self::assertSame('redirects.error.save_failed', $this->rendered[0][1]['form']->vars['errors'][0]->getMessage());
+    }
+
+    public function testRoleGateWarningFlagIsPassedToTemplates(): void
+    {
+        [$controller] = $this->controller(roleGateDisabled: true);
+        $controller->index(Request::create('/_routing/redirects'));
+
+        self::assertTrue($this->rendered[0][1]['role_gate_disabled']);
     }
 
     public function testEditKeepsIdAndAudit(): void
@@ -231,6 +246,8 @@ final class UrlRedirectPanelControllerTest extends TestCase
         ?UrlRedirectStorageInterface $storage = null,
         bool $csrfValid = true,
         ?PanelAccessGuard $guard = null,
+        bool $roleGateDisabled = false,
+        ?LoggerInterface $logger = null,
     ): array {
         $storage ??= new FilesystemUrlRedirectStorage($this->file);
         $routes = new RouteCollection();
@@ -258,6 +275,8 @@ final class UrlRedirectPanelControllerTest extends TestCase
             $translator,
             '/_routing',
             $pageSize,
+            $roleGateDisabled,
+            $logger,
         );
 
         return [$controller, $storage];

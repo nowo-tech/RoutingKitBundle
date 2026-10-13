@@ -10,7 +10,7 @@
 <body class="nowo-ui-page nowo-ui-routing-kit-panel" data-css-framework="custom" data-icon-set="none">
 <header class="nowo-ui-container">
 <div class="nowo-ui-error errors" role="alert">
-<strong>UNSAFE:</strong> in-bundle role gate is disabled (<code>security.access_roles: []</code> / <code>panel.role: null</code>). Anyone who can reach this URL can manage routes. Use only on trusted local demos, or set <code>ROLE_ADMIN</code> and firewall the prefix. </div>
+<strong>UNSAFE:</strong> in-bundle role gate is disabled (<code>security.allow_unauthenticated: true</code>). Anyone who can reach this URL can manage routes. Use only on trusted local demos, or set it to <code>false</code>, keep <code>security.access_roles: [ROLE_ADMIN]</code> and firewall the prefix. </div>
 </header>
 <div class="nowo-ui-container">
 <header class="nowo-ui-page-header">

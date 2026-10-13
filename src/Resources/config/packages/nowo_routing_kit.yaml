@@ -31,6 +31,7 @@ nowo_routing_kit:
     redirects:
         canonical_enabled: true
         canonical_status: 301
+        canonical_cache_pool: cache.app
         root_enabled: false
         root_canonical_style: without_prefix
         root_home_path: /

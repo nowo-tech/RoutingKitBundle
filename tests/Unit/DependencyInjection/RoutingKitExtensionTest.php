@@ -195,8 +195,36 @@ final class RoutingKitExtensionTest extends TestCase
         $guard = $container->getDefinition(PanelAccessGuard::class);
         self::assertTrue($guard->getArgument('$allowUnauthenticated'));
         self::assertFalse($guard->getArgument('$roleGateDisabled'));
-        self::assertFalse($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
+        // The panel must show the UNSAFE banner whenever the in-bundle role check is skipped.
+        self::assertTrue($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
         self::assertTrue($container->hasDefinition('nowo.routing_kit.access_checker.allow_all'));
+    }
+
+    public function testAllowUnauthenticatedShowsWarningOnRedirectPanel(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'security'      => ['allow_unauthenticated' => true],
+            'url_redirects' => ['enabled' => true],
+        ]], $container);
+
+        $controller = $container->getDefinition(UrlRedirectPanelController::class);
+        self::assertTrue($controller->getArgument('$roleGateDisabled'));
+        self::assertEquals(new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE), $controller->getArgument('$logger'));
+    }
+
+    public function testCanonicalSubscriberCachePool(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[]], $container);
+
+        $subscriber = $container->getDefinition(CanonicalRedirectSubscriber::class);
+        self::assertEquals(new Reference('cache.app', ContainerInterface::NULL_ON_INVALID_REFERENCE), $subscriber->getArgument('$cache'));
+        self::assertEquals(new Reference(RouteCacheInvalidator::class, ContainerInterface::NULL_ON_INVALID_REFERENCE), $subscriber->getArgument('$routeTable'));
+
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([['redirects' => ['canonical_cache_pool' => null]]], $container);
+        self::assertNull($container->getDefinition(CanonicalRedirectSubscriber::class)->getArgument('$cache'));
     }
 
     public function testEmptyAccessRolesKeepsRoleGateEnabled(): void

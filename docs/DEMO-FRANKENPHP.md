@@ -260,7 +260,7 @@ Full findings and residuals: [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDI
 
 ### Panel shows UNSAFE or export/import fails
 
-- Demo may set `panel.role: null` for local use — do not expose publicly.
+- The demo sets `security.allow_unauthenticated: true`, which shows the UNSAFE banner — do not expose it publicly. (`panel.role: null` / `access_roles: []` alone denies every panel request.)
 - Export/import signing key must be ≥32 characters (`APP_SECRET` / `panel.export_signing_key`).
 
 ### Demo does not respond or `make up` times out

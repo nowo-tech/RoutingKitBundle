@@ -42,6 +42,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`redirects.canonical_cache_pool`** (default `cache.app`, `null` = no pool): the resolved canonical/alias path table is cached under the current route-table version and memoized per request (reset via `kernel.reset`), instead of reading and locking the JSON storage and resolving every row × locale on every main request. Panel / `RoutePathManager` writes (`RoutePathsChangedEvent`) drop the cached table; `RouteCacheInvalidator::currentVersion()` exposes the shared route-table version.
+
+### Fixed
+
+- Canonical and trailing-slash redirects now keep the query string (`utm_*`, pagination, …) on the `Location` target.
+- Canonical and trailing-slash redirects only apply to safe methods (`GET`/`HEAD`): a 301 on `POST`/`PUT`/`PATCH`/`DELETE` no longer drops the request body. Unsafe requests do not touch the path storage.
+- `panel.role_gate_warning` (UNSAFE banner) was never shown: the panels now pass `security.allow_unauthenticated` as the role-gate flag (definitions panel and redirects panel). The banner text in all 7 locales no longer claims that `security.access_roles: []` / `panel.role: null` disables the gate (an empty list fails closed); `docs/CONFIGURATION.md` and `docs/DEMO-FRANKENPHP.md` aligned.
+- Storage failures in the redirect form are logged (`logger`, error level) and shown as the generic translated `redirects.error.save_failed` message instead of the raw exception text (file paths, SQL).
+
+### Changed
+
+- Symfony floor aligned to **7.4** for every component (`symfony/event-dispatcher`, `finder`, `routing`, `security-csrf`, `yaml` and the dev `asset`, `framework-bundle`, `messenger`, `twig-bundle` still allowed `^7.0`); CI matrix drops the untested-floor `7.0` cell.
+
 ## [1.7.2] - 2026-10-13
 
 ### Added

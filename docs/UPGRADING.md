@@ -1,5 +1,13 @@
 # Upgrading
 
+## Unreleased
+
+- **Symfony 7.4+** is now required for every `symfony/*` dependency (some components still allowed `^7.0`). Symfony 7.0–7.3 hosts must upgrade to 7.4 LTS first.
+- Canonical / trailing-slash redirects only fire for `GET`/`HEAD` and keep the query string. If you relied on `POST` to an alias path being redirected, post to the canonical path instead.
+- The canonical path table is cached in `cache.app` by default (key follows the route-table version; panel writes clear it). Set `redirects.canonical_cache_pool: ~` to read the storage once per request instead, e.g. if you edit the JSON / storage outside the panel with `auto_invalidate_cache: false` (otherwise changes show up after at most one hour or a `cache:clear`).
+- With `security.allow_unauthenticated: true` the panel now shows the UNSAFE banner, as documented.
+- New translation key `redirects.error.save_failed`: add it if you override the `NowoRoutingKitBundle` domain.
+
 ## To 1.7.2
 
 From **1.7.1** — no breaking changes; default markup is unchanged.

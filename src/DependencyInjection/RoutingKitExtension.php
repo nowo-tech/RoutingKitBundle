@@ -350,7 +350,9 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         if ($container->hasDefinition(UrlRedirectPanelController::class)) {
             $container->getDefinition(UrlRedirectPanelController::class)
                 ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
-                ->setArgument('$listPageSize', (int) $config['panel']['list_page_size']);
+                ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
+                ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated'])
+                ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
         }
     }
 
@@ -430,11 +432,15 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     private function configureSubscribers(ContainerBuilder $container, array $config): void
     {
-        $redirects = $config['redirects'];
+        $redirects     = $config['redirects'];
+        $canonicalPool = $redirects['canonical_cache_pool'] ?? null;
 
         $container->getDefinition(CanonicalRedirectSubscriber::class)
             ->setArgument('$enabled', (bool) $redirects['canonical_enabled'])
-            ->setArgument('$redirectStatus', (int) $redirects['canonical_status']);
+            ->setArgument('$redirectStatus', (int) $redirects['canonical_status'])
+            ->setArgument('$cache', is_string($canonicalPool) && $canonicalPool !== '' ? new Reference($canonicalPool, ContainerInterface::NULL_ON_INVALID_REFERENCE) : null)
+            ->setArgument('$routeTable', new Reference(RouteCacheInvalidator::class, ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
         $style = CanonicalStyle::tryFrom((string) $redirects['root_canonical_style']) ?? CanonicalStyle::WithoutPrefix;
 
@@ -468,7 +474,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->getDefinition(RoutingPanelController::class)
             ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
             ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
-            ->setArgument('$roleGateDisabled', false)
+            // Shows panel.role_gate_warning: the in-bundle role check is skipped (AllowAll checker).
+            ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated'])
             ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');

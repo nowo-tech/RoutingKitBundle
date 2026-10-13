@@ -13,6 +13,7 @@ use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -61,6 +62,8 @@ final class UrlRedirectPanelController
         private readonly ?TranslatorInterface $translator = null,
         private readonly string $pathPrefix = '/_routing',
         private readonly int $listPageSize = 50,
+        private readonly bool $roleGateDisabled = false,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -172,7 +175,9 @@ final class UrlRedirectPanelController
 
                     return new RedirectResponse($this->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
                 } catch (Throwable $exception) {
-                    $form->addError(new FormError($exception->getMessage()));
+                    // Storage messages may expose file paths or SQL: log them, show a generic error.
+                    $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
+                    $form->addError(new FormError($this->trans('redirects.error.save_failed'), 'redirects.error.save_failed'));
                 }
             }
 
@@ -232,6 +237,6 @@ final class UrlRedirectPanelController
      */
     private function render(string $template, array $context): Response
     {
-        return new Response($this->twig->render($template, $context));
+        return new Response($this->twig->render($template, $context + ['role_gate_disabled' => $this->roleGateDisabled]));
     }
 }

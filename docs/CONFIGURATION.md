@@ -31,11 +31,12 @@ Root key: `nowo_routing_kit`.
 | `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
 | `web_ui.main_landmark` | `true` | *(1.7.2)* Wrap panel pages (definitions index / form, redirects index / form / delete) in `<main>`. `false` renders a `<div>` with the same classes, for host layouts that already own `<main>` (no nested landmarks). Twig global `nowo_routing_kit_main_landmark` |
 | `web_ui.delete_confirm_attr` | `{}` | Attributes for the row delete form; `%message%` → translated confirmation. When set, the inline `onsubmit="return confirm(…)"` is not rendered (CSP-friendly) |
-| `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = no in-bundle gate (still firewall the prefix) |
+| `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = fail-closed (every panel request is denied). Still firewall the prefix |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |
-| `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll); panel requires SecurityBundle when `false` |
+| `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll) and show the **UNSAFE** banner on every panel page; panel requires SecurityBundle when `false` |
 | `redirects.canonical_enabled` | `true` | Redirect non-canonical twins |
-| `redirects.canonical_status` | `301` | Redirect status |
+| `redirects.canonical_status` | `301` | Redirect status. Only `GET`/`HEAD` are redirected; the query string is kept |
+| `redirects.canonical_cache_pool` | `cache.app` | Cache pool for the resolved canonical/alias path table, keyed by the route-table version (`null` = storage read once per request) |
 | `redirects.root_enabled` | `false` | Redirect `/` to default-locale home |
 | `redirects.root_canonical_style` | `without_prefix` | `without_prefix` \| `with_prefix` |
 | `redirects.root_home_path` | `/` | Home path segment (must be a safe public path) |
@@ -94,6 +95,6 @@ nowo_routing_kit:
 
 ### Private access (REQ-UI-002)
 
-Prefer `security.access_roles`. Legacy `panel.role: ROLE_X` still maps to `access_roles: [ROLE_X]`; `panel.role: null` maps to `access_roles: []`. Always add host `access_control` for `panel.path_prefix`.
+Prefer `security.access_roles`. Legacy `panel.role: ROLE_X` still maps to `access_roles: [ROLE_X]`; `panel.role: null` maps to `access_roles: []` (fail-closed: the panel denies everyone). Always add host `access_control` for `panel.path_prefix`.
 
 See `src/Resources/config/packages/nowo_routing_kit.yaml` for a full example.
