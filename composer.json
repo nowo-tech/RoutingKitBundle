@@ -64,7 +64,7 @@
         "symfony/messenger": "^7.0 || ^8.0",
         "symfony/twig-bundle": "^7.0 || ^8.0",
         "twig/twig": "^3.12",
-        "vincentlanglet/twig-cs-fixer": "^3.0"
+        "vincentlanglet/twig-cs-fixer": "^4.1"
     },
     "suggest": {
         "nowo-tech/form-kit-bundle": "Panel Symfony forms (FormOptionsTrait, profile routing_kit). Pulled in automatically when using the CRUD panel.",
