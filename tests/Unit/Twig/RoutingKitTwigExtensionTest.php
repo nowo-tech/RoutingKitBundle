@@ -23,7 +23,35 @@ final class RoutingKitTwigExtensionTest extends TestCase
             'nowo_routing_kit_css_framework'         => 'bootstrap5',
             'nowo_routing_kit_icon_set'              => 'bootstrap-icons',
             'nowo_routing_kit_url_redirects_enabled' => true,
+            'nowo_routing_kit_classes'               => [],
+            'nowo_routing_kit_partials'              => [],
+            'nowo_routing_kit_ui_kit_assets'         => true,
+            'nowo_routing_kit_import_display'        => 'inline',
+            'nowo_routing_kit_show_row_count'        => true,
+            'nowo_routing_kit_primary_action_last'   => false,
+            'nowo_routing_kit_delete_confirm_attr'   => [],
         ], $ext->getGlobals());
         self::assertFalse((new RoutingKitTwigExtension())->getGlobals()['nowo_routing_kit_url_redirects_enabled']);
+    }
+
+    public function testExposesAdminChromeHooks(): void
+    {
+        $globals = (new RoutingKitTwigExtension(
+            classes: ['table' => 'data-table'],
+            partials: ['pagination' => 'kit/_pagination.html.twig'],
+            uiKitAssets: false,
+            importDisplay: 'modal',
+            showRowCount: false,
+            primaryActionLast: true,
+            deleteConfirmAttr: ['data-controller' => 'confirm-submit'],
+        ))->getGlobals();
+
+        self::assertSame(['table' => 'data-table'], $globals['nowo_routing_kit_classes']);
+        self::assertSame(['pagination' => 'kit/_pagination.html.twig'], $globals['nowo_routing_kit_partials']);
+        self::assertFalse($globals['nowo_routing_kit_ui_kit_assets']);
+        self::assertSame('modal', $globals['nowo_routing_kit_import_display']);
+        self::assertFalse($globals['nowo_routing_kit_show_row_count']);
+        self::assertTrue($globals['nowo_routing_kit_primary_action_last']);
+        self::assertSame(['data-controller' => 'confirm-submit'], $globals['nowo_routing_kit_delete_confirm_attr']);
     }
 }

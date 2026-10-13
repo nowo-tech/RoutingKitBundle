@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [[Unreleased]](#unreleased)
 
+- [[1.7.0] - 2026-10-13](#170---2026-10-13)
 - [[1.6.0] - 2026-10-09](#160---2026-10-09)
 - [[1.5.1] - 2026-10-09](#151---2026-10-09)
 - [[1.5.0] - 2026-09-28](#150---2026-09-28)
@@ -39,9 +40,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-13
+
+Admin chrome hooks (spec [`003-admin-chrome-hooks`](../specs/003-admin-chrome-hooks/spec.md)): hosts can theme the panel without copying pages. Default markup is unchanged (snapshot-tested); default English strings are unchanged.
+
+### Added
+
+- `web_ui.classes`: allow-listed class map (buttons, row actions, page header, table cells, badges, empty row, forms, alerts, import). Twig global `nowo_routing_kit_classes`.
+- `web_ui.partials`: `nav`, `pagination`, `action_inner` (e.g. UiKit `_action_inner` for `row_actions_display`), `modal_shell`. Twig global `nowo_routing_kit_partials`.
+- `web_ui.ui_kit_assets`, `web_ui.import_display` (`inline` | `modal`, with `panel/_modal_shell.html.twig` and the `modal-routing-import` id), `web_ui.show_row_count`, `web_ui.primary_action_last`, `web_ui.delete_confirm_attr` (CSP-friendly delete confirmation, e.g. a Stimulus controller).
+- Twig blocks on every panel page (slot blocks `rk_page_title`, `rk_page_intro`, `rk_page_actions`, `rk_back_link`; page blocks `rk_page_header`, `rk_results`, `rk_table`, `rk_row`, `rk_enabled_cell`, `rk_row_actions`, `rk_empty_state`, `rk_pagination`, `rk_import`, `rk_form*`…) and layout contract variables `rk_page_header_in_layout`, `rk_title_suffix`.
+- `@!NowoRoutingKitBundle/...` Twig namespace (always the bundle copy) so an app override can extend the original page and redefine blocks only.
+- Translation keys `panel.export`, `panel.import`, `panel.import_title`, `panel.import_payload`, `panel.import_replace_all`, `panel.count`, `panel.yes`, `panel.no`, `panel.delete_confirm`, `panel.col.actions`, `panel.role_gate_warning` in all 7 locales; render tests for the default output and every hook; catalogue parity test.
+
 ### Changed
 
+- No hard-coded English left in panel templates ("Export", "Import", "Import (signed JSON)", "row(s)", "yes"/"no", "Delete?", the role-gate warning); the import form labels use translation keys. English output is identical.
+- `panel.*` strings translated in de, fr, it, nl, pt (they were English).
 - Development: `composer.json` pins `config.platform.php` to 8.2.0 so the committed lock stays installable on the minimum PHP; CI overrides the platform per matrix cell.
+- Dev lock: `nowo-tech/form-kit-bundle` v2.8.0, `nowo-tech/ui-kit-bundle` v1.12.0 (`make composer-sync`).
 - Dev lock re-resolved for PHP 8.2 (Symfony components 8.1.x -> 7.4.x, `symfony/polyfill-php83` added, `symfony/polyfill-deepclone` dropped; `nowo-tech/form-kit-bundle` v2.7.0, `nowo-tech/ui-kit-bundle` v1.10.0).
 
 ## [1.6.0] - 2026-10-09
@@ -453,6 +470,7 @@ First stable release of **Routing Kit Bundle**.
 - Twig for the CRUD panel templates.
 
 [Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...HEAD
+[1.7.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...v1.6.0
 [1.4.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/nowo-tech/RoutingKitBundle/releases/tag/v1.4.4

@@ -1,6 +1,21 @@
 # Upgrading
 
 
+## To 1.7.0
+
+No breaking changes; with no new option the panel renders as in 1.6 (English strings included).
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+php bin/console cache:clear
+```
+
+- Copies of `panel/base.html.twig`, `panel/index.html.twig` or `panel/form.html.twig` made only to change classes, move actions into your header, show the import in a modal or replace the inline `confirm()` can be deleted: use `web_ui.classes`, `web_ui.partials`, `web_ui.ui_kit_assets`, `web_ui.import_display`, `web_ui.show_row_count`, `web_ui.primary_action_last`, `web_ui.delete_confirm_attr` and a layout that renders the slot blocks (see [USAGE — Customising the admin chrome](USAGE.md#customising-the-admin-chrome)).
+- A remaining override can extend the original: `{% extends '@!NowoRoutingKitBundle/panel/index.html.twig' %}` and redefine blocks only.
+- Host translation overrides for `panel.export`, `panel.import`, `panel.yes`… keep working (application catalogues win); you can drop the ones that match the bundle now.
+- The import form labels are now the keys `panel.import_payload` / `panel.import_replace_all` (same English text).
+
+
 ## To 1.6.0
 
 No breaking changes. The new operator URL redirect manager is **off by default**; existing apps need no change.

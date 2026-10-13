@@ -17,6 +17,7 @@ use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\RoutingKitBundle\Panel\PanelChrome;
 use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
@@ -536,7 +537,14 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$layoutTemplate', $webUi['layout_template'])
             ->setArgument('$cssFramework', $webUi['css_framework'])
             ->setArgument('$iconSet', $webUi['icon_set'])
-            ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled']);
+            ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled'])
+            ->setArgument('$classes', PanelChrome::clean($webUi['classes']))
+            ->setArgument('$partials', PanelChrome::clean($webUi['partials']))
+            ->setArgument('$uiKitAssets', (bool) $webUi['ui_kit_assets'])
+            ->setArgument('$importDisplay', (string) $webUi['import_display'])
+            ->setArgument('$showRowCount', (bool) $webUi['show_row_count'])
+            ->setArgument('$primaryActionLast', (bool) $webUi['primary_action_last'])
+            ->setArgument('$deleteConfirmAttr', PanelChrome::clean($webUi['delete_confirm_attr']));
     }
 
     /**

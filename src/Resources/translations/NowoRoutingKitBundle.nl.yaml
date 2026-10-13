@@ -1,32 +1,43 @@
-panel.title: Routing Kit
-panel.subtitle: 'Manage locale paths (default: %default%). Paths are stored without {_locale}; the loader always applies /{_locale}/…'
-panel.new: New path
-panel.clear_cache: Clear routing cache
-panel.edit: Edit
-panel.delete: Delete
-panel.empty: No path definitions yet.
-panel.col.route: Route
-panel.col.locale: Locale
-panel.col.path: Path
-panel.col.canonical: Canonical
-panel.col.enabled: Enabled
-panel.edit_title: Edit path
-panel.create_title: Create path
-panel.form_hint: 'Define path as /about or /blog/{slug}. Do not include {_locale}.'
-panel.save: Save
-panel.cancel: Cancel
-panel.form.trailing_slash: Trailing slash
-panel.form.alias_mode: Alias mode
-panel.form.controller: Controller (allowlist override)
-panel.form.controller_empty: — discovery default —
-panel.form.canonical_style.without_prefix: Without locale prefix
-panel.form.canonical_style.with_prefix: With locale prefix
-panel.form.trailing_slash_style.omit: Omit
-panel.form.trailing_slash_style.keep: Keep
-panel.form.trailing_slash_style.redirect_to_omit: Redirect to omit
-panel.form.trailing_slash_style.redirect_to_keep: Redirect to keep
-panel.form.alias_mode_choice.redirect: Redirect alias to canonical
-panel.form.alias_mode_choice.alias: Serve alias (200)
+panel.title: "Routing Kit"
+panel.subtitle: "Beheer paden per locale (standaard: %default%). Paden worden opgeslagen zonder {_locale}; de loader past altijd /{_locale}/… toe."
+panel.new: "Nieuw pad"
+panel.clear_cache: "Routingcache legen"
+panel.edit: "Bewerken"
+panel.delete: "Verwijderen"
+panel.empty: "Nog geen paddefinities."
+panel.col.route: "Route"
+panel.col.locale: "Locale"
+panel.col.path: "Pad"
+panel.col.canonical: "Canoniek"
+panel.col.enabled: "Actief"
+panel.edit_title: "Pad bewerken"
+panel.create_title: "Pad aanmaken"
+panel.form_hint: "Geef het pad op als /about of /blog/{slug}. Neem {_locale} niet op."
+panel.save: "Opslaan"
+panel.cancel: "Annuleren"
+panel.form.trailing_slash: "Afsluitende slash"
+panel.form.alias_mode: "Aliasmodus"
+panel.form.controller: "Controller (uitzondering op allowlist)"
+panel.form.controller_empty: "— standaard van de discovery —"
+panel.form.canonical_style.without_prefix: "Zonder localeprefix"
+panel.form.canonical_style.with_prefix: "Met localeprefix"
+panel.form.trailing_slash_style.omit: "Weglaten"
+panel.form.trailing_slash_style.keep: "Behouden"
+panel.form.trailing_slash_style.redirect_to_omit: "Doorsturen naar zonder"
+panel.form.trailing_slash_style.redirect_to_keep: "Doorsturen naar met"
+panel.form.alias_mode_choice.redirect: "Alias doorsturen naar canoniek"
+panel.form.alias_mode_choice.alias: "Alias serveren (200)"
+panel.col.actions: "Acties"
+panel.export: "Exporteren"
+panel.import: "Importeren"
+panel.import_title: "Importeren (ondertekende JSON)"
+panel.import_payload: "JSON-inhoud"
+panel.import_replace_all: "Alle bestaande rijen vervangen"
+panel.count: "%count% rij(en)"
+panel.yes: "ja"
+panel.no: "nee"
+panel.delete_confirm: "Deze paddefinitie verwijderen?"
+panel.role_gate_warning: "<strong>ONVEILIG:</strong> de rolcontrole van de bundle is uitgeschakeld (<code>security.access_roles: []</code> / <code>panel.role: null</code>). Iedereen die deze URL bereikt, kan routes beheren. Gebruik dit alleen voor vertrouwde lokale demo’s, of stel <code>ROLE_ADMIN</code> in en bescherm het prefix met de firewall."
 nav.label: "Routing Kit-secties"
 nav.routes: "Routes"
 nav.redirects: "Doorverwijzingen"

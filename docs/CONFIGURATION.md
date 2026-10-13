@@ -23,6 +23,13 @@ Root key: `nowo_routing_kit`.
 | `web_ui.layout_template` | `@NowoRoutingKitBundle/panel/layout.html.twig` | Host apps SHOULD set their project layout |
 | `web_ui.css_framework` | `custom` | `bootstrap` / `bootstrap4` / `bootstrap5` / `tailwind` / `foundation` / `custom` / `tabler` / `none` |
 | `web_ui.icon_set` | `none` | `bootstrap-icons` / `tabler-icons` / `ux_icon` / `svg_inline` / `none` |
+| `web_ui.classes` | `{}` | Admin chrome class map (allow-listed keys, see [USAGE](USAGE.md#customising-the-admin-chrome)); unknown keys fail at container build. Twig global `nowo_routing_kit_classes` |
+| `web_ui.partials` | `{}` | `nav`, `pagination`, `action_inner`, `modal_shell`. Twig global `nowo_routing_kit_partials` |
+| `web_ui.ui_kit_assets` | `true` | Append `nowo-ui.css` (and `nowo-ui-modal.js` with `import_display: modal`) from `panel/base.html.twig`; `false` when the host layout loads UiKit first |
+| `web_ui.import_display` | `inline` | `inline` (section under the table) or `modal` (`#modal-routing-import`, opened from the page actions) |
+| `web_ui.show_row_count` | `true` | Show the "N row(s)" line |
+| `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
+| `web_ui.delete_confirm_attr` | `{}` | Attributes for the row delete form; `%message%` → translated confirmation. When set, the inline `onsubmit="return confirm(…)"` is not rendered (CSP-friendly) |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = no in-bundle gate (still firewall the prefix) |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |
 | `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll); panel requires SecurityBundle when `false` |

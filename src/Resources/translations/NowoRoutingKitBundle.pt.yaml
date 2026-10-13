@@ -1,32 +1,43 @@
-panel.title: Routing Kit
-panel.subtitle: 'Manage locale paths (default: %default%). Paths are stored without {_locale}; the loader always applies /{_locale}/…'
-panel.new: New path
-panel.clear_cache: Clear routing cache
-panel.edit: Edit
-panel.delete: Delete
-panel.empty: No path definitions yet.
-panel.col.route: Route
-panel.col.locale: Locale
-panel.col.path: Path
-panel.col.canonical: Canonical
-panel.col.enabled: Enabled
-panel.edit_title: Edit path
-panel.create_title: Create path
-panel.form_hint: 'Define path as /about or /blog/{slug}. Do not include {_locale}.'
-panel.save: Save
-panel.cancel: Cancel
-panel.form.trailing_slash: Trailing slash
-panel.form.alias_mode: Alias mode
-panel.form.controller: Controller (allowlist override)
-panel.form.controller_empty: — discovery default —
-panel.form.canonical_style.without_prefix: Without locale prefix
-panel.form.canonical_style.with_prefix: With locale prefix
-panel.form.trailing_slash_style.omit: Omit
-panel.form.trailing_slash_style.keep: Keep
-panel.form.trailing_slash_style.redirect_to_omit: Redirect to omit
-panel.form.trailing_slash_style.redirect_to_keep: Redirect to keep
-panel.form.alias_mode_choice.redirect: Redirect alias to canonical
-panel.form.alias_mode_choice.alias: Serve alias (200)
+panel.title: "Routing Kit"
+panel.subtitle: "Gerir caminhos por locale (predefinido: %default%). Os caminhos são guardados sem {_locale}; o loader aplica sempre /{_locale}/…"
+panel.new: "Novo caminho"
+panel.clear_cache: "Limpar cache de routing"
+panel.edit: "Editar"
+panel.delete: "Eliminar"
+panel.empty: "Ainda não há definições de caminho."
+panel.col.route: "Rota"
+panel.col.locale: "Locale"
+panel.col.path: "Caminho"
+panel.col.canonical: "Canónico"
+panel.col.enabled: "Ativo"
+panel.edit_title: "Editar caminho"
+panel.create_title: "Criar caminho"
+panel.form_hint: "Indique o caminho como /about ou /blog/{slug}. Não inclua {_locale}."
+panel.save: "Guardar"
+panel.cancel: "Cancelar"
+panel.form.trailing_slash: "Barra final"
+panel.form.alias_mode: "Modo alias"
+panel.form.controller: "Controlador (exceção à allowlist)"
+panel.form.controller_empty: "— predefinição da descoberta —"
+panel.form.canonical_style.without_prefix: "Sem prefixo de locale"
+panel.form.canonical_style.with_prefix: "Com prefixo de locale"
+panel.form.trailing_slash_style.omit: "Omitir"
+panel.form.trailing_slash_style.keep: "Manter"
+panel.form.trailing_slash_style.redirect_to_omit: "Redirecionar para sem"
+panel.form.trailing_slash_style.redirect_to_keep: "Redirecionar para com"
+panel.form.alias_mode_choice.redirect: "Redirecionar alias para o canónico"
+panel.form.alias_mode_choice.alias: "Servir alias (200)"
+panel.col.actions: "Ações"
+panel.export: "Exportar"
+panel.import: "Importar"
+panel.import_title: "Importar (JSON assinado)"
+panel.import_payload: "Conteúdo JSON"
+panel.import_replace_all: "Substituir todas as linhas existentes"
+panel.count: "%count% linha(s)"
+panel.yes: "sim"
+panel.no: "não"
+panel.delete_confirm: "Eliminar esta definição de caminho?"
+panel.role_gate_warning: "<strong>INSEGURO:</strong> o controlo de papéis do bundle está desativado (<code>security.access_roles: []</code> / <code>panel.role: null</code>). Qualquer pessoa que chegue a este URL pode gerir rotas. Use apenas em demos locais de confiança, ou defina <code>ROLE_ADMIN</code> e proteja o prefixo com a firewall."
 nav.label: "Secções do Routing Kit"
 nav.routes: "Rotas"
 nav.redirects: "Redirecionamentos"

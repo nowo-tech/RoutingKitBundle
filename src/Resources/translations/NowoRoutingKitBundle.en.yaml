@@ -27,6 +27,17 @@ panel.form.trailing_slash_style.redirect_to_omit: Redirect to omit
 panel.form.trailing_slash_style.redirect_to_keep: Redirect to keep
 panel.form.alias_mode_choice.redirect: Redirect alias to canonical
 panel.form.alias_mode_choice.alias: Serve alias (200)
+panel.col.actions: "Actions"
+panel.export: "Export"
+panel.import: "Import"
+panel.import_title: "Import (signed JSON)"
+panel.import_payload: "payload JSON"
+panel.import_replace_all: "replace all existing rows"
+panel.count: "%count% row(s)"
+panel.yes: "yes"
+panel.no: "no"
+panel.delete_confirm: "Delete?"
+panel.role_gate_warning: "<strong>UNSAFE:</strong> in-bundle role gate is disabled (<code>security.access_roles: []</code> / <code>panel.role: null</code>). Anyone who can reach this URL can manage routes. Use only on trusted local demos, or set <code>ROLE_ADMIN</code> and firewall the prefix."
 nav.label: "Routing Kit sections"
 nav.routes: "Routes"
 nav.redirects: "Redirects"

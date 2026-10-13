@@ -43,6 +43,10 @@ final class TwigPathsPass implements CompilerPassInterface
 
         // @igor-ignore - Container compile-time DI mutation; not runtime worker state.
         $definition->addMethodCall('addPath', [$viewsPath, self::TWIG_NAMESPACE]);
+        // Spec 003: `@!NowoRoutingKitBundle/...` always resolves to the bundle copy, so an app override can
+        // extend the original page and only redefine blocks (Symfony's bang-namespace convention).
+        // @igor-ignore - Container compile-time DI mutation; not runtime worker state.
+        $definition->addMethodCall('addPath', [$viewsPath, '!' . self::TWIG_NAMESPACE]);
     }
 
     private function getNativeLoaderServiceId(ContainerBuilder $container): ?string

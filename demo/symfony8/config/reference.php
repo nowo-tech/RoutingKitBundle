@@ -856,6 +856,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         layout_template?: scalar|Param|null, // Twig layout that panel pages extend (host apps SHOULD set their project layout). // Default: "@NowoRoutingKitBundle/panel/layout.html.twig"
  *         css_framework?: "bootstrap"|"bootstrap4"|"bootstrap5"|"tailwind"|"foundation"|"custom"|"tabler"|"none"|Param, // Default: "custom"
  *         icon_set?: "bootstrap-icons"|"tabler-icons"|"ux_icon"|"svg_inline"|"none"|Param, // Default: "none"
+ *         classes?: array<string, scalar|Param|null>,
+ *         partials?: array<string, scalar|Param|null>,
+ *         ui_kit_assets?: bool|Param, // Append nowo-ui.css (and nowo-ui-modal.js in import_display: modal) from panel/base.html.twig. Set false when the host layout already loads UiKit assets before its theme. // Default: true
+ *         import_display?: "inline"|"modal"|Param, // Signed JSON import: inline section under the table (default) or a modal opened from the page actions. // Default: "inline"
+ *         show_row_count?: bool|Param, // Show the "N row(s)" line above the tables. // Default: true
+ *         primary_action_last?: bool|Param, // Render the primary "New" action after the secondary page actions. // Default: false
+ *         delete_confirm_attr?: array<string, scalar|Param|null>,
  *     },
  *     security?: array{ // REQ-UI-002 private panel access (firewall the path_prefix in the host app as well).
  *         access_roles?: list<scalar|Param|null>,
@@ -869,6 +876,19 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         root_canonical_style?: "without_prefix"|"with_prefix"|Param, // Default: "without_prefix"
  *         root_home_path?: scalar|Param|null, // Default: "/"
  *         root_status?: int|Param, // Default: 302
+ *     },
+ *     url_redirects?: array{ // Operator-managed redirects (old public path → new path or URL), applied before routing.
+ *         enabled?: bool|Param, // Opt-in. Registers the request listener (priority 33) and the panel section. // Default: false
+ *         storage?: scalar|Param|null, // Service id implementing UrlRedirectStorageInterface (e.g. a Doctrine repository). null = JSON file. // Default: null
+ *         file?: scalar|Param|null, // JSON file used by the default FilesystemUrlRedirectStorage. // Default: "%kernel.project_dir%/var/routing_kit/redirects.json"
+ *         cache_pool?: scalar|Param|null, // Cache pool (Symfony Contracts CacheInterface) for the enabled-redirects map. null = storage read once per request. // Default: "cache.app"
+ *         cache_ttl?: int|Param, // Seconds the cached map lives; bounds staleness after writes made outside the panel. // Default: 3600
+ *         protected_prefixes?: list<scalar|Param|null>,
+ *         protected_starts?: list<scalar|Param|null>,
+ *         hits?: array{
+ *             enabled?: bool|Param, // Count hits / last hit per redirect. // Default: true
+ *             message_bus?: scalar|Param|null, // Messenger bus service id (e.g. messenger.default_bus) to count hits asynchronously. null = synchronous write. // Default: null
+ *         },
  *     },
  *     auto_invalidate_cache?: bool|Param, // Default: true
  *     register_unprefixed_default?: bool|Param, // Default: true

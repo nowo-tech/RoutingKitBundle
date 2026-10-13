@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routing Kit</title>
+<link rel="stylesheet" href="/assets/nowo_ui_kit/css/nowo-ui.css">
+<link rel="stylesheet" href="/assets/nowo_ui_kit/css/nowo-ui.css">
+</head>
+<body class="nowo-ui-page nowo-ui-routing-kit-panel" data-css-framework="custom" data-icon-set="none">
+<div class="nowo-ui-container">
+<header class="nowo-ui-page-header">
+<h1>Routing Kit</h1>
+<p class="nowo-ui-muted muted">Manage locale paths (default: en). Paths are stored without {_locale}; the loader always applies /{_locale}/…</p>
+<div class="nowo-ui-actions actions">
+<a class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-action-create" href="/_routing-kit/new">New path</a>
+<form-start name="" options="{&quot;action&quot;:&quot;\/_routing-kit\/export&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;attr&quot;:{&quot;style&quot;:&quot;display:inline&quot;}}">
+<form-rest name="">
+<button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary">Export</button>
+<form-end name="" options="{&quot;render_rest&quot;:false}">
+<form-start name="" options="{&quot;action&quot;:&quot;\/_routing-kit\/clear-cache&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;attr&quot;:{&quot;style&quot;:&quot;display:inline&quot;}}">
+<form-rest name="">
+<button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary">Clear routing cache</button>
+<form-end name="" options="{&quot;render_rest&quot;:false}">
+</div>
+</header>
+<main>
+<p class="nowo-ui-muted muted">2 row(s)</p>
+<div class="nowo-ui-table-wrap">
+<table class="nowo-ui-table">
+<thead>
+<tr>
+<th>Route</th>
+<th>Locale</th>
+<th>Path</th>
+<th>Canonical</th>
+<th>Enabled</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app_home</code></td>
+<td>en</td>
+<td><code>/home</code></td>
+<td>without_prefix</td>
+<td>yes</td>
+<td>
+<div class="nowo-ui-row-actions nowo-ui-row-actions--text">
+<a class="nowo-ui-action nowo-ui-action--edit nowo-ui-btn nowo-ui-btn--secondary nowo-ui-btn--sm" href="/_routing-kit/edit/rk_1" title="Edit" aria-label="Edit">Edit</a>
+<form-start name="" options="{&quot;action&quot;:&quot;\/_routing-kit\/delete\/rk_1&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;attr&quot;:{&quot;class&quot;:&quot;nowo-ui-row-actions__form&quot;,&quot;onsubmit&quot;:&quot;return confirm(&#039;Delete?&#039;);&quot;}}">
+<form-rest name="">
+<button type="submit" class="nowo-ui-action nowo-ui-action--delete nowo-ui-btn nowo-ui-btn--danger nowo-ui-btn--sm" title="Delete" aria-label="Delete">Delete</button>
+<form-end name="" options="{&quot;render_rest&quot;:false}">
+</div>
+</td>
+</tr>
+<tr>
+<td><code>app_about</code></td>
+<td>es</td>
+<td><code>/sobre</code></td>
+<td>without_prefix</td>
+<td>no</td>
+<td>
+<div class="nowo-ui-row-actions nowo-ui-row-actions--text">
+<a class="nowo-ui-action nowo-ui-action--edit nowo-ui-btn nowo-ui-btn--secondary nowo-ui-btn--sm" href="/_routing-kit/edit/rk_2" title="Edit" aria-label="Edit">Edit</a>
+<form-start name="" options="{&quot;action&quot;:&quot;\/_routing-kit\/delete\/rk_2&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;attr&quot;:{&quot;class&quot;:&quot;nowo-ui-row-actions__form&quot;,&quot;onsubmit&quot;:&quot;return confirm(&#039;Delete?&#039;);&quot;}}">
+<form-rest name="">
+<button type="submit" class="nowo-ui-action nowo-ui-action--delete nowo-ui-btn nowo-ui-btn--danger nowo-ui-btn--sm" title="Delete" aria-label="Delete">Delete</button>
+<form-end name="" options="{&quot;render_rest&quot;:false}">
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="nowo-ui-pagination">
+<p class="nowo-ui-pagination__info"> pagination.showing </p>
+</div>
+<h2>Import (signed JSON)</h2>
+<form-start name="routing_panel_import" options="{&quot;action&quot;:&quot;\/_routing-kit\/import&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;attr&quot;:{&quot;class&quot;:&quot;nowo-ui-form&quot;}}">
+<form-row name="payload_json">
+<form-row name="replace_all">
+<div class="nowo-ui-actions actions">
+<button type="submit" class="nowo-ui-btn nowo-ui-btn--secondary">Import</button>
+</div>
+<form-end name="routing_panel_import">
+</main>
+</div>
+</body>
+</html>

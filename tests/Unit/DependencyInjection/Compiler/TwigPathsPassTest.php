@@ -59,11 +59,14 @@ final class TwigPathsPassTest extends TestCase
 
         $calls = $container->getDefinition('twig.loader.native_filesystem')->getMethodCalls();
 
-        self::assertCount(2, $calls);
+        self::assertCount(3, $calls);
         self::assertSame('prependPath', $calls[0][0]);
         self::assertSame([$overrideDir, 'NowoRoutingKitBundle'], $calls[0][1]);
         self::assertSame('addPath', $calls[1][0]);
         self::assertSame('NowoRoutingKitBundle', $calls[1][1][1]);
+        self::assertSame('addPath', $calls[2][0]);
+        self::assertSame('!NowoRoutingKitBundle', $calls[2][1][1], 'Bang namespace always targets the bundle copy.');
+        self::assertSame($calls[1][1][0], $calls[2][1][0]);
     }
 
     public function testProcessUsesNativeLoaderDefinitionWithoutOverride(): void
@@ -76,8 +79,9 @@ final class TwigPathsPassTest extends TestCase
 
         $calls = $container->getDefinition('twig.loader.native')->getMethodCalls();
 
-        self::assertCount(1, $calls);
+        self::assertCount(2, $calls);
         self::assertSame('addPath', $calls[0][0]);
+        self::assertSame('!NowoRoutingKitBundle', $calls[1][1][1]);
     }
 
     public function testProcessFallsBackToNativeFilesystemDefinition(): void
@@ -89,7 +93,7 @@ final class TwigPathsPassTest extends TestCase
 
         $calls = $container->getDefinition('twig.loader.native_filesystem')->getMethodCalls();
 
-        self::assertCount(1, $calls);
+        self::assertCount(2, $calls);
         self::assertSame('addPath', $calls[0][0]);
     }
 
@@ -102,6 +106,6 @@ final class TwigPathsPassTest extends TestCase
 
         (new TwigPathsPass())->process($container);
 
-        self::assertCount(1, $container->getDefinition('twig.loader.real')->getMethodCalls());
+        self::assertCount(2, $container->getDefinition('twig.loader.real')->getMethodCalls());
     }
 }

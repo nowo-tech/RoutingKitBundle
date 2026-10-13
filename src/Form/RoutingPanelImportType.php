@@ -25,7 +25,7 @@ final class RoutingPanelImportType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $this->addTextarea($builder, 'payload_json', [
-            'label'    => 'payload JSON',
+            'label'    => 'panel.import_payload',
             'required' => false,
             'attr'     => [
                 'rows'        => 6,
@@ -34,7 +34,7 @@ final class RoutingPanelImportType extends AbstractType
             ],
         ]);
         $this->addCheckbox($builder, 'replace_all', [
-            'label'    => 'replace all existing rows',
+            'label'    => 'panel.import_replace_all',
             'required' => false,
         ]);
     }

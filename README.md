@@ -110,7 +110,7 @@ Open http://localhost:8058 — panel at `/_routing`. FrankenPHP mode is controll
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [PSR evaluation (REQ-CS-007)](docs/PSR.md)
-- [Usage](docs/USAGE.md)
+- [Usage](docs/USAGE.md) — including [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) (class map, partials, blocks; no page copies)
 - [URL redirects](docs/REDIRECTS.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)

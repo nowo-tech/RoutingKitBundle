@@ -13,8 +13,7 @@
 {% if role_gate_disabled|default(false) %}
 <header class="nowo-ui-container">
     <div class="nowo-ui-error errors" role="alert">
-        <strong>UNSAFE:</strong> in-bundle role gate is disabled (<code>security.access_roles: []</code> / <code>panel.role: null</code>).
-        Anyone who can reach this URL can manage routes. Use only on trusted local demos, or set <code>ROLE_ADMIN</code> and firewall the prefix.
+        {{ 'panel.role_gate_warning'|trans({}, 'NowoRoutingKitBundle')|raw }}
     </div>
 </header>
 {% endif %}

@@ -1,0 +1,23 @@
+{% trans_default_domain 'NowoRoutingKitBundle' %}
+{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{#
+  Default modal shell (UiKit semantic modal; Bootstrap classes on bootstrap* / tabler) used when
+  web_ui.import_display is "modal". Replace it with web_ui.partials.modal_shell to repaint the modal.
+  Variables: modal_id (keep it: the Import button targets it), modal_title. Blocks: rk_modal_body, rk_modal_footer.
+#}
+{% set _rk_fw = nowo_routing_kit_css_framework|default('custom') %}
+{% set _rk_bs = _rk_fw in ['bootstrap', 'bootstrap5', 'bootstrap4', 'tabler'] %}
+<div class="nowo-ui-modal{% if _rk_bs %} modal fade{% endif %}" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="{{ modal_id }}-label">{{ modal_title }}</h2>
+                <button type="button" class="btn-close" {{ ui.modal_dismiss_attrs(_rk_fw)|raw }} aria-label="{{ 'panel.cancel'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                {% block rk_modal_body %}{% endblock %}
+            </div>
+            {% block rk_modal_footer %}{% endblock %}
+        </div>
+    </div>
+</div>

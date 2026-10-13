@@ -1,75 +1,116 @@
 {% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
+{% trans_default_domain 'NowoRoutingKitBundle' %}
 {% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
+{#
+  Admin chrome hooks: slot blocks rk_page_title, rk_page_intro, rk_page_actions; page blocks rk_nav, rk_page_header,
+  rk_status, rk_results, rk_count, rk_table, rk_row, rk_row_actions, rk_empty_state, rk_pagination.
+  Classes (web_ui.classes) and partials (nav, pagination, action_inner) as on the routes page.
+#}
 {% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
+{% set _rk_c = nowo_routing_kit_classes|default({}) %}
+{% set _rk_p = nowo_routing_kit_partials|default({}) %}
+{% set _rk_display = nowo_ui_kit_row_actions_display|default('text') %}
 
-{% block title %}{{ 'redirects.title'|trans({}, 'NowoRoutingKitBundle') }}{% endblock %}
+{% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
+
+{% block rk_page_title %}{{ 'redirects.title'|trans }}{% endblock %}
+{% block rk_page_intro %}{{ 'redirects.intro'|trans }}{% endblock %}
+{% block rk_page_actions %}
+    <a class="{{ _rk_c.btn_primary ?? ui.btn('primary', null, _css_fw) }} nowo-ui-action-create" href="{{ path_prefix }}/redirects/new" data-testid="redirect-new">{{ 'redirects.new'|trans }}</a>
+{% endblock %}
 
 {% block body %}
-{{ include('@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}
-<header class="nowo-ui-page-header">
-    <h1>{{ 'redirects.title'|trans({}, 'NowoRoutingKitBundle') }}</h1>
-    <p class="nowo-ui-muted muted">{{ 'redirects.intro'|trans({}, 'NowoRoutingKitBundle') }}</p>
-    <div class="nowo-ui-actions actions">
-        <a class="{{ ui.btn('primary', null, _css_fw) }} nowo-ui-action-create" href="{{ path_prefix }}/redirects/new" data-testid="redirect-new">{{ 'redirects.new'|trans({}, 'NowoRoutingKitBundle') }}</a>
-    </div>
-</header>
-<main>
-    {% if status %}
-        <div class="{{ ui.flash('success', _css_fw) }}" role="status" data-testid="redirect-status">{{ ('redirects.status.' ~ status)|trans({}, 'NowoRoutingKitBundle') }}</div>
+{% block rk_nav %}{{ include(_rk_p.nav ?? '@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}{% endblock %}
+{% block rk_page_header %}
+    {% if not rk_page_header_in_layout|default(false) %}
+        <header class="{{ _rk_c.page_header ?? 'nowo-ui-page-header' }}">
+            <h1{% if _rk_c.page_title is defined %} class="{{ _rk_c.page_title }}"{% endif %}>{{ block('rk_page_title') }}</h1>
+            <p class="{{ _rk_c.page_intro ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
+            <div class="{{ _rk_c.toolbar ?? 'nowo-ui-actions actions' }}">
+                {{ block('rk_page_actions') }}
+            </div>
+        </header>
     {% endif %}
-    <p class="nowo-ui-muted muted">{{ 'redirects.count'|trans({'%count%': total}, 'NowoRoutingKitBundle') }}</p>
-    <div class="nowo-ui-table-wrap">
-    <table class="nowo-ui-table" data-testid="redirect-table">
-        <thead>
-            <tr>
-                <th>{{ 'redirects.col.source'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th>{{ 'redirects.col.target'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th>{{ 'redirects.col.status'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th>{{ 'redirects.col.enabled'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th>{{ 'redirects.col.hits'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th>{{ 'redirects.col.note'|trans({}, 'NowoRoutingKitBundle') }}</th>
-                <th><span class="visually-hidden sr-only">{{ 'redirects.col.actions'|trans({}, 'NowoRoutingKitBundle') }}</span></th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for redirect in redirects %}
-            <tr>
-                <td><code>{{ redirect.sourcePath }}</code></td>
-                <td><code>{{ redirect.targetUrl }}</code></td>
-                <td>{{ redirect.statusCode }}</td>
-                <td>
-                    <span class="{{ ui.badge(redirect.enabled ? 'success' : 'neutral', _css_fw) }}">{{ (redirect.enabled ? 'redirects.yes' : 'redirects.no')|trans({}, 'NowoRoutingKitBundle') }}</span>
-                </td>
-                <td>
-                    {{ redirect.hits }}
-                    {% if redirect.lastHitAt %}<span class="nowo-ui-muted muted">· {{ redirect.lastHitAt|date('Y-m-d H:i') }}</span>{% endif %}
-                </td>
-                <td>{{ redirect.note }}</td>
-                <td>
-                    <div class="{{ ui.row_actions(_css_fw) }} nowo-ui-row-actions--text">
-                        <a class="{{ ui.action('edit', _css_fw) }}" href="{{ path_prefix }}/redirects/{{ redirect.id }}/edit">{{ 'panel.edit'|trans({}, 'NowoRoutingKitBundle') }}</a>
-                        <a class="{{ ui.action('delete', _css_fw) }}" href="{{ path_prefix }}/redirects/{{ redirect.id }}/delete" data-testid="redirect-delete">{{ 'panel.delete'|trans({}, 'NowoRoutingKitBundle') }}</a>
-                    </div>
-                </td>
-            </tr>
-        {% else %}
-            <tr><td colspan="7">{{ 'redirects.empty'|trans({}, 'NowoRoutingKitBundle') }}</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+{% endblock %}
+<main>
+    {% block rk_status %}
+        {% if status %}
+            <div class="{{ _rk_c.flash ?? ui.flash('success', _css_fw) }}" role="status" data-testid="redirect-status">{{ ('redirects.status.' ~ status)|trans }}</div>
+        {% endif %}
+    {% endblock %}
+    {% block rk_results %}
+        {% if _rk_c.results is defined %}<section class="{{ _rk_c.results }}" data-testid="routing-kit-redirects-table">{% endif %}
+        {% block rk_count %}
+            {% if nowo_routing_kit_show_row_count ?? true %}
+                <p class="{{ _rk_c.count ?? 'nowo-ui-muted muted' }}">{{ 'redirects.count'|trans({'%count%': total}) }}</p>
+            {% endif %}
+        {% endblock %}
+        {% block rk_table %}
+            <div class="{{ _rk_c.table_wrap ?? 'nowo-ui-table-wrap' }}">
+            <table class="{{ _rk_c.table ?? 'nowo-ui-table' }}" data-testid="redirect-table">
+                <thead>
+                    <tr{% if _rk_c.thead_row is defined %} class="{{ _rk_c.thead_row }}"{% endif %}>
+                        {% for col in ['source', 'target', 'status', 'enabled', 'hits', 'note'] %}
+                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ ('redirects.col.' ~ col)|trans }}</th>
+                        {% endfor %}
+                        {% if _rk_c.th_actions is defined %}<th class="{{ _rk_c.th_actions }}">{{ 'redirects.col.actions'|trans }}</th>{% else %}<th><span class="visually-hidden sr-only">{{ 'redirects.col.actions'|trans }}</span></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for redirect in redirects %}
+                    {% block rk_row %}
+                        <tr{% if _rk_c.row is defined %} class="{{ _rk_c.row }}"{% endif %}>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}><code>{{ redirect.sourcePath }}</code></td>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}><code>{{ redirect.targetUrl }}</code></td>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>{{ redirect.statusCode }}</td>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>
+                                <span class="{{ _rk_c[redirect.enabled ? 'badge_yes' : 'badge_no'] ?? ui.badge(redirect.enabled ? 'success' : 'neutral', _css_fw) }}">{{ (redirect.enabled ? 'redirects.yes' : 'redirects.no')|trans }}</span>
+                            </td>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>
+                                {{ redirect.hits }}
+                                {% if redirect.lastHitAt %}<span class="{{ _rk_c.muted ?? 'nowo-ui-muted muted' }}">· {{ redirect.lastHitAt|date('Y-m-d H:i') }}</span>{% endif %}
+                            </td>
+                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>{{ redirect.note }}</td>
+                            <td{% if _rk_c.td_actions is defined %} class="{{ _rk_c.td_actions }}"{% endif %}>
+                                <div class="{{ _rk_c.row_actions ?? (ui.row_actions(_css_fw) ~ ' nowo-ui-row-actions--text') }}">
+                                    {{ block('rk_row_actions') }}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endblock %}
+                {% else %}
+                    {% block rk_empty_state %}
+                        <tr><td colspan="7"{% if _rk_c.empty is defined %} class="{{ _rk_c.empty }}"{% endif %}>{{ 'redirects.empty'|trans }}</td></tr>
+                    {% endblock %}
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        {% endblock %}
 
-    {{ include('@NowoUiKitBundle/partials/_pagination.html.twig', {
-        pagination: {
-            page: page,
-            per_page: page_size,
-            total: total,
-            total_pages: pages,
-        },
-        item_count: item_count,
-        route: 'nowo_routing_kit_redirects',
-        route_params: {},
-        framework: _css_fw,
-    }) }}
+        {% block rk_pagination %}
+            {{ include(_rk_p.pagination ?? '@NowoUiKitBundle/partials/_pagination.html.twig', {
+                pagination: {
+                    page: page,
+                    per_page: page_size,
+                    total: total,
+                    total_pages: pages,
+                },
+                item_count: item_count,
+                route: 'nowo_routing_kit_redirects',
+                route_params: {},
+                framework: _css_fw,
+            }) }}
+        {% endblock %}
+        {% if _rk_c.results is defined %}</section>{% endif %}
+    {% endblock %}
 </main>
+{% endblock %}
+
+{# Row actions for `redirect`. #}
+{% block rk_row_actions %}
+    {% set _rk_l_edit = 'panel.edit'|trans %}
+    {% set _rk_l_delete = 'panel.delete'|trans %}
+    <a class="{{ _rk_c.action_edit ?? ui.action('edit', _css_fw) }}" href="{{ path_prefix }}/redirects/{{ redirect.id }}/edit"{% if _rk_p.action_inner is defined %} title="{{ _rk_l_edit }}" aria-label="{{ _rk_l_edit }}"{% endif %}>{% if _rk_p.action_inner is defined %}{% include _rk_p.action_inner with {display: _rk_display, icon_name: 'edit', label: _rk_l_edit} only %}{% else %}{{ _rk_l_edit }}{% endif %}</a>
+    <a class="{{ _rk_c.action_delete ?? ui.action('delete', _css_fw) }}" href="{{ path_prefix }}/redirects/{{ redirect.id }}/delete" data-testid="redirect-delete"{% if _rk_p.action_inner is defined %} title="{{ _rk_l_delete }}" aria-label="{{ _rk_l_delete }}"{% endif %}>{% if _rk_p.action_inner is defined %}{% include _rk_p.action_inner with {display: _rk_display, icon_name: 'delete', label: _rk_l_delete} only %}{% else %}{{ _rk_l_delete }}{% endif %}</a>
 {% endblock %}

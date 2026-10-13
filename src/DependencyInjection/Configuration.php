@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
+use InvalidArgumentException;
+use Nowo\RoutingKitBundle\Panel\PanelChrome;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -12,9 +14,11 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 use function array_key_exists;
 use function array_values;
+use function implode;
 use function is_array;
 use function is_string;
 use function preg_match;
+use function sprintf;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
@@ -175,6 +179,53 @@ final class Configuration implements ConfigurationInterface
                         ->enumNode('icon_set')
                             ->values(['bootstrap-icons', 'tabler-icons', 'ux_icon', 'svg_inline', 'none'])
                             ->defaultValue('none')
+                        ->end()
+                        ->arrayNode('classes')
+                            ->info('Admin chrome class map (spec 003): key => class list replacing the default classes. Keys: ' . implode(', ', PanelChrome::CLASS_KEYS) . '. Unset keys keep the default markup.')
+                            ->normalizeKeys(false)
+                            ->useAttributeAsKey('name')
+                            ->scalarPrototype()->end()
+                            ->validate()
+                                ->ifTrue(static fn (array $v): bool => PanelChrome::unknownKeys($v, PanelChrome::CLASS_KEYS) !== [])
+                                ->then(static function (array $v): array {
+                                    throw new InvalidArgumentException(sprintf('Unknown nowo_routing_kit.web_ui.classes key(s): %s. Allowed: %s.', implode(', ', PanelChrome::unknownKeys($v, PanelChrome::CLASS_KEYS)), implode(', ', PanelChrome::CLASS_KEYS)));
+                                })
+                            ->end()
+                        ->end()
+                        ->arrayNode('partials')
+                            ->info('Admin chrome partial paths (spec 003): nav, pagination, action_inner (e.g. @NowoUiKitBundle/partials/_action_inner.html.twig), modal_shell.')
+                            ->normalizeKeys(false)
+                            ->useAttributeAsKey('name')
+                            ->scalarPrototype()->end()
+                            ->validate()
+                                ->ifTrue(static fn (array $v): bool => PanelChrome::unknownKeys($v, PanelChrome::PARTIAL_KEYS) !== [])
+                                ->then(static function (array $v): array {
+                                    throw new InvalidArgumentException(sprintf('Unknown nowo_routing_kit.web_ui.partials key(s): %s. Allowed: %s.', implode(', ', PanelChrome::unknownKeys($v, PanelChrome::PARTIAL_KEYS)), implode(', ', PanelChrome::PARTIAL_KEYS)));
+                                })
+                            ->end()
+                        ->end()
+                        ->booleanNode('ui_kit_assets')
+                            ->info('Append nowo-ui.css (and nowo-ui-modal.js in import_display: modal) from panel/base.html.twig. Set false when the host layout already loads UiKit assets before its theme.')
+                            ->defaultTrue()
+                        ->end()
+                        ->enumNode('import_display')
+                            ->info('Signed JSON import: inline section under the table (default) or a modal opened from the page actions.')
+                            ->values(['inline', 'modal'])
+                            ->defaultValue('inline')
+                        ->end()
+                        ->booleanNode('show_row_count')
+                            ->info('Show the "N row(s)" line above the tables.')
+                            ->defaultTrue()
+                        ->end()
+                        ->booleanNode('primary_action_last')
+                            ->info('Render the primary "New" action after the secondary page actions.')
+                            ->defaultFalse()
+                        ->end()
+                        ->arrayNode('delete_confirm_attr')
+                            ->info('Attributes for the row delete form (e.g. a Stimulus confirm controller); "%message%" is replaced by the translated confirmation. When set, the inline onsubmit confirm() is not rendered (CSP-friendly).')
+                            ->normalizeKeys(false)
+                            ->useAttributeAsKey('name')
+                            ->scalarPrototype()->end()
                         ->end()
                     ->end()
                 ->end()

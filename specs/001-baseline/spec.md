@@ -25,7 +25,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-11 | Canonical style (`without_prefix` / `with_prefix`) and alias mode (`redirect` / `alias`). |
 | FR-12 | Optional root `/` redirect to the default-locale home. |
 | FR-13 | Trailing-slash styles including redirect-to-omit / redirect-to-keep. |
-| FR-14 | Bundle Twig namespace `NowoRoutingKitBundle`; app overrides win (REQ-TWIG-001). |
+| FR-14 | Bundle Twig namespace `NowoRoutingKitBundle`; app overrides win (REQ-TWIG-001). `@!NowoRoutingKitBundle` targets the bundle copy; admin chrome hooks per [`003-admin-chrome-hooks`](../003-admin-chrome-hooks/spec.md) (v1.7.0). |
 | FR-15 | Path mutations dispatch `RoutePathsChangedEvent`. |
 | FR-16 | Optional SeoKit bridge decorates `SeoPathBuilderInterface::pagePath`. |
 | FR-17 | Panel POST actions validate CSRF when `CsrfTokenManagerInterface` is available. |

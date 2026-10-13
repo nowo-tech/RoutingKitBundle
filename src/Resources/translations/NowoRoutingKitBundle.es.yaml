@@ -27,6 +27,17 @@ panel.form.trailing_slash_style.redirect_to_omit: Redirigir a omitir
 panel.form.trailing_slash_style.redirect_to_keep: Redirigir a mantener
 panel.form.alias_mode_choice.redirect: Redirigir alias a canónica
 panel.form.alias_mode_choice.alias: Servir alias (200)
+panel.col.actions: "Acciones"
+panel.export: "Exportar"
+panel.import: "Importar"
+panel.import_title: "Importar (JSON firmado)"
+panel.import_payload: "JSON a importar"
+panel.import_replace_all: "Reemplazar todas las filas existentes"
+panel.count: "%count% fila(s)"
+panel.yes: "sí"
+panel.no: "no"
+panel.delete_confirm: "¿Eliminar esta definición de path?"
+panel.role_gate_warning: "<strong>INSEGURO:</strong> el control de roles del bundle está desactivado (<code>security.access_roles: []</code> / <code>panel.role: null</code>). Cualquiera que llegue a esta URL puede gestionar rutas. Úsalo solo en demos locales de confianza, o configura <code>ROLE_ADMIN</code> y protege el prefijo con el firewall."
 nav.label: "Secciones de Routing Kit"
 nav.routes: "Rutas"
 nav.redirects: "Redirecciones"
