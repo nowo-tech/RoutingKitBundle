@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.8.1](#to-181)
 - [To 1.8.0](#to-180)
 - [To 1.7.2](#to-172)
 - [To 1.7.1](#to-171)
@@ -80,6 +81,16 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.8.1
+
+From **1.8.0** — CHANGELOG link references and SECURITY.md checklist corrected.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+- No breaking changes. No application upgrade steps.
 
 ## To 1.8.0
 
