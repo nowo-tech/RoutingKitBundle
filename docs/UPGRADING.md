@@ -1,5 +1,14 @@
 # Upgrading
 
+## To 1.7.1
+
+From **1.7.0** — dependency refresh and repository maintenance.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+- No breaking changes. No application upgrade steps.
 
 ## To 1.7.0
 
@@ -14,7 +23,6 @@ php bin/console cache:clear
 - A remaining override can extend the original: `{% extends '@!NowoRoutingKitBundle/panel/index.html.twig' %}` and redefine blocks only.
 - Host translation overrides for `panel.export`, `panel.import`, `panel.yes`… keep working (application catalogues win); you can drop the ones that match the bundle now.
 - The import form labels are now the keys `panel.import_payload` / `panel.import_replace_all` (same English text).
-
 
 ## To 1.6.0
 
@@ -175,9 +183,7 @@ and enable `Twig\Extra\TwigExtraBundle\TwigExtraBundle`. Flex recipes usually re
 
 Package maintainers: `composer twig:lint` / `composer twig:fix` use `.twig-cs-fixer.php` over `src/` (and `templates/` when present).
 
-
 ## Table of contents
-
 
 - [To 1.6.0](#to-160)
 - [To 1.5.1](#to-151)

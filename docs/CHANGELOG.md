@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [[Unreleased]](#unreleased)
 
+- [[1.7.1] - 2026-10-13](#171---2026-10-13)
 - [[1.7.0] - 2026-10-13](#170---2026-10-13)
 - [[1.6.0] - 2026-10-09](#160---2026-10-09)
 - [[1.5.1] - 2026-10-09](#151---2026-10-09)
@@ -39,6 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.7.1] - 2026-10-13
+
+### Dependencies
+
+- PHPStan group (3 packages) bumped by Dependabot (development lock; #13).
+- `igor-php/igor-php` 0.9.7 → 0.10.1 (require-dev constraint + development lock; #14).
+- `vincentlanglet/twig-cs-fixer` 3.14.0 → 4.1.1 (require-dev constraint + development lock; #15).
+
+### Changed
+
+- Repository: `.twig-cs-fixer.cache` is now git-ignored.
 
 ## [1.7.0] - 2026-10-13
 
@@ -470,6 +483,7 @@ First stable release of **Routing Kit Bundle**.
 - Twig for the CRUD panel templates.
 
 [Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...HEAD
+[1.7.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.5...v1.6.0
 [1.4.5]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.4.4...v1.4.5
