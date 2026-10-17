@@ -39,7 +39,7 @@ nowo_routing_kit_db:
 
 ## Protect the panel
 
-The bundle does not ship authentication. Restrict `/_routing` (or your `panel.path_prefix`) with Symfony Security firewalls / access control.
+The bundle does not ship authentication. Restrict `/_routing` (or your `web_ui.path_prefix`) with Symfony Security firewalls / access control.
 
 ## Assets
 

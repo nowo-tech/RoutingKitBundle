@@ -10,6 +10,19 @@
 
 This bundle is **FrankenPHP worker mode friendly**.
 
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/images/demo/paths-list.webp" alt="Routing Kit panel listing locale paths with export, clear cache and signed import" />
+      <br /><sub>Locale paths per route — canonical style, enabled state, signed import / export</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/images/demo/redirects-confirm.webp" alt="URL redirects list with the delete confirmation dialog open" />
+      <br /><sub>Operator URL redirects — delete through the UiKit confirm dialog</sub>
+    </td>
+  </tr>
+</table>
+
 ## Features
 
 - **Storage** — One row per `(routeName, locale)`; filesystem JSON by default; swap via `RoutePathStorageInterface`.
@@ -19,7 +32,7 @@ This bundle is **FrankenPHP worker mode friendly**.
 - **Fallback** — Missing locale row → default-locale path for that route name.
 - **`#[Routable]`** — Controllers offered in the CRUD; params + constraints validated on save.
 - **Loader** — `type: nowo_routing_kit` registers `{name}.{locale}` with `_canonical_route` (import last).
-- **Panel** — Twig CRUD under `/_routing` + Symfony forms (FormKit + UiKit) for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete). Protect with `security.access_roles` (default `[ROLE_ADMIN]`) / `allow_unauthenticated`.
+- **Panel** — Twig CRUD under `/_routing` on the **UiKit page contract** (list / form / confirm scaffolds, themed once in `nowo_ui_kit` for every bundle; see [docs/TEMPLATES.md](docs/TEMPLATES.md)) + Symfony forms (FormKit) for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete). Protect with `security.access_roles` (default `[ROLE_ADMIN]`) / `allow_unauthenticated`.
 - **SeoKit** — Optional bridge decorates `SeoPathBuilderInterface` for canonical/hreflang paths.
 - **URL redirects** (opt-in, `url_redirects.enabled`) — Operator-managed old path → new path / URL redirects applied before routing, with a panel section at `/_routing/redirects`, protected paths, live-page detection (`LivePathCheckerInterface`), hit counting (sync or Messenger) and pluggable storage. See [docs/REDIRECTS.md](docs/REDIRECTS.md).
 
@@ -57,8 +70,8 @@ The loader registers `{name}.{locale}` with `_canonical_route`. Protect `/_routi
 nowo_routing_kit:
     default_locale: en
     locales: [en, es]
-    panel:
-        path_prefix: /_routing
+    web_ui:
+        path_prefix: /_routing      # panel pages render in nowo_ui_kit.layouts.admin
     redirects:
         canonical_enabled: true
     seo_kit_bridge: true
@@ -105,12 +118,20 @@ make -C demo up-symfony8
 
 Open http://localhost:8058 — panel at `/_routing`. FrankenPHP mode is controlled by `FRANKENPHP_MODE` (`classic` \| `worker`, default **worker**) in the demo `.env`.
 
+Playwright e2e of the panel and the README screenshots (REQ-DEMO-013):
+
+```bash
+make -C demo/symfony8 test-e2e
+make -C demo/symfony8 demo-screenshots   # refreshes docs/images/demo/*.webp
+```
+
 ## Documentation
 
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [PSR evaluation (REQ-CS-007)](docs/PSR.md)
-- [Usage](docs/USAGE.md) — including [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) (class map, partials, blocks; no page copies)
+- [Usage](docs/USAGE.md) — including [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) (UiKit layout and theme; no page copies)
+- [Templates](docs/TEMPLATES.md) — panel pages → UiKit scaffolds, view models, data blocks (REQ-UI-003)
 - [URL redirects](docs/REDIRECTS.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)

@@ -4,17 +4,15 @@ nowo_routing_kit:
     default_locale: en
     locales: [en]
     panel:
-        enabled: true
-        path_prefix: '/_routing'
         allow_controller_override: false
         max_definitions: 500
         list_page_size: 50
         reject_conflicts: true
+    # Admin panel on the UiKit page contract: layout (nowo_ui_kit.layouts.admin) and theme come from nowo_ui_kit.
     web_ui:
         enabled: true
-        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
-        css_framework: custom
-        icon_set: none
+        path_prefix: '/_routing'
+        # layout_template: ~   # null = nowo_ui_kit.layouts.admin
     security:
         access_roles: [ROLE_ADMIN]
         allow_unauthenticated: false

@@ -94,7 +94,9 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `Service/RoutePathConflictDetector.php` | Detects colliding public paths. | FR-05 |
 | `Service/RoutePathImportExport.php` | Signed export/import. | FR-08 |
 | `Controller/RoutingPanelController.php` | Twig CRUD + CSRF + clear cache. | FR-08, FR-09, FR-17 |
-| `Twig/RoutingKitTwigExtension.php` | Panel Twig helpers / globals. | FR-08, FR-14 |
+| `Twig/RoutingKitTwigExtension.php` | Panel Twig globals (1.x; deprecated since 1.9). | FR-08, FR-14 |
+| `Panel/PanelView.php` | Renders panel pages on the UiKit page contract (template per page, layout, nav, role-gate flag) — spec 004. | FR-08, FR-14 |
+| `Panel/PanelChrome.php` | Deprecated 1.x class / partial maps and their bridge into `nowo_ui_kit.theme.bundles` — spec 004. | FR-14 |
 
 ## Seo
 
@@ -115,7 +117,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Resources/views/panel/*` | Panel chrome, index, forms (Symfony Form Types). | FR-08, FR-09, FR-14, FR-17 |
+| `Resources/views/panel/*` | Panel pages extending the UiKit scaffolds (`page/list`, `page/form`, `page/confirm`) + nav / notices / import partials ([docs/TEMPLATES.md](../../docs/TEMPLATES.md)). | FR-08, FR-09, FR-14, FR-17 |
 
 ## Translations
 

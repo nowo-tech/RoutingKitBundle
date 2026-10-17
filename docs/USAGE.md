@@ -53,13 +53,13 @@ Loaded Symfony routes are named `{route_name}.{locale}` with `_canonical_route` 
 
 ## Panel
 
-- List / create / edit / delete at `/_routing` (configurable `panel.path_prefix`).
+- List / create / edit / delete at `/_routing` (configurable `web_ui.path_prefix`). Pages extend the UiKit page scaffolds (REQ-UI-003): see [TEMPLATES.md](TEMPLATES.md).
 - **Clear routing cache** button; saves/deletes also invalidate when `auto_invalidate_cache: true`.
 - Signed **Export** / **Import** (HMAC): export is POST + CSRF; import validates rows like panel saves (allowlists, conflicts, max rows). Signing key must be ≥32 characters (`panel.export_signing_key` or `kernel.secret`).
-- Toolbar, import, and per-row delete actions use Symfony Form Types rendered with `form_start` / `form_row` / `form_end` (FormKit profile `routing_kit` for visible fields). Context keys: `export_form`, `clear_cache_form`, `import_form`, `delete_forms[id]`. Host overrides should keep using form rendering instead of raw HTML `<form>`.
+- Toolbar, import, and per-row delete actions use Symfony Form Types (CSRF-only `RoutingPanelActionType`, `RoutingPanelImportType`; FormKit profile `routing_kit` for visible fields). Export / clear cache / delete are UiKit `Action`s carrying their CSRF form; deletes open the UiKit confirm dialog (no inline JavaScript). The import form is the `import_form` context variable.
 - Index list paginates with `panel.list_page_size` (default 50).
-- Private access: prefer `security.access_roles` (e.g. `[ROLE_ADMIN]`); `panel.role` remains a BC alias. Empty roles / `allow_unauthenticated: true` show an **UNSAFE** banner (demo / trusted networks only). Also firewall the path prefix in the host app.
-- Host chrome without forking pages: set `web_ui.layout_template` to the project layout (and optional `web_ui.css_framework`). See [CONFIGURATION.md](CONFIGURATION.md#host-app-ui-integration-req-ui-001).
+- Private access: prefer `security.access_roles` (e.g. `[ROLE_ADMIN]`); `panel.role` is a deprecated alias. `allow_unauthenticated: true` shows an **UNSAFE** warning (demo / trusted networks only). Also firewall the path prefix in the host app.
+- Host chrome without forking pages: point `nowo_ui_kit.layouts.admin` at your layout and theme `nowo_ui_kit.theme` once for every bundle. See [CONFIGURATION.md](CONFIGURATION.md#host-app-ui-integration-req-ui-003).
 
 ## SeoKitBundle
 
@@ -77,7 +77,7 @@ Prefer a single route loader owner (RoutingKit) for the same pages.
 
 ## URL redirects
 
-Opt-in (`url_redirects.enabled: true`): operators redirect retired public URLs to a new path or URL from `{panel.path_prefix}/redirects`. Slug routes need a `LivePathCheckerInterface` so deleted content can be redirected. Full guide: [REDIRECTS.md](REDIRECTS.md).
+Opt-in (`url_redirects.enabled: true`): operators redirect retired public URLs to a new path or URL from `{web_ui.path_prefix}/redirects`. Slug routes need a `LivePathCheckerInterface` so deleted content can be redirected. Full guide: [REDIRECTS.md](REDIRECTS.md).
 
 ## Custom storage / locales
 
@@ -94,140 +94,63 @@ Implement `LocaleProviderInterface` and `RoutePathStorageInterface` (including `
 
 Twig namespace: **`NowoRoutingKitBundle`**. Application files under `templates/bundles/NowoRoutingKitBundle/` **always win**.
 
-**Freeze rule:** a full-file override hides vendor updates for that `<subpath>` until you delete or merge it. Prefer `web_ui.layout_template` / `web_ui.css_framework` / `web_ui.classes` / `web_ui.partials` (see [Customising the admin chrome](#customising-the-admin-chrome)) over copying list/form pages; if you must override, `{% extends '@!NowoRoutingKitBundle/<subpath>' %}` and redefine only blocks (1.7.0+).
+**Freeze rule:** a full-file override hides vendor updates for that `<subpath>` until you delete or merge it. Theme the UiKit scaffolds and slots instead (see [Customising the admin chrome](#customising-the-admin-chrome)); if you must change one page, set `web_ui.templates.<page>` to a template that `{% extends '@!NowoRoutingKitBundle/<subpath>' %}` and redefines one data block.
 
 | Subpath | Purpose |
 | --- | --- |
-| `panel/layout.html.twig` | Default demo shell (`web_ui.layout_template` default) |
-| `panel/index.html.twig` | List |
-| `panel/form.html.twig` | Create/edit |
-| `panel/_nav.html.twig` | Routes / Redirects switcher (prefer `web_ui.partials.nav`) |
-| `panel/_modal_shell.html.twig` | Import modal shell when `import_display: modal` (prefer `web_ui.partials.modal_shell`) |
-| `panel/redirects/*.html.twig` | Redirect list / form / delete confirmation |
+| `panel/index.html.twig` | Route paths list (`page/list`) |
+| `panel/form.html.twig` | Route path create / edit (`page/form`) |
+| `panel/redirects/index.html.twig`, `form.html.twig` | URL redirects list / form (`page/list`, `page/form`) |
+| `panel/redirects/delete.html.twig` | No-JS delete confirmation (`page/confirm`) |
+| `panel/_nav.html.twig`, `_notices.html.twig`, `_import_form.html.twig` | Section nav, notices, import form (see [TEMPLATES.md](TEMPLATES.md#bundle-partials)) |
 
 **Procedure:** copy the vendor file to `templates/bundles/NowoRoutingKitBundle/<subpath>`, then `php bin/console cache:clear` if needed.
 
 ## Customising the admin chrome
 
-Since **1.7.0** (spec [`003-admin-chrome-hooks`](../specs/003-admin-chrome-hooks/spec.md)) a host can repaint the panel **without copying pages**. Everything is opt-in: with no option set the markup is the 1.6 markup (snapshot-tested). Behaviour stays in the bundle: routes, form variable names (`export_form`, `clear_cache_form`, `import_form`, `delete_forms`), CSRF, modal id `modal-routing-import`.
+Since **1.9** the panel follows the UiKit 2 page contract (REQ-UI-003): a host themes each **view type** once in
+UiKit and the panel inherits it — no RoutingKit-specific chrome configuration is needed.
 
-Pick the lightest tool:
+1. **Layout** — `nowo_ui_kit.layouts.admin` (a one-file bridge into your base layout that renders the canonical
+   `nowo_ui_*` blocks). `web_ui.layout_template` only when the panel needs a different layout than the other bundles.
+2. **Theme** — `nowo_ui_kit.theme.tokens` and `theme.classes` (slots `btn_primary`, `table`, `badge_success`,
+   `action_danger`, `tabs`…) for all bundles; `theme.bundles.NowoRoutingKitBundle` for exceptions of this bundle
+   only; `theme.partials` to replace a UiKit partial (`page_header`, `pagination`, `tabs`, `modal_shell`…).
+3. **Scaffolds** — `templates/bundles/NowoUiKitBundle/page/list.html.twig` (or `form`, `confirm`) re-skins every list /
+   form / confirm page of every bundle.
+4. **Options** — `web_ui.import_display: modal`, `web_ui.show_row_count: false`, `web_ui.primary_action_last: true`.
+5. **One page** — `web_ui.templates.<page>` with a template that extends `@!NowoRoutingKitBundle/…` and redefines a
+   data block ([TEMPLATES.md](TEMPLATES.md)).
 
-1. **Class map** (`web_ui.classes`) — buttons, row actions, table, badges, empty row, forms, alerts, import.
-2. **Options** — `ui_kit_assets: false`, `import_display: modal`, `show_row_count: false`, `primary_action_last: true`, `delete_confirm_attr` (CSP-friendly confirmation instead of the inline `onsubmit`), `main_landmark: false` (1.7.2: the page wrapper becomes a `<div>` when your layout already renders `<main>`).
-3. **Partial paths** (`web_ui.partials`) — `nav`, `pagination`, `action_inner`, `modal_shell`.
-4. **Layout slots** — your `layout_template` renders `block('rk_page_title')`, `block('rk_page_intro')`, `block('rk_page_actions')`, `block('rk_back_link')` and sets `rk_page_header_in_layout` / `rk_title_suffix`.
-5. **Block overrides** — an app override extends `@!NowoRoutingKitBundle/...` and redefines one block.
-
-### Class map keys
-
-| Group | Keys (default when unset) |
-|-------|---------------------------|
-| Buttons | `btn_primary`, `btn_secondary`, `btn_danger`, `btn_link` (`ui.btn(variant, null, css_framework)`), `inline_form` (export / clear-cache forms; default `style="display:inline"`) |
-| Row actions | `action_edit`, `action_delete` (`ui.action()`), `row_actions` (`ui.row_actions()` + `nowo-ui-row-actions--text`), `delete_form` (`nowo-ui-row-actions__form`) |
-| Page | `page_header`, `page_title`, `page_intro`, `toolbar`, `count`, `flash`, `muted`, `empty`, `badge_yes`, `badge_no` |
-| Tables | `results` (wraps count + table + pagination in `<section data-testid="routing-kit-definitions-table">` / `routing-kit-redirects-table`; none by default), `table_wrap`, `table`, `thead_row`, `th`, `th_actions` (also prints the translated "Actions" header), `row`, `td`, `td_actions` |
-| Forms | `form_panel` (wraps the form in `<section data-testid="routing-kit-definition-form">`), `form_heading` / `form_hint` (heading inside the panel when the page header is in the layout), `alert` (adds `role="alert"`), `form`, `form_actions` |
-| Import | `import_title`, `import_form` (inline), `modal_form`, `modal_form_body`, `modal_actions` (modal) |
-
-### Partials
-
-| Key | Default | Receives |
-|-----|---------|----------|
-| `nav` | `panel/_nav.html.twig` | `current` (`routes` / `redirects`), `path_prefix` |
-| `pagination` | `@NowoUiKitBundle/partials/_pagination.html.twig` | `pagination` (`page`, `per_page`, `total`, `total_pages`), `item_count`, `route`, `route_params`, `framework` |
-| `action_inner` | text label | `display` (`nowo_ui_kit_row_actions_display`), `icon_name` (`edit`, `delete`), `label` |
-| `modal_shell` | `panel/_modal_shell.html.twig` | `modal_id` (`modal-routing-import`), `modal_title`; blocks `rk_modal_body`, `rk_modal_footer` |
-
-### Layout contract
-
-| Variable | Effect |
-|----------|--------|
-| `rk_page_header_in_layout` | Pages skip their `<header>`; forms print the title + hint inside `form_panel` instead. |
-| `rk_title_suffix` | Appended to every page `title` block. |
-
-Slot blocks are definitions the stock layout never renders: `rk_page_title`, `rk_page_intro` (all pages), `rk_page_actions` (lists), `rk_back_link` (forms). Guard with `is defined` in a shared layout.
-
-### Blocks
-
-| Template | Blocks |
-|----------|--------|
-| `panel/index` | `rk_nav`, `rk_page_header`, `rk_results`, `rk_count`, `rk_table`, `rk_table_head`, `rk_row`, `rk_enabled_cell`, `rk_row_actions`, `rk_empty_state`, `rk_pagination`, `rk_import` |
-| `panel/form` | `rk_page_header`, `rk_form`, `rk_form_heading`, `rk_form_errors`, `rk_form_fields`, `rk_form_actions` |
-| `panel/redirects/index` | `rk_nav`, `rk_page_header`, `rk_status`, `rk_results`, `rk_count`, `rk_table`, `rk_row`, `rk_row_actions`, `rk_empty_state`, `rk_pagination` |
-| `panel/redirects/form` | `rk_nav`, `rk_page_header`, `rk_form`, `rk_form_heading`, `rk_form_fields`, `rk_form_actions` |
-| `panel/redirects/delete` | `rk_nav`, `rk_confirm` |
-
-### Example (Tailwind admin, no page copies)
+Example:
 
 ```yaml
-# config/packages/nowo_routing_kit.yaml
+nowo_ui_kit:
+    css_framework: tailwind
+    layouts:
+        admin: 'admin/layout.html.twig'
+    theme:
+        tokens: { primary: 'var(--color-brand)', radius: '0.5rem' }
+        classes:
+            btn_primary: 'btn-primary'
+            table: 'data-table w-full text-sm'
+            action_danger: 'text-red-700'
+        bundles:
+            NowoRoutingKitBundle:
+                classes: { table: 'data-table data-table--dense' }
+
 nowo_routing_kit:
     web_ui:
-        layout_template: 'admin/routing_layout.html.twig'
-        css_framework: tailwind
-        ui_kit_assets: false          # the admin layout loads nowo-ui.css + its modal JS
         import_display: modal
-        show_row_count: false
         primary_action_last: true
-        main_landmark: false          # the admin layout already renders <main>
-        delete_confirm_attr:
-            data-controller: confirm-submit
-            data-action: 'submit->confirm-submit#confirm'
-            data-confirm-submit-message-value: '%message%'
-        classes:
-            btn_primary: 'btn-primary no-underline'
-            btn_secondary: 'btn-ghost'
-            btn_link: 'btn-ghost no-underline'
-            inline_form: 'inline'
-            action_edit: 'btn-ghost btn-icon no-underline'
-            action_delete: 'btn-danger btn-icon'
-            delete_form: 'inline'
-            row_actions: 'inline-flex gap-1 nowo-ui-row-actions nowo-ui-row-actions--icon'
-            results: 'panel overflow-x-auto'
-            table: 'data-table w-full text-sm'
-            th: 'px-2 py-2 font-medium'
-            th_actions: 'w-0 px-2 py-2 text-end'
-            td: 'px-2 py-3'
-            td_actions: 'w-0 px-2 py-3 text-end whitespace-nowrap'
-            badge_yes: 'badge badge--ok'
-            badge_no: 'badge'
-            form_panel: 'panel'
-            form_heading: 'mb-1 text-base font-semibold'
-            alert: 'alert alert--danger'
-            modal_form: 'modal-panel'
-            modal_form_body: 'modal-content'
-            modal_actions: 'modal-actions'
-        partials:
-            pagination: 'admin/_pagination.html.twig'
-            action_inner: '@NowoUiKitBundle/partials/_action_inner.html.twig'
-            modal_shell: 'admin/_dialog_shell.html.twig'
 ```
 
 ```twig
-{# templates/admin/routing_layout.html.twig #}
-{% extends 'admin/base.html.twig' %}
-{% set rk_page_header_in_layout = true %}
-{% set rk_title_suffix = ' — ' ~ brand_name %}
-{% set admin_actions %}
-    {% if block('rk_back_link') is defined %}{{ block('rk_back_link') }}{% endif %}
-    {% if block('rk_page_actions') is defined %}{{ block('rk_page_actions') }}{% endif %}
-{% endset %}
-```
-
-```twig
-{# templates/admin/_dialog_shell.html.twig — keep modal_id and "{modal_id}-label" #}
-<dialog class="nowo-ui-modal admin-dialog" id="{{ modal_id }}" aria-labelledby="{{ modal_id }}-label">
-    <header><h2 id="{{ modal_id }}-label">{{ modal_title }}</h2></header>
-    {% block rk_modal_body %}{% endblock %}
-</dialog>
-```
-
-One structural change left? Extend the original and redefine a single block:
-
-```twig
-{# templates/bundles/NowoRoutingKitBundle/panel/index.html.twig #}
+{# templates/routing/paths.html.twig — nowo_routing_kit.web_ui.templates.index #}
 {% extends '@!NowoRoutingKitBundle/panel/index.html.twig' %}
-{% block rk_enabled_cell %}{{ row.enabled ? '✓' : '—' }}{% endblock %}
+{% block nowo_ui_list_after %}{% endblock %}   {# hide the inline import card #}
 ```
 
+The 1.x hooks (`web_ui.classes`, `web_ui.partials`, `ui_kit_assets`, `main_landmark`, `delete_confirm_attr`, the
+`rk_*` blocks and the `rk_page_header_in_layout` / `rk_title_suffix` layout contract) are deprecated or gone; the
+mapping to UiKit slots and blocks is in [UPGRADING.md](UPGRADING.md#unreleased).

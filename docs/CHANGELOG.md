@@ -43,6 +43,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+UiKit 2 page contract (REQ-UI-003). Requires `nowo-tech/ui-kit-bundle` **^2.0**. See [UPGRADING — Unreleased](UPGRADING.md#unreleased) for the template contract and the migration of overrides.
+
+### Added
+
+- Panel pages on the UiKit page scaffolds: route paths and URL redirects lists → `page/list`, route path and redirect forms → `page/form`, redirect delete fallback → `page/confirm`, built from UiKit view models (`ListPage`, `FormPage`, `ConfirmPage`, `Action`, `Confirm`, `Pagination`…). Pages, data blocks and context: [docs/TEMPLATES.md](TEMPLATES.md).
+- `Nowo\RoutingKitBundle\Panel\PanelView`: renders the panel pages (per-page template, layout override, section nav, role-gate flag).
+- `web_ui.path_prefix` (canonical URL prefix, default `/_routing`) and `web_ui.templates.<page>` (`index`, `form`, `redirects_index`, `redirects_form`, `redirects_delete`).
+- Deleting a path or redirect from a list (and from the edit forms' danger zone) opens the UiKit confirm `<dialog>`; the route path edit form gains a delete action.
+- Translation keys `panel.delete_title`, `panel.delete_confirm_message`, `panel.import_placeholder`, `panel.form.path_placeholder`, `redirects.form.source_placeholder`, `redirects.form.target_placeholder` (7 locales).
+- Page contract tests (`PageContractTestCase`, English and German), BC tests for the deprecated keys and the theme bridge.
+- Demo: host layout bridge (`nowo_ui_kit.layouts.admin`) and theme tokens, Playwright e2e (`make -C demo/symfony8 test-e2e`) and WebP screenshots (`make -C demo/symfony8 demo-screenshots`, `docs/images/demo/`).
+
+### Changed
+
+- `web_ui.layout_template` defaults to `null` (UiKit `nowo_ui_kit.layouts.admin`) and must render the UiKit canonical blocks; a 1.x layout that only renders `body` is wrapped by `panel/_legacy_layout.html.twig` (deprecated).
+- The section nav renders through the UiKit `tabs` partial, the role-gate warning and the redirect status through the `flash_warning` slot / `flashes` partial, the inline import in a UiKit card and the modal import through the UiKit `modal_shell` partial.
+- Form-level and save errors of the route path form are form errors (`form_errors`); the conflict preview renders in the `flash_warning` slot.
+- Route names and locales in the route path form are no longer passed through the translator.
+- `web_ui.css_framework` / `icon_set` are seeded into `nowo_ui_kit` only when set (they defaulted to `custom` / `none` and forced them on UiKit when the host did not configure UiKit).
+- Dev: PHPUnit 11.
+
+### Deprecated
+
+- `panel.enabled` → `web_ui.enabled`; `panel.path_prefix` → `web_ui.path_prefix`; `panel.role` → `security.access_roles`.
+- `web_ui.classes` and `web_ui.partials` (`PanelChrome`): bridged into `nowo_ui_kit.theme.bundles.NowoRoutingKitBundle`.
+- `web_ui.css_framework`, `web_ui.icon_set` (set them on `nowo_ui_kit`), `web_ui.ui_kit_assets`, `web_ui.main_landmark`, `web_ui.delete_confirm_attr` (no effect).
+- A `web_ui.layout_template` that does not render the UiKit canonical blocks.
+- Twig globals `nowo_routing_kit_*` (no panel template reads them except the legacy layout bridge).
+
+### Removed
+
+- `panel/layout.html.twig` (standalone HTML layout), `panel/base.html.twig`, `panel/_modal_shell.html.twig`, the inline `onsubmit="return confirm(…)"` handler and the `rk_*` page blocks / slot blocks (`rk_page_header_in_layout`, `rk_title_suffix`). See the block mapping in UPGRADING.
+
 ## [1.8.1] - 2026-10-13
 
 ### Changed

@@ -350,7 +350,7 @@ final class Configuration implements ConfigurationInterface
 
     /**
      * Operator URL redirect manager (REQ-REDIR-*). Opt-in: adds a kernel.request listener and a
-     * panel section under {panel.path_prefix}/redirects.
+     * panel section under {web_ui.path_prefix}/redirects.
      */
     private function urlRedirectsNode(): ArrayNodeDefinition
     {
@@ -397,7 +397,7 @@ final class Configuration implements ConfigurationInterface
                     ->defaultValue(3600)
                 ->end()
                 ->arrayNode('protected_prefixes')
-                    ->info('Whole-segment prefixes never redirected (also behind a /{locale} segment). Replaces the default list; panel.path_prefix is always added.')
+                    ->info('Whole-segment prefixes never redirected (also behind a /{locale} segment). Replaces the default list; web_ui.path_prefix is always added.')
                     ->scalarPrototype()->end()
                     ->defaultValue(ProtectedPaths::DEFAULT_PREFIXES)
                     ->validate()

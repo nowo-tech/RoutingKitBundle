@@ -35,7 +35,7 @@ nowo_routing_kit:
         #     message_bus: messenger.default_bus     # null = synchronous write
 ```
 
-No new route import is needed: the panel section lives under the existing `@NowoRoutingKitBundle/Resources/config/routes.yaml` import (`{panel.path_prefix}/redirects`). When `url_redirects.enabled` is `false` those routes answer **404**.
+No new route import is needed: the panel section lives under the existing `@NowoRoutingKitBundle/Resources/config/routes.yaml` import (`{web_ui.path_prefix}/redirects`). When `url_redirects.enabled` is `false` those routes answer **404**.
 
 > The key is `url_redirects`, not `redirects`: `redirects.*` already configures the canonical / root redirect subscribers.
 
@@ -58,7 +58,7 @@ No new route import is needed: the panel section lives under the existing `@Nowo
 
 | Option | Default | Match |
 | --- | --- | --- |
-| `protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` + **`panel.path_prefix`** (always added) | Whole segment: `/admin` covers `/admin` and `/admin/x`, not `/administration` |
+| `protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` + **`web_ui.path_prefix`** (always added) | Whole segment: `/admin` covers `/admin` and `/admin/x`, not `/administration` |
 | `protected_starts` | `/_`, `/robots.txt`, `/sitemap`, `/favicon` | Raw string prefix: `/_` covers `/_profiler`, `/_wdt`, `/_routing` |
 
 - `/` is always protected. Comparison is case-insensitive.
@@ -93,12 +93,12 @@ final class BlogLivePathChecker implements LivePathCheckerInterface
 
 ## Panel
 
-`{panel.path_prefix}/redirects` (default `/_routing/redirects`) lists, creates, edits and deletes rows. A "Routes | Redirects" switcher appears on both panel sections when the feature is enabled.
+`{web_ui.path_prefix}/redirects` (default `/_routing/redirects`) lists, creates, edits and deletes rows. A "Routes | Redirects" switcher appears on both panel sections when the feature is enabled.
 
 - Access: same guard as the routes panel (`security.access_roles`, `security.access_checker`, `allow_unauthenticated`). Firewall the prefix too.
-- Layout: `web_ui.layout_template`, `css_framework`, `icon_set` apply.
+- Layout and theme: the UiKit page contract (`nowo_ui_kit.layouts.admin`, `nowo_ui_kit.theme`; optional `web_ui.layout_template`), see [TEMPLATES.md](TEMPLATES.md).
 - Writes are CSRF-protected (`nowo_routing_kit_url_redirect` for the form, `nowo_routing_kit_url_redirect_delete_{id}` per delete).
-- Delete goes through a **confirmation page** (GET shows it, POST deletes) — no inline `confirm()` JavaScript.
+- Delete opens the **UiKit confirm dialog** from the list (POST + CSRF); `GET {web_ui.path_prefix}/redirects/{id}/delete` keeps a full-page confirmation (UiKit `page/confirm`) as the no-JS fallback — no inline `confirm()` JavaScript.
 - Rules (`UrlRedirectValidator`): source `/…` without spaces, `?`, `#`, `\` (≤255); target internal path or `http(s)://` URL (≤500); status 301/302/307/308; note ≤255; source not protected and not live; target ≠ source (loop); target not another row's source (chain); source unique.
 - Audit: `createdAt` / `updatedAt` and `createdBy` / `updatedBy` (the panel user's **identifier string**, e.g. e-mail — no foreign key to a User entity).
 - Translations: `NowoRoutingKitBundle` domain (`redirects.*`, `nav.*`) in en, es, fr, de, it, pt, nl.

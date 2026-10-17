@@ -9,5 +9,6 @@
             access_control:
                 - { path: ^/_routing, roles: ROLE_ADMIN }
 
-  * panel.role defaults to ROLE_ADMIN (in-bundle AuthorizationChecker gate). Set panel.role: null only if the firewall alone is enough.
+  * security.access_roles defaults to [ROLE_ADMIN] (in-bundle AuthorizationChecker gate; an empty list denies everyone).
+  * The panel renders in nowo_ui_kit.layouts.admin (UiKit page contract): point it at your admin layout.
   * CSRF is required (symfony/security-csrf).

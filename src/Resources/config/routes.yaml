@@ -1,7 +1,7 @@
-# Attribute routes for the CRUD panel (REQ-SF-004). Prefix comes from panel.path_prefix.
+# Attribute routes for the CRUD panel (REQ-SF-004). Prefix comes from web_ui.path_prefix.
 nowo_routing_kit_controllers:
     resource:
         path: '../../Controller/'
         namespace: Nowo\RoutingKitBundle\Controller
     type: attribute
-    prefix: '%nowo.routing_kit.panel.path_prefix%'
+    prefix: '%nowo.routing_kit.web_ui.path_prefix%'

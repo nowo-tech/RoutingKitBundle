@@ -11,10 +11,6 @@ nowo_routing_kit:
         scan_dirs:
             - '%kernel.project_dir%/src/Controller'
     panel:
-        enabled: true
-        path_prefix: '/_routing'
-        # panel.role is a BC alias — prefer security.access_roles
-        role: ROLE_ADMIN
         allow_controller_override: false
         max_definitions: 500
         list_page_size: 50
@@ -22,9 +18,12 @@ nowo_routing_kit:
         # export_signing_key: '%env(ROUTING_KIT_EXPORT_KEY)%'  # min 32 chars when set; null → kernel.secret
     web_ui:
         enabled: true
-        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
-        css_framework: custom
-        icon_set: none
+        path_prefix: '/_routing'
+        layout_template: ~        # null = nowo_ui_kit.layouts.admin (UiKit page contract)
+        templates: {}             # index, form, redirects_index, redirects_form, redirects_delete
+        import_display: inline    # inline | modal
+        show_row_count: true
+        primary_action_last: false
     security:
         access_roles: [ROLE_ADMIN]
         allow_unauthenticated: false

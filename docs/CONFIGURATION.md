@@ -11,26 +11,18 @@ Root key: `nowo_routing_kit`.
 | `storage.paths_file` | `%kernel.project_dir%/var/routing_kit/paths.json` | JSON storage path |
 | `storage.path_storage` | `null` | Custom `RoutePathStorageInterface` service id (must implement `replaceAll`) |
 | `discovery.scan_dirs` | `[%kernel.project_dir%/src/Controller]` | Controllers scanned for `#[Routable]` |
-| `panel.enabled` | `true` | Twig CRUD panel |
-| `panel.path_prefix` | `/_routing` | Panel URL prefix (`/^/[A-Za-z0-9/_-]+$/`) |
-| `panel.role` | `ROLE_ADMIN` | **Deprecated BC** alias for `security.access_roles` (`null` → empty roles) |
 | `panel.allow_controller_override` | `false` | Allow selecting a discovery controller override (never free-form) |
 | `panel.max_definitions` | `500` | Hard cap on stored path rows (REQ-PERF-001) |
-| `panel.list_page_size` | `50` | Panel index page size (REQ-PERF-001) |
+| `panel.list_page_size` | `50` | Panel lists page size (REQ-PERF-001) |
 | `panel.reject_conflicts` | `true` | Block saves that collide on public paths |
 | `panel.export_signing_key` | `null` | HMAC key for signed export/import (`null` → `%kernel.secret%`; min **32** chars when set) |
-| `web_ui.enabled` | `true` | REQ-UI-001 chrome globals |
-| `web_ui.layout_template` | `@NowoRoutingKitBundle/panel/layout.html.twig` | Host apps SHOULD set their project layout |
-| `web_ui.css_framework` | `custom` | `bootstrap` / `bootstrap4` / `bootstrap5` / `tailwind` / `foundation` / `custom` / `tabler` / `none` |
-| `web_ui.icon_set` | `none` | `bootstrap-icons` / `tabler-icons` / `ux_icon` / `svg_inline` / `none` |
-| `web_ui.classes` | `{}` | Admin chrome class map (allow-listed keys, see [USAGE](USAGE.md#customising-the-admin-chrome)); unknown keys fail at container build. Twig global `nowo_routing_kit_classes` |
-| `web_ui.partials` | `{}` | `nav`, `pagination`, `action_inner`, `modal_shell`. Twig global `nowo_routing_kit_partials` |
-| `web_ui.ui_kit_assets` | `true` | Append `nowo-ui.css` (and `nowo-ui-modal.js` with `import_display: modal`) from `panel/base.html.twig`; `false` when the host layout loads UiKit first |
-| `web_ui.import_display` | `inline` | `inline` (section under the table) or `modal` (`#modal-routing-import`, opened from the page actions) |
-| `web_ui.show_row_count` | `true` | Show the "N row(s)" line |
+| `web_ui.enabled` | `true` | Register the admin panel (paths, redirects, import / export). Replaces `panel.enabled` |
+| `web_ui.path_prefix` | `/_routing` | Panel URL prefix (`/^/[A-Za-z0-9/_-]+$/`). Replaces `panel.path_prefix` |
+| `web_ui.layout_template` | `null` | Layout the panel scaffolds extend instead of `nowo_ui_kit.layouts.admin` (`null` = UiKit layout). It must render the UiKit canonical blocks; a 1.x layout that only renders `body` is wrapped by a deprecated bridge |
+| `web_ui.templates.<page>` | `{}` | Per-page template override: `index`, `form`, `redirects_index`, `redirects_form`, `redirects_delete` ([TEMPLATES.md](TEMPLATES.md#per-page-overrides)) |
+| `web_ui.import_display` | `inline` | Signed JSON import: `inline` (card under the paths table) or `modal` (UiKit modal `#modal-routing-import`, opened from the page actions) |
+| `web_ui.show_row_count` | `true` | "N row(s)" caption of the tables |
 | `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
-| `web_ui.main_landmark` | `true` | *(1.7.2)* Wrap panel pages (definitions index / form, redirects index / form / delete) in `<main>`. `false` renders a `<div>` with the same classes, for host layouts that already own `<main>` (no nested landmarks). Twig global `nowo_routing_kit_main_landmark` |
-| `web_ui.delete_confirm_attr` | `{}` | Attributes for the row delete form; `%message%` → translated confirmation. When set, the inline `onsubmit="return confirm(…)"` is not rendered (CSP-friendly) |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = fail-closed (every panel request is denied). Still firewall the prefix |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |
 | `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll) and show the **UNSAFE** banner on every panel page; panel requires SecurityBundle when `false` |
@@ -45,7 +37,7 @@ Root key: `nowo_routing_kit`.
 | `url_redirects.file` | `%kernel.project_dir%/var/routing_kit/redirects.json` | JSON file for the default storage |
 | `url_redirects.cache_pool` | `cache.app` | Cache pool for the enabled-redirect map (`null` = storage read once per request) |
 | `url_redirects.cache_ttl` | `3600` | Seconds; bounds staleness after writes made outside the panel |
-| `url_redirects.protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` | Whole-segment prefixes never redirected (also behind `/{locale}`); replaces defaults; `panel.path_prefix` always added |
+| `url_redirects.protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` | Whole-segment prefixes never redirected (also behind `/{locale}`); replaces defaults; `web_ui.path_prefix` always added |
 | `url_redirects.protected_starts` | `/_`, `/robots.txt`, `/sitemap`, `/favicon` | Raw string prefixes never redirected; replaces defaults |
 | `url_redirects.hits.enabled` | `true` | Count hits / last hit |
 | `url_redirects.hits.message_bus` | `null` | Messenger bus id for async hit counting (`null` = synchronous write) |
@@ -53,48 +45,55 @@ Root key: `nowo_routing_kit`.
 | `register_unprefixed_default` | `true` | Register unprefixed routes for default locale |
 | `seo_kit_bridge` | `true` | Decorate SeoKit `SeoPathBuilderInterface` when present |
 
-### Host app UI integration (REQ-UI-001)
+### Deprecated keys (removed in 2.0)
+
+Still accepted in 1.9 (a deprecation is logged when set); see [UPGRADING.md](UPGRADING.md#unreleased).
+
+| Key | Replacement |
+| --- | --- |
+| `panel.enabled` | `web_ui.enabled` (the canonical key wins when both are set) |
+| `panel.path_prefix` | `web_ui.path_prefix` (the canonical key wins when both are set) |
+| `panel.role` | `security.access_roles` (`null` → `[]`, fail-closed) |
+| `web_ui.classes` | `nowo_ui_kit.theme.classes` (all bundles) or `nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.classes`; bridged automatically (slot table in UPGRADING) |
+| `web_ui.partials` | `nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.partials`; `nav` → `tabs` and `pagination` are bridged, `action_inner` / `modal_shell` are ignored |
+| `web_ui.css_framework`, `web_ui.icon_set` | `nowo_ui_kit.css_framework` / `icon_set` (still seeded into UiKit when set here and not in `nowo_ui_kit`) |
+| `web_ui.ui_kit_assets` | The layout loads the UiKit assets (only the 1.x layout bridge reads it) |
+| `web_ui.main_landmark` | No effect: the layout owns `<main>` |
+| `web_ui.delete_confirm_attr` | No effect: deletes use the UiKit confirm dialog (CSP-safe) |
+
+### Host app UI integration (REQ-UI-003)
+
+The panel pages extend the UiKit page scaffolds (`page/list`, `page/form`, `page/confirm`) and render inside the
+layout configured **once** for every Nowo bundle:
 
 ```yaml
+nowo_ui_kit:
+    css_framework: bootstrap5            # CSS stack and row-action display come from UiKit
+    layouts:
+        admin: 'layouts/admin.html.twig' # renders the canonical nowo_ui_* blocks
+    theme:
+        tokens: { primary: '#0b5fff', radius: '0.5rem' }
+        classes: { table: 'table-sm' }   # one class map for all bundles
+        bundles:
+            NowoRoutingKitBundle: { classes: { table: 'table-sm table-striped' } }   # optional exception
+
 nowo_routing_kit:
     web_ui:
-        layout_template: 'base.html.twig'   # project layout
-        css_framework: custom
-        icon_set: none
+        path_prefix: /_routing
+        # layout_template: ~   # only to give the panel a different layout than nowo_ui_kit.layouts.admin
     security:
         access_roles: [ROLE_ADMIN]
 ```
 
-Panel templates extend `layout|default(nowo_routing_kit_layout_template)` via the intermediate `@NowoRoutingKitBundle/panel/base.html.twig`, which injects UiKit `nowo-ui.css` (`nowo_ui_kit` package) through the `stylesheets` block. Host shells receive the CSS automatically via `{{ parent() }}`.
+Layout bridge, slot vocabulary and tokens: UiKit `docs/PAGE_CONTRACT.md` and `docs/THEME_SLOTS.md`. Pages, view
+models and data blocks of this bundle: [TEMPLATES.md](TEMPLATES.md). The demo (`demo/symfony8`) ships a one-file
+bridge (`templates/layouts/admin.html.twig`) and `config/packages/nowo_ui_kit.yaml`.
 
-#### `css_framework: custom` — host path without reimplementing CSS
-
-When `css_framework: custom`, UiKit `nowo-ui.css` is linked via the `stylesheets` block. No Bootstrap or Tailwind CDN is needed. Customise appearance by overriding `--nowo-ui-*` CSS tokens in your host layout:
-
-```css
-/* your app's CSS */
-:root {
-    --nowo-ui-accent:       #1d4ed8;   /* primary action colour */
-    --nowo-ui-accent-fg:    #fff;
-    --nowo-ui-bg:           #f9fafb;
-    --nowo-ui-radius:       0.375rem;  /* rounded inputs/buttons */
-}
-```
-
-Available tokens are documented in UiKit `public/bundles/nowouikit/css/nowo-ui.css` after running `assets:install`.
-
-#### Bootstrap 5 example (demo)
-
-```yaml
-nowo_routing_kit:
-    web_ui:
-        layout_template: 'base.html.twig'
-        css_framework: bootstrap5
-        icon_set: bootstrap-icons
-```
+Form fields use the FormKit profile `routing_kit` (seeded when the host does not define it; override
+`nowo_form_kit.profiles.routing_kit` to change field classes).
 
 ### Private access (REQ-UI-002)
 
-Prefer `security.access_roles`. Legacy `panel.role: ROLE_X` still maps to `access_roles: [ROLE_X]`; `panel.role: null` maps to `access_roles: []` (fail-closed: the panel denies everyone). Always add host `access_control` for `panel.path_prefix`.
+Prefer `security.access_roles`. Legacy `panel.role: ROLE_X` still maps to `access_roles: [ROLE_X]`; `panel.role: null` maps to `access_roles: []` (fail-closed: the panel denies everyone). Always add host `access_control` for `web_ui.path_prefix`.
 
 See `src/Resources/config/packages/nowo_routing_kit.yaml` for a full example.

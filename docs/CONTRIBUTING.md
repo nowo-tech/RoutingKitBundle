@@ -15,6 +15,8 @@
 3. Start the dev container: `make up` then `make install`.
 4. Run tests: `make test`, `make cs-check`, `make phpstan`, `make igor`.
 5. Pre-release: `make release-check`.
+6. Demo e2e (Playwright, Docker image) and screenshots: `make -C demo/symfony8 test-e2e`, `make -C demo/symfony8 demo-screenshots` (REQ-DEMO-013).
+7. Panel templates: keep `tests/Integration/Contract/PageContractTest.php` green (UiKit `PageContractTestCase`) and update `docs/TEMPLATES.md` plus the UPGRADING "Template contract" section when pages, blocks or view-model fields change (REQ-UI-003).
 
 ## Code style
 
