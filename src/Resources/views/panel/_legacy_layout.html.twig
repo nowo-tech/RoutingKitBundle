@@ -1,0 +1,40 @@
+{#
+  BC bridge (deprecated since 1.9, removed in 2.0): wraps a 1.x web_ui.layout_template that renders `body` (and
+  optionally `title`, `stylesheets`, `javascripts`) instead of the UiKit canonical blocks. PanelView selects it
+  automatically when the configured layout has no `nowo_ui_content` block. Variable: nowo_routing_kit_legacy_layout.
+  UiKit assets follow the deprecated web_ui.ui_kit_assets (default true), as the 1.x panel base template did.
+#}
+{% extends nowo_routing_kit_legacy_layout %}
+{% set _rk_assets = nowo_routing_kit_ui_kit_assets ?? true %}
+{% set _rk_nonce = app is defined and app and app.request ? app.request.attributes.get('csp_nonce')|default('') : '' %}
+
+{% block title %}{% block nowo_ui_document_title %}{% endblock %}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% if _rk_assets %}
+        <link rel="stylesheet" href="{{ asset('css/nowo-ui.css', 'nowo_ui_kit') }}">
+    {% endif %}
+    {% block nowo_ui_head %}{% endblock %}
+    {% block nowo_ui_styles %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+    {% block nowo_ui_navigation %}{% endblock %}
+    <div class="{{ nowo_ui_class('content', nowo_ui_bundle|default(null)) }}"{% if nowo_ui_bundle|default(null) %} data-nowo-ui-bundle="{{ nowo_ui_bundle }}"{% endif %}>
+        {% block nowo_ui_page_header %}{% endblock %}
+        {% block nowo_ui_flashes %}{{ include(nowo_ui_partial('flashes', nowo_ui_bundle|default(null)), {bundle: nowo_ui_bundle|default(null)}) }}{% endblock %}
+        {% block nowo_ui_content %}{% endblock %}
+    </div>
+    {% block nowo_ui_modals %}{% endblock %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if _rk_assets %}
+        {% for _script in ['nowo-ui-modal', 'nowo-ui-confirm'] %}
+            <script src="{{ asset('js/' ~ _script ~ '.js', 'nowo_ui_kit') }}" defer{% if _rk_nonce %} nonce="{{ _rk_nonce }}"{% endif %}></script>
+        {% endfor %}
+    {% endif %}
+    {% block nowo_ui_scripts %}{% endblock %}
+{% endblock %}

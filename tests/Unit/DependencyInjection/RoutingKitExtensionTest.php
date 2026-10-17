@@ -19,6 +19,7 @@ use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
@@ -196,7 +197,7 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertTrue($guard->getArgument('$allowUnauthenticated'));
         self::assertFalse($guard->getArgument('$roleGateDisabled'));
         // The panel must show the UNSAFE banner whenever the in-bundle role check is skipped.
-        self::assertTrue($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
+        self::assertTrue($container->getDefinition(PanelView::class)->getArgument('$roleGateDisabled'));
         self::assertTrue($container->hasDefinition('nowo.routing_kit.access_checker.allow_all'));
     }
 
@@ -209,7 +210,8 @@ final class RoutingKitExtensionTest extends TestCase
         ]], $container);
 
         $controller = $container->getDefinition(UrlRedirectPanelController::class);
-        self::assertTrue($controller->getArgument('$roleGateDisabled'));
+        self::assertTrue($container->getDefinition(PanelView::class)->getArgument('$roleGateDisabled'));
+        self::assertTrue($container->getDefinition(PanelView::class)->getArgument('$urlRedirectsEnabled'));
         self::assertEquals(new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE), $controller->getArgument('$logger'));
     }
 
@@ -241,7 +243,7 @@ final class RoutingKitExtensionTest extends TestCase
         $guard = $container->getDefinition(PanelAccessGuard::class);
         self::assertFalse($guard->getArgument('$allowUnauthenticated'));
         self::assertFalse($guard->getArgument('$roleGateDisabled'));
-        self::assertFalse($container->getDefinition(RoutingPanelController::class)->getArgument('$roleGateDisabled'));
+        self::assertFalse($container->getDefinition(PanelView::class)->getArgument('$roleGateDisabled'));
     }
 
     public function testPanelRequiresSecurityBundleWhenAuthenticated(): void
@@ -386,7 +388,7 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertFalse($container->hasDefinition(RecordRedirectHitHandler::class), 'No bus: synchronous hits, no handler.');
 
         $controller = $container->getDefinition(UrlRedirectPanelController::class);
-        self::assertSame('/_admin/routing', $controller->getArgument('$pathPrefix'));
+        self::assertSame('/_admin/routing', $container->getDefinition(PanelView::class)->getArgument('$pathPrefix'));
         self::assertSame(20, $controller->getArgument('$listPageSize'));
         self::assertTrue($container->getDefinition(RoutingKitTwigExtension::class)->getArgument('$urlRedirectsEnabled'));
     }
@@ -619,6 +621,7 @@ final class RoutingKitExtensionTest extends TestCase
         $this->registerStubExtension($container, 'nowo_form_kit');
         $this->registerStubExtension($container, 'framework');
 
+        $container->prependExtensionConfig(Configuration::ALIAS, ['web_ui' => ['css_framework' => 'tailwind']]);
         // Inject non-array config bags (prependExtensionConfig is typed as array).
         $ref                        = new ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
         $configs                    = $ref->getValue($container);
@@ -643,6 +646,75 @@ final class RoutingKitExtensionTest extends TestCase
             }
         }
         self::assertTrue($formSeeded);
+    }
+
+    public function testPrependBridgesTheDeprecatedChromeMapsIntoTheUiKitTheme(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_ui_kit');
+        $container->prependExtensionConfig(Configuration::ALIAS, ['web_ui' => [
+            'classes'  => ['btn_primary' => 'btn btn-moss', 'action_delete' => 'text-red-700'],
+            'partials' => ['pagination' => 'kit/_pagination.html.twig', 'action_inner' => 'x.html.twig'],
+        ]]);
+
+        $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.web_ui\.classes" option is deprecated, use "nowo_ui_kit\.theme\.bundles\.NowoRoutingKitBundle\.classes"/');
+        $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.web_ui\.partials" option is deprecated/');
+
+        (new RoutingKitExtension())->prepend($container);
+        self::assertSame([[
+            'theme' => ['bundles' => ['NowoRoutingKitBundle' => [
+                'classes'  => ['btn_primary' => ['value' => 'btn btn-moss', 'framework_defaults' => false], 'action_danger' => 'text-red-700'],
+                'partials' => ['pagination' => 'kit/_pagination.html.twig'],
+            ]]],
+        ]], $container->getExtensionConfig('nowo_ui_kit'));
+    }
+
+    public function testPrependDoesNotSeedUiKitWithoutDeprecatedKeys(): void
+    {
+        $container = $this->createContainer();
+        $this->registerStubExtension($container, 'nowo_ui_kit');
+
+        (new RoutingKitExtension())->prepend($container);
+
+        self::assertSame([], $container->getExtensionConfig('nowo_ui_kit'), 'css_framework / icon_set are inherited from nowo_ui_kit.');
+    }
+
+    public function testWebUiDisabledRemovesThePanel(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([['web_ui' => ['enabled' => false, 'layout_template' => 'admin.html.twig'], 'security' => ['access_roles' => []]]], $container);
+
+        self::assertFalse($container->hasDefinition(PanelView::class));
+        self::assertFalse($container->hasDefinition(RoutingPanelController::class));
+        self::assertFalse($container->getParameter('nowo.routing_kit.panel.enabled'));
+        self::assertNull($container->getParameter('nowo.routing_kit.panel.role'));
+    }
+
+    public function testPanelViewReceivesTheWebUiSettings(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'security' => ['access_roles' => ['ROLE_ROUTES']],
+            'web_ui'   => [
+                'path_prefix'         => '/admin/routing',
+                'layout_template'     => 'admin/layout.html.twig',
+                'templates'           => ['index' => 'admin/routes.html.twig'],
+                'import_display'      => 'modal',
+                'show_row_count'      => false,
+                'primary_action_last' => true,
+            ],
+        ]], $container);
+
+        $view = $container->getDefinition(PanelView::class);
+        self::assertSame('/admin/routing', $view->getArgument('$pathPrefix'));
+        self::assertSame('admin/layout.html.twig', $view->getArgument('$layoutTemplate'));
+        self::assertSame(['index' => 'admin/routes.html.twig'], $view->getArgument('$templates'));
+        self::assertSame('modal', $view->getArgument('$importDisplay'));
+        self::assertFalse($view->getArgument('$showRowCount'));
+        self::assertTrue($view->getArgument('$primaryActionLast'));
+        self::assertFalse($view->getArgument('$urlRedirectsEnabled'));
+        self::assertSame('/admin/routing', $container->getParameter('nowo.routing_kit.web_ui.path_prefix'));
+        self::assertSame('ROLE_ROUTES', $container->getParameter('nowo.routing_kit.panel.role'));
     }
 
     private function registerStubExtension(ContainerBuilder $container, string $alias): void

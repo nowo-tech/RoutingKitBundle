@@ -52,8 +52,8 @@ final class ConfigurationTest extends TestCase
         self::assertSame('/tmp/routing.json', $config['storage']['paths_file']);
         self::assertSame('app.path_storage', $config['storage']['path_storage']);
         self::assertSame(['/app/src/Controller', '/app/src/Admin'], $config['discovery']['scan_dirs']);
-        self::assertFalse($config['panel']['enabled']);
-        self::assertSame('/_routes', $config['panel']['path_prefix']);
+        self::assertFalse($config['web_ui']['enabled']);
+        self::assertSame('/_routes', $config['web_ui']['path_prefix']);
         self::assertSame([
             'canonical_enabled'    => false,
             'canonical_status'     => 308,
@@ -82,18 +82,20 @@ final class ConfigurationTest extends TestCase
         self::assertSame('%kernel.project_dir%/var/routing_kit/paths.json', $config['storage']['paths_file']);
         self::assertNull($config['storage']['path_storage']);
         self::assertSame(['%kernel.project_dir%/src/Controller'], $config['discovery']['scan_dirs']);
-        self::assertTrue($config['panel']['enabled']);
-        self::assertSame('/_routing', $config['panel']['path_prefix']);
-        self::assertSame('ROLE_ADMIN', $config['panel']['role']);
+        self::assertArrayNotHasKey('enabled', $config['panel']);
+        self::assertArrayNotHasKey('path_prefix', $config['panel']);
+        self::assertArrayNotHasKey('role', $config['panel']);
+        self::assertSame('/_routing', $config['web_ui']['path_prefix']);
+        self::assertSame([], $config['web_ui']['templates']);
         self::assertFalse($config['panel']['allow_controller_override']);
         self::assertSame(500, $config['panel']['max_definitions']);
         self::assertSame(50, $config['panel']['list_page_size']);
         self::assertTrue($config['panel']['reject_conflicts']);
         self::assertNull($config['panel']['export_signing_key']);
         self::assertTrue($config['web_ui']['enabled']);
-        self::assertSame('@NowoRoutingKitBundle/panel/layout.html.twig', $config['web_ui']['layout_template']);
-        self::assertSame('custom', $config['web_ui']['css_framework']);
-        self::assertSame('none', $config['web_ui']['icon_set']);
+        self::assertNull($config['web_ui']['layout_template']);
+        self::assertArrayNotHasKey('css_framework', $config['web_ui']);
+        self::assertArrayNotHasKey('icon_set', $config['web_ui']);
         self::assertSame(['ROLE_ADMIN'], $config['security']['access_roles']);
         self::assertFalse($config['security']['allow_unauthenticated']);
         self::assertNull($config['security']['access_checker']);
@@ -121,7 +123,6 @@ final class ConfigurationTest extends TestCase
         ]]);
 
         self::assertSame([], $config['security']['access_roles']);
-        self::assertNull($config['panel']['role']);
     }
 
     public function testMapsEmptyStringPanelRoleToEmptyAccessRoles(): void
@@ -148,28 +149,62 @@ final class ConfigurationTest extends TestCase
         self::assertSame(['ROLE_A', 'ROLE_B'], $config['security']['access_roles']);
     }
 
-    public function testMirrorsAccessRolesToPanelRole(): void
+    public function testAccessRolesAloneDoNotTriggerThePanelRoleDeprecation(): void
     {
-        $processor     = new Processor();
-        $configuration = new Configuration();
-
-        $config = $processor->processConfiguration($configuration, [[
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
             'security' => ['access_roles' => ['ROLE_EDITOR']],
         ]]);
 
-        self::assertSame('ROLE_EDITOR', $config['panel']['role']);
+        self::assertSame(['ROLE_EDITOR'], $config['security']['access_roles']);
+        self::assertArrayNotHasKey('role', $config['panel'], 'access_roles is no longer mirrored into the deprecated panel.role.');
     }
 
-    public function testMirrorsEmptyAccessRolesToNullPanelRole(): void
+    public function testDeprecatedPanelKeysMapToTheCanonicalWebUiKeys(): void
     {
-        $processor     = new Processor();
-        $configuration = new Configuration();
+        $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.panel\.enabled" option is deprecated, use "nowo_routing_kit\.web_ui\.enabled"/');
+        $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.panel\.path_prefix" option is deprecated, use "nowo_routing_kit\.web_ui\.path_prefix"/');
+        $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.panel\.role" option is deprecated, use "nowo_routing_kit\.security\.access_roles"/');
 
-        $config = $processor->processConfiguration($configuration, [[
-            'security' => ['access_roles' => []],
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'panel' => ['enabled' => false, 'path_prefix' => '/_old', 'role' => 'ROLE_OLD'],
         ]]);
 
-        self::assertNull($config['panel']['role']);
+        self::assertFalse($config['web_ui']['enabled']);
+        self::assertSame('/_old', $config['web_ui']['path_prefix']);
+        self::assertSame(['ROLE_OLD'], $config['security']['access_roles']);
+    }
+
+    public function testCanonicalWebUiKeysWinOverTheDeprecatedPanelKeys(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'panel'  => ['enabled' => false, 'path_prefix' => '/_old'],
+            'web_ui' => ['enabled' => true, 'path_prefix' => '/_new'],
+        ]]);
+
+        self::assertTrue($config['web_ui']['enabled']);
+        self::assertSame('/_new', $config['web_ui']['path_prefix']);
+    }
+
+    public function testLegacyDefaultLayoutMapsToTheUiKitLayout(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'web_ui' => ['layout_template' => Configuration::LEGACY_LAYOUT_TEMPLATE],
+        ]]);
+        self::assertNull($config['web_ui']['layout_template']);
+
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'web_ui' => ['layout_template' => 'admin/layout.html.twig', 'templates' => ['index' => 'admin/routes.html.twig']],
+        ]]);
+        self::assertSame('admin/layout.html.twig', $config['web_ui']['layout_template']);
+        self::assertSame(['index' => 'admin/routes.html.twig'], $config['web_ui']['templates']);
+    }
+
+    public function testRejectsUnknownTemplatePage(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Unknown nowo_routing_kit.web_ui.templates page(s): show');
+
+        (new Processor())->processConfiguration(new Configuration(), [['web_ui' => ['templates' => ['show' => 'x.html.twig']]]]);
     }
 
     public function testSecurityAccessRolesPreferredOverPanelRole(): void
@@ -192,7 +227,7 @@ final class ConfigurationTest extends TestCase
 
         foreach (['javascript:alert(1)', '//evil', '/http://x', '/bad space'] as $prefix) {
             try {
-                $processor->processConfiguration($configuration, [['panel' => ['path_prefix' => $prefix]]]);
+                $processor->processConfiguration($configuration, [['web_ui' => ['path_prefix' => $prefix]]]);
                 self::fail('expected invalid prefix: ' . $prefix);
             } catch (InvalidConfigurationException $e) {
                 self::assertStringContainsString('path_prefix', $e->getMessage());

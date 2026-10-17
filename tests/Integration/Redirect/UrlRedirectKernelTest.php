@@ -50,7 +50,8 @@ final class UrlRedirectKernelTest extends TestCase
         $list = $this->request('GET', '/_routing/redirects');
         self::assertSame(200, $list->getStatusCode());
         self::assertStringContainsString('data-testid="redirect-table"', (string) $list->getContent());
-        self::assertStringNotContainsString('onsubmit', (string) $list->getContent(), 'No inline JavaScript.');
+        self::assertSame(0, preg_match('/<script(?![^>]*\bsrc=)|\son[a-z]+=|confirm\(/i', (string) $list->getContent()), 'No inline JavaScript (CSP).');
+        self::assertStringContainsString('data-nowo-ui-page="list"', (string) $list->getContent());
 
         $created = $this->submit('/tratamientos/Unas-Encarnadas/', '/contact', ['note' => 'Old site']);
         self::assertSame(302, $created->getStatusCode());
@@ -102,7 +103,8 @@ final class UrlRedirectKernelTest extends TestCase
 
         $confirm = (string) $this->request('GET', '/_routing/redirects/' . $id . '/delete')->getContent();
         self::assertStringContainsString('data-testid="redirect-delete-form"', $confirm);
-        self::assertStringNotContainsString('<script', $confirm);
+        self::assertStringContainsString('data-nowo-ui-page="confirm"', $confirm, 'Full-page confirm = UiKit page/confirm scaffold.');
+        self::assertSame(0, preg_match('/<script(?![^>]*\bsrc=)|\son[a-z]+=|confirm\(/i', $confirm), 'No inline JavaScript (CSP).');
         $deleted = $this->request('POST', '/_routing/redirects/' . $id . '/delete', [
             '_csrf_token' => $this->token($confirm, '_csrf_token'),
             'confirmed'   => '1',
@@ -111,6 +113,39 @@ final class UrlRedirectKernelTest extends TestCase
         self::assertNull($this->storage()->findBySource('/old'));
         self::assertSame(404, $this->request('GET', '/old')->getStatusCode(), 'Cache invalidated on delete.');
         self::assertSame(404, $this->request('GET', '/_routing/redirects/missing/edit')->getStatusCode());
+    }
+
+    public function testListDeletesThroughTheConfirmDialog(): void
+    {
+        $this->submit('/gone', '/new');
+        $id   = (string) $this->storage()->findBySource('/gone')?->getId();
+        $list = (string) $this->request('GET', '/_routing/redirects')->getContent();
+
+        self::assertStringContainsString('data-testid="redirect-delete"', $list);
+        self::assertStringContainsString('<dialog', $list, 'UiKit confirm dialog rendered once after the table.');
+        self::assertStringContainsString('action="/_routing/redirects/' . $id . '/delete"', $list);
+
+        $deleted = $this->request('POST', '/_routing/redirects/' . $id . '/delete', [
+            '_csrf_token' => $this->token($list, '_csrf_token'),
+            'confirmed'   => '1',
+        ]);
+        self::assertSame('/_routing/redirects?status=deleted', $deleted->headers->get('Location'));
+        self::assertNull($this->storage()->findBySource('/gone'));
+        self::assertStringContainsString('Redirect deleted.', (string) $this->request('GET', '/_routing/redirects?status=deleted')->getContent());
+    }
+
+    public function testRoutesPanelPagesRenderOnTheUiKitScaffolds(): void
+    {
+        $index = (string) $this->request('GET', '/_routing/')->getContent();
+        self::assertStringContainsString('data-nowo-ui-page="list"', $index);
+        self::assertStringContainsString('data-testid="routing-kit-import-form"', $index);
+        self::assertStringContainsString('data-testid="routing-kit-role-gate-warning"', $index);
+        self::assertSame(0, preg_match('/<script(?![^>]*\bsrc=)|\son[a-z]+=|confirm\(/i', $index), 'No inline JavaScript (CSP).');
+
+        $form = $this->request('GET', '/_routing/new');
+        self::assertSame(200, $form->getStatusCode());
+        self::assertStringContainsString('data-nowo-ui-page="form"', (string) $form->getContent());
+        self::assertStringContainsString('aria-current="page"', (string) $form->getContent(), 'Section nav marks the current section.');
     }
 
     public function testAccentedSourcesMatchAndLivePagesWinOverStaleRedirects(): void

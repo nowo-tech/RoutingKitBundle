@@ -7,6 +7,7 @@ namespace Nowo\RoutingKitBundle\Tests\Unit\Controller;
 use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
@@ -17,6 +18,10 @@ use Nowo\RoutingKitBundle\Security\RoutingKitAccessCheckerInterface;
 use Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
+use Nowo\UiKitBundle\View\ConfirmPage;
+use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\Label;
+use Nowo\UiKitBundle\View\ListPage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -34,6 +39,8 @@ use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
+
+use function count;
 
 final class UrlRedirectPanelControllerTest extends TestCase
 {
@@ -62,8 +69,18 @@ final class UrlRedirectPanelControllerTest extends TestCase
         $controller->index(Request::create('/_routing/redirects?page=2&status=created'));
         [$template, $context] = $this->rendered[0];
         self::assertSame('@NowoRoutingKitBundle/panel/redirects/index.html.twig', $template);
-        self::assertSame('/b', $context['redirects'][0]->getSourcePath());
-        self::assertSame(['created', 2, 2, 2, 1, '/_routing'], [$context['status'], $context['page'], $context['pages'], $context['total'], $context['item_count'], $context['path_prefix']]);
+        $page = $context['page'];
+        self::assertInstanceOf(ListPage::class, $page);
+        self::assertSame('/b', $page->rows[0]->getSourcePath());
+        self::assertSame(['created', 2, 2, 2, 1, '/_routing'], [$context['status'], $page->pagination?->page, $page->pagination?->totalPages, $page->pagination?->total, count($page->rows), $context['path_prefix']]);
+        self::assertSame('redirects', $context['nav_current']);
+        self::assertSame(['data-testid' => 'redirect-new'], $page->header->actions[0]->attributes);
+        $actions = $page->rowActions($page->rows[0], 0);
+        self::assertSame('/_routing/redirects/' . $page->rows[0]->getId() . '/edit', $actions[0]->href);
+        self::assertSame('/_routing/redirects/' . $page->rows[0]->getId() . '/delete', $actions[1]->href);
+        self::assertTrue($actions[1]->isPost());
+        self::assertSame(['%source%' => '/b', '%target%' => '/x'], $actions[1]->confirm?->message instanceof Label ? $actions[1]->confirm->message->params : null);
+        self::assertSame([], $page->rowActions(new UrlRedirect(), 99));
 
         $controller->index(Request::create('/_routing/redirects?status=<script>'));
         self::assertNull($this->rendered[1][1]['status']);
@@ -84,6 +101,8 @@ final class UrlRedirectPanelControllerTest extends TestCase
         $controller->create(Request::create('/_routing/redirects/new'));
         self::assertSame('@NowoRoutingKitBundle/panel/redirects/form.html.twig', $this->rendered[0][0]);
         self::assertNull($this->rendered[0][1]['redirect']);
+        self::assertInstanceOf(FormPage::class, $this->rendered[0][1]['page']);
+        self::assertNull($this->rendered[0][1]['page']->deleteAction);
 
         $response = $controller->create($this->post('/_routing/redirects/new', [
             'source_path' => '/tratamientos/Unas/',
@@ -111,7 +130,7 @@ final class UrlRedirectPanelControllerTest extends TestCase
 
         $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/contact', 'target_url' => '/x', 'status_code' => '301']));
 
-        $form = $this->rendered[0][1]['form'];
+        $form = $this->rendered[0][1]['page']->form;
         self::assertSame('T:redirects.error.source_live_page', $form['source_path']->vars['errors'][0]->getMessage());
         self::assertSame([], $storage->all());
     }
@@ -121,10 +140,10 @@ final class UrlRedirectPanelControllerTest extends TestCase
         [$controller] = $this->controller();
 
         $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/admin', 'target_url' => '/x', 'status_code' => '301']));
-        self::assertSame('redirects.error.source_protected', $this->rendered[0][1]['form']['source_path']->vars['errors'][0]->getMessage());
+        self::assertSame('redirects.error.source_protected', $this->rendered[0][1]['page']->form['source_path']->vars['errors'][0]->getMessage());
 
         $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/a', 'target_url' => '/x', 'status_code' => '200']));
-        self::assertFalse($this->rendered[1][1]['form']->vars['valid']);
+        self::assertFalse($this->rendered[1][1]['page']->form->vars['valid']);
     }
 
     public function testStorageFailureIsShownOnTheForm(): void
@@ -142,7 +161,7 @@ final class UrlRedirectPanelControllerTest extends TestCase
         $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/a', 'target_url' => '/x', 'status_code' => '301']));
 
         // Generic, translated message: never the raw storage exception (file paths, SQL).
-        self::assertSame('redirects.error.save_failed', $this->rendered[0][1]['form']->vars['errors'][0]->getMessage());
+        self::assertSame('redirects.error.save_failed', $this->rendered[0][1]['page']->form->vars['errors'][0]->getMessage());
     }
 
     public function testRoleGateWarningFlagIsPassedToTemplates(): void
@@ -161,7 +180,8 @@ final class UrlRedirectPanelControllerTest extends TestCase
 
         $controller->edit(Request::create('/_routing/redirects/' . $id . '/edit'), $id);
         self::assertSame($id, $this->rendered[0][1]['redirect']->getId());
-        self::assertSame('/old', $this->rendered[0][1]['form']['source_path']->vars['value']);
+        self::assertSame('/_routing/redirects/' . $id . '/delete', $this->rendered[0][1]['page']->deleteAction?->href);
+        self::assertSame('/old', $this->rendered[0][1]['page']->form['source_path']->vars['value']);
 
         $response = $controller->edit($this->post('/_routing/redirects/' . $id . '/edit', [
             'source_path' => '/old',
@@ -191,6 +211,11 @@ final class UrlRedirectPanelControllerTest extends TestCase
 
         $controller->delete(Request::create('/_routing/redirects/' . $id . '/delete'), $id);
         self::assertSame('@NowoRoutingKitBundle/panel/redirects/delete.html.twig', $this->rendered[0][0]);
+        $page = $this->rendered[0][1]['page'];
+        self::assertInstanceOf(ConfirmPage::class, $page);
+        self::assertSame('/_routing/redirects/' . $id . '/delete', $page->action->href);
+        self::assertSame('/_routing/redirects', $page->cancelHref);
+        self::assertSame(['data-testid' => 'redirect-delete-form'], $page->attributes);
         self::assertNotNull($storage->findById($id), 'GET only asks for confirmation.');
 
         $response = $controller->delete(Request::create('/_routing/redirects/' . $id . '/delete', 'POST', [
@@ -216,7 +241,7 @@ final class UrlRedirectPanelControllerTest extends TestCase
     public function testDisabledFeatureIs404(): void
     {
         $controller = new UrlRedirectPanelController(
-            $this->createStub(Environment::class),
+            new PanelView($this->createStub(Environment::class)),
             FormKitTestSupport::createFormFactory($this->csrf(true)),
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), allowUnauthenticated: true),
         );
@@ -266,16 +291,14 @@ final class UrlRedirectPanelControllerTest extends TestCase
         });
 
         $controller = new UrlRedirectPanelController(
-            $twig,
+            new PanelView($twig, '/_routing', urlRedirectsEnabled: true, roleGateDisabled: $roleGateDisabled),
             FormKitTestSupport::createFormFactory($this->csrf($csrfValid)),
             $guard ?? new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), $tokens, allowUnauthenticated: true),
             $storage,
             $matcher ?? new UrlRedirectMatcher($storage),
             $validator,
             $translator,
-            '/_routing',
             $pageSize,
-            $roleGateDisabled,
             $logger,
         );
 

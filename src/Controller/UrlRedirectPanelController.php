@@ -9,10 +9,20 @@ use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
 use Nowo\RoutingKitBundle\Form\UrlRedirectType;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
+use Nowo\UiKitBundle\View\Action;
+use Nowo\UiKitBundle\View\Column;
+use Nowo\UiKitBundle\View\Confirm;
+use Nowo\UiKitBundle\View\ConfirmPage;
+use Nowo\UiKitBundle\View\EmptyState;
+use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\ListPage;
+use Nowo\UiKitBundle\View\PageHeader;
+use Nowo\UiKitBundle\View\Pagination;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -25,9 +35,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
-use Twig\Environment;
 
 use function array_slice;
+use function array_values;
 use function ceil;
 use function count;
 use function in_array;
@@ -37,11 +47,11 @@ use function max;
 use function min;
 
 /**
- * Panel CRUD for operator URL redirects under `{panel.path_prefix}/redirects` (REQ-REDIR-007).
+ * Panel CRUD for operator URL redirects under `{web_ui.path_prefix}/redirects` (REQ-REDIR-007).
  *
- * Active only when `url_redirects.enabled` and `panel.enabled` are true; otherwise every action is a
- * 404. Access uses the panel guard (security.access_roles). Writes are CSRF-protected; delete goes
- * through a confirmation page (no inline JavaScript, CSP-friendly).
+ * Active only when `url_redirects.enabled` and `web_ui.enabled` are true; otherwise every action is a
+ * 404. Access uses the panel guard (security.access_roles). Writes are CSRF-protected; delete uses the UiKit
+ * confirm dialog, with a full-page confirmation (page/confirm) as the no-JS fallback (CSP-friendly).
  */
 #[AsController]
 final class UrlRedirectPanelController
@@ -53,16 +63,14 @@ final class UrlRedirectPanelController
     private const STATUS_MESSAGES = ['created', 'saved', 'deleted'];
 
     public function __construct(
-        private readonly Environment $twig,
+        private readonly PanelView $view,
         private readonly FormFactoryInterface $formFactory,
         private readonly ?PanelAccessGuard $accessGuard = null,
         private readonly ?UrlRedirectStorageInterface $storage = null,
         private readonly ?UrlRedirectMatcher $matcher = null,
         private readonly ?UrlRedirectValidator $validator = null,
         private readonly ?TranslatorInterface $translator = null,
-        private readonly string $pathPrefix = '/_routing',
         private readonly int $listPageSize = 50,
-        private readonly bool $roleGateDisabled = false,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -76,18 +84,42 @@ final class UrlRedirectPanelController
         $pageSize = max(1, $this->listPageSize);
         $pages    = max(1, (int) ceil($total / $pageSize));
         $page     = max(1, min($pages, $request->query->getInt('page', 1)));
-        $rows     = array_slice($all, ($page - 1) * $pageSize, $pageSize);
+        $rows     = array_values(array_slice($all, ($page - 1) * $pageSize, $pageSize));
         $status   = $request->query->getString('status');
+        $prefix   = $this->view->pathPrefix;
 
-        return $this->render('@NowoRoutingKitBundle/panel/redirects/index.html.twig', [
-            'redirects'   => $rows,
-            'path_prefix' => $this->pathPrefix,
-            'status'      => in_array($status, self::STATUS_MESSAGES, true) ? $status : null,
-            'page'        => $page,
-            'pages'       => $pages,
-            'total'       => $total,
-            'page_size'   => $pageSize,
-            'item_count'  => count($rows),
+        $rowActions = [];
+        foreach ($rows as $key => $redirect) {
+            $rowActions[$key] = [
+                Action::edit($prefix . '/redirects/' . $redirect->getId() . '/edit', PanelView::label('panel.edit')),
+                $this->deleteAction($redirect, ['data-testid' => 'redirect-delete']),
+            ];
+        }
+
+        return $this->view->render('redirects_index', 'redirects', [
+            'page' => new ListPage(
+                new PageHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
+                    new Action('create', PanelView::label('redirects.new'), $prefix . '/redirects/new', variant: 'primary', attributes: ['data-testid' => 'redirect-new']),
+                ]),
+                [
+                    new Column('sourcePath', PanelView::label('redirects.col.source'), required: true),
+                    new Column('targetUrl', PanelView::label('redirects.col.target'), required: true),
+                    new Column('statusCode', PanelView::label('redirects.col.status')),
+                    new Column('enabled', PanelView::label('redirects.col.enabled')),
+                    new Column('hits', PanelView::label('redirects.col.hits'), align: 'end', priority: 2),
+                    new Column('note', PanelView::label('redirects.col.note'), priority: 3),
+                ],
+                $rows,
+                rowActions: static fn (mixed $row, int|string $key): array => $rowActions[$key] ?? [],
+                pagination: new Pagination($page, $pageSize, $total, $pages, 'nowo_routing_kit_redirects'),
+                empty: new EmptyState(message: PanelView::label('redirects.empty')),
+                caption: $this->view->showRowCount ? PanelView::label('redirects.count', ['%count%' => $total]) : null,
+                bundle: PanelView::BUNDLE,
+                layout: $this->view->layout(),
+                attributes: ['data-testid' => 'redirect-table'],
+                actionsLabel: PanelView::label('redirects.col.actions'),
+            ),
+            'status' => in_array($status, self::STATUS_MESSAGES, true) ? $status : null,
         ]);
     }
 
@@ -105,13 +137,14 @@ final class UrlRedirectPanelController
         return $this->form($request, $this->find($id));
     }
 
+    /**
+     * Full-page confirmation (no-JS fallback of the list's confirm dialog) on GET; deletes on POST.
+     */
     #[Route('/redirects/{id}/delete', name: 'nowo_routing_kit_redirects_delete', requirements: ['id' => '[A-Za-z0-9_.-]+'], methods: ['GET', 'POST'])]
     public function delete(Request $request, string $id): Response
     {
         $redirect = $this->find($id);
-        $form     = $this->formFactory->createNamed('', RoutingPanelActionType::class, null, [
-            'csrf_token_id' => self::DELETE_CSRF_TOKEN_PREFIX . $id,
-        ]);
+        $form     = $this->deleteForm($id);
         $form->handleRequest($request);
 
         if ($request->isMethod('POST')) {
@@ -122,13 +155,20 @@ final class UrlRedirectPanelController
             $this->enabledStorage()->delete($id);
             $this->matcher?->invalidate();
 
-            return new RedirectResponse($this->pathPrefix . '/redirects?status=deleted');
+            return new RedirectResponse($this->view->pathPrefix . '/redirects?status=deleted');
         }
 
-        return $this->render('@NowoRoutingKitBundle/panel/redirects/delete.html.twig', [
-            'redirect'    => $redirect,
-            'form'        => $form->createView(),
-            'path_prefix' => $this->pathPrefix,
+        return $this->view->render('redirects_delete', 'redirects', [
+            'page' => new ConfirmPage(
+                new PageHeader(PanelView::label('redirects.delete_title')),
+                $this->deleteConfirm($redirect),
+                new Action('delete', PanelView::label('panel.delete'), $this->view->pathPrefix . '/redirects/' . $id . '/delete', method: 'POST', form: $form->createView()),
+                $this->view->pathPrefix . '/redirects',
+                bundle: PanelView::BUNDLE,
+                layout: $this->view->layout(),
+                attributes: ['data-testid' => 'redirect-delete-form'],
+            ),
+            'redirect' => $redirect,
         ]);
     }
 
@@ -173,7 +213,7 @@ final class UrlRedirectPanelController
                     $storage->save($redirect);
                     $this->matcher?->invalidate();
 
-                    return new RedirectResponse($this->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
+                    return new RedirectResponse($this->view->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
                 } catch (Throwable $exception) {
                     // Storage messages may expose file paths or SQL: log them, show a generic error.
                     $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
@@ -186,10 +226,54 @@ final class UrlRedirectPanelController
             }
         }
 
-        return $this->render('@NowoRoutingKitBundle/panel/redirects/form.html.twig', [
-            'redirect'    => $existing,
-            'form'        => $form->createView(),
-            'path_prefix' => $this->pathPrefix,
+        return $this->view->render('redirects_form', 'redirects', [
+            'page' => new FormPage(
+                new PageHeader(PanelView::label($existing instanceof UrlRedirect ? 'redirects.edit_title' : 'redirects.create_title'), PanelView::label('redirects.form_hint')),
+                $form->createView(),
+                PanelView::label('panel.save'),
+                $this->view->pathPrefix . '/redirects',
+                PanelView::label('panel.cancel'),
+                deleteAction: $existing instanceof UrlRedirect ? $this->deleteAction($existing) : null,
+                bundle: PanelView::BUNDLE,
+                layout: $this->view->layout(),
+                attributes: ['data-testid' => 'routing-kit-redirect-form-panel'],
+            ),
+            'redirect' => $existing,
+        ]);
+    }
+
+    /**
+     * @param array<string, string> $attributes
+     */
+    private function deleteAction(UrlRedirect $redirect, array $attributes = []): Action
+    {
+        return new Action(
+            'delete',
+            PanelView::label('panel.delete'),
+            $this->view->pathPrefix . '/redirects/' . $redirect->getId() . '/delete',
+            method: 'POST',
+            confirm: $this->deleteConfirm($redirect),
+            attributes: $attributes,
+            form: $this->deleteForm((string) $redirect->getId())->createView(),
+        );
+    }
+
+    private function deleteConfirm(UrlRedirect $redirect): Confirm
+    {
+        return new Confirm(
+            PanelView::label('redirects.delete_title'),
+            PanelView::label('redirects.delete_confirm', ['%source%' => $redirect->getSourcePath(), '%target%' => $redirect->getTargetUrl()]),
+            PanelView::label('panel.delete'),
+        );
+    }
+
+    /**
+     * @return FormInterface<array<string, mixed>|null>
+     */
+    private function deleteForm(string $id): FormInterface
+    {
+        return $this->formFactory->createNamed('', RoutingPanelActionType::class, null, [
+            'csrf_token_id' => self::DELETE_CSRF_TOKEN_PREFIX . $id,
         ]);
     }
 
@@ -230,13 +314,5 @@ final class UrlRedirectPanelController
     private function trans(string $key): string
     {
         return $this->translator?->trans($key, [], NowoRoutingKitBundle::TRANSLATION_DOMAIN) ?? $key;
-    }
-
-    /**
-     * @param array<string, mixed> $context
-     */
-    private function render(string $template, array $context): Response
-    {
-        return new Response($this->twig->render($template, $context + ['role_gate_disabled' => $this->roleGateDisabled]));
     }
 }

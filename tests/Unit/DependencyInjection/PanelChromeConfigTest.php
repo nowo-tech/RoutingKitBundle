@@ -24,12 +24,12 @@ final class PanelChromeConfigTest extends TestCase
 
         self::assertSame([], $webUi['classes']);
         self::assertSame([], $webUi['partials']);
-        self::assertTrue($webUi['ui_kit_assets']);
+        self::assertArrayNotHasKey('ui_kit_assets', $webUi);
         self::assertSame('inline', $webUi['import_display']);
         self::assertTrue($webUi['show_row_count']);
         self::assertFalse($webUi['primary_action_last']);
         self::assertSame([], $webUi['delete_confirm_attr']);
-        self::assertTrue($webUi['main_landmark']);
+        self::assertArrayNotHasKey('main_landmark', $webUi);
     }
 
     public function testUnknownClassKeyIsRejected(): void
@@ -63,10 +63,14 @@ final class PanelChromeConfigTest extends TestCase
         $container->setParameter('kernel.secret', str_repeat('s', 32));
         $container->setParameter('kernel.bundles', []);
 
+        foreach (['classes', 'partials', 'ui_kit_assets', 'main_landmark', 'delete_confirm_attr'] as $key) {
+            $this->expectUserDeprecationMessageMatches('/"nowo_routing_kit\.web_ui\.' . $key . '" option is deprecated/');
+        }
+
         (new RoutingKitExtension())->load([[
-            'panel'    => ['enabled' => true],
             'security' => ['allow_unauthenticated' => true],
             'web_ui'   => [
+                'enabled'             => true,
                 'classes'             => ['table' => ' data-table ', 'th' => ''],
                 'partials'            => ['pagination' => 'kit/_pagination.html.twig'],
                 'ui_kit_assets'       => false,

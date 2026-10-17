@@ -18,6 +18,7 @@ use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Nowo\RoutingKitBundle\Panel\PanelChrome;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
@@ -81,8 +82,9 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
     }
 
     /**
-     * When UiKit is installed, seed nowo_ui_kit.css_framework / icon_set from web_ui.
-     * Does not override keys the host already set under nowo_ui_kit.
+     * When UiKit is installed: seed nowo_ui_kit.css_framework / icon_set from the deprecated web_ui keys when the host
+     * set them (and not the nowo_ui_kit ones), and bridge the deprecated web_ui.classes / web_ui.partials maps into
+     * nowo_ui_kit.theme.bundles.NowoRoutingKitBundle (REQ-UI-003). Prepended: the host's own UiKit config wins.
      */
     private function prependUiKitDefaults(ContainerBuilder $container): void
     {
@@ -104,20 +106,25 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             }
         }
 
-        if ($hostHasCssFramework && $hostHasIconSet) {
-            return;
-        }
-
         $config   = $this->processConfiguration(new Configuration(), $container->getExtensionConfig(Configuration::ALIAS));
         $webUi    = is_array($config['web_ui'] ?? null) ? $config['web_ui'] : [];
         $defaults = [];
 
-        if (!$hostHasCssFramework) {
-            $fw                        = (string) ($webUi['css_framework'] ?? 'custom');
+        $fw = $webUi['css_framework'] ?? null;
+        if (!$hostHasCssFramework && is_string($fw)) {
             $defaults['css_framework'] = $fw === 'bootstrap' ? 'bootstrap5' : $fw;
         }
-        if (!$hostHasIconSet) {
-            $defaults['icon_set'] = (string) ($webUi['icon_set'] ?? 'none');
+        $iconSet = $webUi['icon_set'] ?? null;
+        if (!$hostHasIconSet && is_string($iconSet)) {
+            $defaults['icon_set'] = $iconSet;
+        }
+
+        $bridge = PanelChrome::themeBridge(
+            is_array($webUi['classes'] ?? null) ? $webUi['classes'] : [],
+            is_array($webUi['partials'] ?? null) ? $webUi['partials'] : [],
+        );
+        if ($bridge !== []) {
+            $defaults['theme'] = ['bundles' => [PanelView::BUNDLE => $bridge]];
         }
 
         if ($defaults !== []) {
@@ -203,15 +210,19 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->setParameter('nowo.routing_kit.locales', array_values($config['locales']));
         $container->setParameter('nowo.routing_kit.storage.paths_file', $config['storage']['paths_file']);
         $container->setParameter('nowo.routing_kit.discovery.scan_dirs', $config['discovery']['scan_dirs']);
-        $container->setParameter('nowo.routing_kit.panel.enabled', $config['panel']['enabled']);
-        $container->setParameter('nowo.routing_kit.panel.path_prefix', $config['panel']['path_prefix']);
-        $container->setParameter('nowo.routing_kit.panel.role', $config['panel']['role']);
+        $accessRoles = array_values($config['security']['access_roles']);
+        $firstRole   = $accessRoles[0] ?? null;
+        $container->setParameter('nowo.routing_kit.panel.enabled', (bool) $config['web_ui']['enabled']);
+        $container->setParameter('nowo.routing_kit.panel.path_prefix', $config['web_ui']['path_prefix']);
+        $container->setParameter('nowo.routing_kit.web_ui.path_prefix', $config['web_ui']['path_prefix']);
+        // BC: first access role (panel.role is a deprecated alias of security.access_roles).
+        $container->setParameter('nowo.routing_kit.panel.role', is_string($firstRole) && $firstRole !== '' ? $firstRole : null);
         $container->setParameter('nowo.routing_kit.panel.list_page_size', (int) $config['panel']['list_page_size']);
         $container->setParameter('nowo.routing_kit.web_ui', $config['web_ui']);
         $container->setParameter('nowo.routing_kit.web_ui.enabled', (bool) $config['web_ui']['enabled']);
         $container->setParameter('nowo.routing_kit.web_ui.layout_template', $config['web_ui']['layout_template']);
-        $container->setParameter('nowo.routing_kit.web_ui.css_framework', $config['web_ui']['css_framework']);
-        $container->setParameter('nowo.routing_kit.web_ui.icon_set', $config['web_ui']['icon_set']);
+        $container->setParameter('nowo.routing_kit.web_ui.css_framework', $config['web_ui']['css_framework'] ?? 'custom');
+        $container->setParameter('nowo.routing_kit.web_ui.icon_set', $config['web_ui']['icon_set'] ?? 'none');
         $container->setParameter('nowo.routing_kit.security', $config['security']);
         $container->setParameter('nowo.routing_kit.security.access_roles', array_values($config['security']['access_roles']));
         $container->setParameter('nowo.routing_kit.security.access_checker', $config['security']['access_checker']);
@@ -233,7 +244,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         }
 
         if (
-            $config['panel']['enabled']
+            $config['web_ui']['enabled']
             && !$config['security']['allow_unauthenticated']
             && !$this->isSecurityBundleAvailable($container)
         ) {
@@ -263,6 +274,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
     private function disableBundle(ContainerBuilder $container): void
     {
         $container->removeDefinition(RoutingPanelController::class);
+        $container->removeDefinition(PanelView::class);
         $container->removeDefinition(DbRouteLoader::class);
         $container->removeDefinition(CanonicalRedirectSubscriber::class);
         $container->removeDefinition(RootRedirectSubscriber::class);
@@ -319,7 +331,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         )->setPublic(false);
 
         $prefixes   = $redirects['protected_prefixes'];
-        $prefixes[] = (string) $config['panel']['path_prefix'];
+        $prefixes[] = (string) $config['web_ui']['path_prefix'];
         $container->getDefinition(ProtectedPaths::class)
             ->setArgument('$locales', new Reference(LocaleProviderInterface::class))
             ->setArgument('$prefixes', array_values(array_unique($prefixes)))
@@ -349,9 +361,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
         if ($container->hasDefinition(UrlRedirectPanelController::class)) {
             $container->getDefinition(UrlRedirectPanelController::class)
-                ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
                 ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
-                ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated'])
                 ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
         }
     }
@@ -456,7 +466,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     private function configurePanel(ContainerBuilder $container, array $config): void
     {
-        if (!$config['panel']['enabled']) {
+        if (!$config['web_ui']['enabled']) {
+            $container->removeDefinition(PanelView::class);
             $container->removeDefinition(RoutingPanelController::class);
             $container->removeDefinition(UrlRedirectPanelController::class);
             $container->removeDefinition(PanelAccessGuard::class);
@@ -471,11 +482,21 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$allowUnauthenticated', (bool) $config['security']['allow_unauthenticated'])
             ->setArgument('$roleGateDisabled', false);
 
-        $container->getDefinition(RoutingPanelController::class)
-            ->setArgument('$pathPrefix', $config['panel']['path_prefix'])
-            ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
+        $webUi = $config['web_ui'];
+        $container->getDefinition(PanelView::class)
+            ->setArgument('$pathPrefix', $webUi['path_prefix'])
+            ->setArgument('$layoutTemplate', $webUi['layout_template'])
+            ->setArgument('$templates', $webUi['templates'])
+            ->setArgument('$importDisplay', (string) $webUi['import_display'])
+            ->setArgument('$showRowCount', (bool) $webUi['show_row_count'])
+            ->setArgument('$primaryActionLast', (bool) $webUi['primary_action_last'])
+            ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled'])
             // Shows panel.role_gate_warning: the in-bundle role check is skipped (AllowAll checker).
-            ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated'])
+            ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated']);
+
+        $container->getDefinition(RoutingPanelController::class)
+            ->setArgument('$pathPrefix', $webUi['path_prefix'])
+            ->setArgument('$allowControllerOverride', (bool) $config['panel']['allow_controller_override'])
             ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
             ->setPublic(true)
             ->addTag('controller.service_arguments');
@@ -531,7 +552,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     private function configureWebUi(ContainerBuilder $container, array $config): void
     {
-        if (!$config['panel']['enabled'] || !$container->hasDefinition(RoutingKitTwigExtension::class)) {
+        if (!$config['web_ui']['enabled'] || !$container->hasDefinition(RoutingKitTwigExtension::class)) {
             if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
                 $container->removeDefinition(RoutingKitTwigExtension::class);
             }
@@ -542,17 +563,17 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $webUi = $config['web_ui'];
         $container->getDefinition(RoutingKitTwigExtension::class)
             ->setArgument('$layoutTemplate', $webUi['layout_template'])
-            ->setArgument('$cssFramework', $webUi['css_framework'])
-            ->setArgument('$iconSet', $webUi['icon_set'])
+            ->setArgument('$cssFramework', $webUi['css_framework'] ?? 'custom')
+            ->setArgument('$iconSet', $webUi['icon_set'] ?? 'none')
             ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled'])
             ->setArgument('$classes', PanelChrome::clean($webUi['classes']))
             ->setArgument('$partials', PanelChrome::clean($webUi['partials']))
-            ->setArgument('$uiKitAssets', (bool) $webUi['ui_kit_assets'])
+            ->setArgument('$uiKitAssets', (bool) ($webUi['ui_kit_assets'] ?? true))
             ->setArgument('$importDisplay', (string) $webUi['import_display'])
             ->setArgument('$showRowCount', (bool) $webUi['show_row_count'])
             ->setArgument('$primaryActionLast', (bool) $webUi['primary_action_last'])
             ->setArgument('$deleteConfirmAttr', PanelChrome::clean($webUi['delete_confirm_attr']))
-            ->setArgument('$mainLandmark', (bool) $webUi['main_landmark']);
+            ->setArgument('$mainLandmark', (bool) ($webUi['main_landmark'] ?? true));
     }
 
     /**
@@ -560,7 +581,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     private function configureImportExport(ContainerBuilder $container, array $config): void
     {
-        if (!$config['panel']['enabled']) {
+        if (!$config['web_ui']['enabled']) {
             $container->removeDefinition(RoutePathImportExport::class);
 
             return;

@@ -9,6 +9,7 @@ use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -423,12 +424,13 @@ PHP);
         $csrf->method('isTokenValid')->willReturn(true);
         $twig = $this->createMock(Environment::class);
         $twig->method('render')->willReturn('<html/>');
+        $roleGateDisabled = false;
 
         return new RoutingPanelController(
             $manager,
             $discovery,
             $locales,
-            $twig,
+            new PanelView($twig, roleGateDisabled: $roleGateDisabled),
             FormKitTestSupport::createFormFactory($csrf),
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -457,12 +459,13 @@ PHP);
         $csrf->method('isTokenValid')->willReturn($valid);
         $twig = $this->createMock(Environment::class);
         $twig->method('render')->willReturn('<html/>');
+        $roleGateDisabled = false;
 
         return new RoutingPanelController(
             $manager,
             $discovery,
             $locales,
-            $twig,
+            new PanelView($twig, roleGateDisabled: $roleGateDisabled),
             FormKitTestSupport::createFormFactory($csrf),
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -500,13 +503,12 @@ PHP);
             $manager,
             $discovery,
             $locales,
-            $twig,
+            new PanelView($twig, roleGateDisabled: $roleGateDisabled),
             FormKitTestSupport::createFormFactory($csrf),
             new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, $roleGateDisabled),
             new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
             '/_routing',
             $allowOverride,
-            $roleGateDisabled,
             50,
         );
     }

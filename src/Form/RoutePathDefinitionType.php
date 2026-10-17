@@ -46,14 +46,16 @@ final class RoutePathDefinitionType extends AbstractType
         }
 
         $this->addChoice($builder, 'route_name', [
-            'label'    => 'panel.col.route',
-            'choices'  => $routeChoices,
-            'required' => true,
+            'label'                     => 'panel.col.route',
+            'choices'                   => $routeChoices,
+            'choice_translation_domain' => false,
+            'required'                  => true,
         ]);
         $this->addChoice($builder, 'locale', [
-            'label'    => 'panel.col.locale',
-            'choices'  => $localeChoices,
-            'required' => true,
+            'label'                     => 'panel.col.locale',
+            'choices'                   => $localeChoices,
+            'choice_translation_domain' => false,
+            'required'                  => true,
         ]);
         $this->addText($builder, 'path', [
             'label'    => 'panel.col.path',

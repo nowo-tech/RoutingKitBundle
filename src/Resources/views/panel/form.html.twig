@@ -1,71 +1,28 @@
-{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
-{% trans_default_domain 'NowoRoutingKitBundle' %}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
 {#
-  Admin chrome hooks (docs/USAGE.md § Customising the admin chrome):
-  - slot blocks (definition only; host layouts pull them with block()): rk_page_title, rk_page_intro, rk_back_link
-  - page blocks: rk_page_header, rk_form, rk_form_heading, rk_form_errors, rk_form_fields, rk_form_actions
-  - classes: page_header, page_title, page_intro, form_panel (section with data-testid), form_heading, form_hint,
-    alert, form, form_actions, btn_primary, btn_secondary, btn_link
-  - layout contract: rk_page_header_in_layout (bool), rk_title_suffix (string)
+  Route path form (REQ-UI-003): UiKit form scaffold. Variable: page (View\FormPage built by RoutingPanelController:
+  title create / edit, submit, cancel, deleteAction on edit); definition, conflicts (conflict preview messages);
+  nav, nav_current, path_prefix, role_gate_disabled.
+  Data block filled: nowo_ui_form_body (form errors and the conflict preview before the default child loop).
 #}
-{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
-{% set _rk_c = nowo_routing_kit_classes|default({}) %}
-{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
-{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
+{% extends '@NowoUiKit/page/form.html.twig' %}
+{% trans_default_domain 'NowoRoutingKitBundle' %}
 
-{% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
-
-{% block rk_page_title %}{{ definition and definition.id ? 'panel.edit_title'|trans : 'panel.create_title'|trans }}{% endblock %}
-{% block rk_page_intro %}{{ 'panel.form_hint'|trans }}{% endblock %}
-{% block rk_back_link %}<a class="{{ _rk_c.btn_link ?? ui.btn('link', null, _css_fw) }}" href="{{ path_prefix }}/">&larr; {{ 'panel.title'|trans }}</a>{% endblock %}
-
-{% block body %}
-{% block rk_page_header %}
-    {% if not rk_page_header_in_layout|default(false) %}
-        <header class="{{ _rk_c.page_header ?? 'nowo-ui-page-header' }}">
-            <h1{% if _rk_c.page_title is defined %} class="{{ _rk_c.page_title }}"{% endif %}>{{ block('rk_page_title') }}</h1>
-            <p class="{{ _rk_c.page_intro ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
-        </header>
-    {% endif %}
+{% block nowo_ui_page_header %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
 {% endblock %}
-<{{ _rk_main }}>
-    {% block rk_form %}
-        {% if _rk_c.form_panel is defined %}<section class="{{ _rk_c.form_panel }}" data-testid="routing-kit-definition-form">{% endif %}
-        {% block rk_form_heading %}
-            {% if rk_page_header_in_layout|default(false) %}
-                <h2{% if _rk_c.form_heading is defined %} class="{{ _rk_c.form_heading }}"{% endif %}>{{ block('rk_page_title') }}</h2>
-                <p class="{{ _rk_c.form_hint ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
-            {% endif %}
-        {% endblock %}
-        {% block rk_form_errors %}
-            {% if errors %}
-                <div class="{{ _rk_c.alert ?? 'nowo-ui-error errors' }}"{% if _rk_c.alert is defined %} role="alert"{% endif %}>
-                    {% for error in errors %}<div>{{ error }}</div>{% endfor %}
-                </div>
-            {% endif %}
-            {% if conflicts %}
-                <div class="{{ _rk_c.alert ?? 'nowo-ui-error errors' }}"{% if _rk_c.alert is defined %} role="alert"{% endif %}>
-                    {% for conflict in conflicts %}<div>{{ conflict }}</div>{% endfor %}
-                </div>
-            {% endif %}
-        {% endblock %}
-        {{ form_start(form, {attr: {class: _rk_c.form ?? 'nowo-ui-form'}}) }}
-            {% block rk_form_fields %}
-                {% for child in form %}
-                    {% if not child.rendered %}
-                        {{ form_row(child) }}
-                    {% endif %}
-                {% endfor %}
-            {% endblock %}
-            <div class="{{ _rk_c.form_actions ?? 'nowo-ui-actions actions' }}">
-                {% block rk_form_actions %}
-                    <button type="submit" class="{{ _rk_c.btn_primary ?? ui.btn('primary', null, _css_fw) }} nowo-ui-action-save">{{ 'panel.save'|trans }}</button>
-                    <a class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }} nowo-ui-action-cancel" href="{{ path_prefix }}/">{{ 'panel.cancel'|trans }}</a>
-                {% endblock %}
-            </div>
-        {{ form_end(form) }}
-        {% if _rk_c.form_panel is defined %}</section>{% endif %}
-    {% endblock %}
-</{{ _rk_main }}>
+
+{% block nowo_ui_flashes %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_notices.html.twig') }}
+{% endblock %}
+
+{% block nowo_ui_form_body %}
+    {{ form_errors(form) }}
+    {% if conflicts is not empty %}
+        <div class="{{ nowo_ui_class('flash_warning', page.bundle) }}" role="alert" data-testid="routing-kit-conflicts">
+            {% for conflict in conflicts %}<p>{{ conflict }}</p>{% endfor %}
+        </div>
+    {% endif %}
+    {{ parent() }}
 {% endblock %}

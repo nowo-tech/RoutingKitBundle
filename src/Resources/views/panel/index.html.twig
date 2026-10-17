@@ -1,199 +1,52 @@
-{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
-{% trans_default_domain 'NowoRoutingKitBundle' %}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
 {#
-  Admin chrome hooks (docs/USAGE.md § Customising the admin chrome):
-  - class map nowo_routing_kit_classes (web_ui.classes), partial map nowo_routing_kit_partials (web_ui.partials)
-  - slot blocks (definition only; host layouts pull them with block()): rk_page_title, rk_page_intro, rk_page_actions
-  - page blocks: rk_nav, rk_page_header, rk_results, rk_count, rk_table, rk_table_head, rk_row, rk_enabled_cell,
-    rk_row_actions, rk_empty_state, rk_pagination, rk_import
-  - layout contract: rk_page_header_in_layout (bool), rk_title_suffix (string)
+  Route paths list (REQ-UI-003): UiKit list scaffold. Variable: page (View\ListPage built by RoutingPanelController);
+  import_form, import_display (inline | modal), import_modal_id; nav, nav_current, path_prefix, role_gate_disabled.
+  Data blocks filled: nowo_ui_list_row, nowo_ui_list_after (inline import card); nowo_ui_modals (import modal).
+  Section nav after the page header, panel notices after the host flashes.
 #}
-{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
-{% set _rk_c = nowo_routing_kit_classes|default({}) %}
-{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
-{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
-{% set _rk_p = nowo_routing_kit_partials|default({}) %}
-{% set _rk_display = nowo_ui_kit_row_actions_display|default('text') %}
-{% set _rk_import_modal = (nowo_routing_kit_import_display ?? 'inline') == 'modal' %}
+{% extends '@NowoUiKit/page/list.html.twig' %}
+{% trans_default_domain 'NowoRoutingKitBundle' %}
 
-{% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
-
-{% block rk_page_title %}{{ 'panel.title'|trans }}{% endblock %}
-{% block rk_page_intro %}{{ 'panel.subtitle'|trans({'%default%': default}) }}{% endblock %}
-
-{% block rk_page_actions %}
-    {% set _rk_new %}<a class="{{ _rk_c.btn_primary ?? ui.btn('primary', null, _css_fw) }} nowo-ui-action-create" href="{{ path_prefix }}/new">{{ 'panel.new'|trans }}</a>{% endset %}
-    {% if not (nowo_routing_kit_primary_action_last ?? false) %}{{ _rk_new }}{% endif %}
-    {{ form_start(export_form, {
-        action: path_prefix ~ '/export',
-        method: 'POST',
-        attr: _rk_c.inline_form is defined ? {class: _rk_c.inline_form} : {style: 'display:inline'},
-    }) }}
-        {{ form_rest(export_form) }}
-        <button type="submit" class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}">{{ 'panel.export'|trans }}</button>
-    {{ form_end(export_form, {render_rest: false}) }}
-    {{ form_start(clear_cache_form, {
-        action: path_prefix ~ '/clear-cache',
-        method: 'POST',
-        attr: _rk_c.inline_form is defined ? {class: _rk_c.inline_form} : {style: 'display:inline'},
-    }) }}
-        {{ form_rest(clear_cache_form) }}
-        <button type="submit" class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}">{{ 'panel.clear_cache'|trans }}</button>
-    {{ form_end(clear_cache_form, {render_rest: false}) }}
-    {% if _rk_import_modal %}
-        <button type="button" class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}" {{ ui.modal_toggle_attrs(_css_fw)|raw }} {{ ui.modal_target_attr('modal-routing-import', _css_fw)|raw }}>{{ 'panel.import'|trans }}</button>
-    {% endif %}
-    {% if nowo_routing_kit_primary_action_last ?? false %}{{ _rk_new }}{% endif %}
+{% block nowo_ui_page_header %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
 {% endblock %}
 
-{% block body %}
-{% block rk_nav %}{{ include(_rk_p.nav ?? '@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'routes', path_prefix: path_prefix}) }}{% endblock %}
-{% block rk_page_header %}
-    {% if not rk_page_header_in_layout|default(false) %}
-        <header class="{{ _rk_c.page_header ?? 'nowo-ui-page-header' }}">
-            <h1{% if _rk_c.page_title is defined %} class="{{ _rk_c.page_title }}"{% endif %}>{{ block('rk_page_title') }}</h1>
-            <p class="{{ _rk_c.page_intro ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
-            <div class="{{ _rk_c.toolbar ?? 'nowo-ui-actions actions' }}">
-                {{ block('rk_page_actions') }}
-            </div>
-        </header>
-    {% endif %}
-{% endblock %}
-<{{ _rk_main }}>
-    {% block rk_results %}
-        {% if _rk_c.results is defined %}<section class="{{ _rk_c.results }}" data-testid="routing-kit-definitions-table">{% endif %}
-        {% block rk_count %}
-            {% if nowo_routing_kit_show_row_count ?? true %}
-                <p class="{{ _rk_c.count ?? 'nowo-ui-muted muted' }}">{{ 'panel.count'|trans({'%count%': total}) }}</p>
-            {% endif %}
-        {% endblock %}
-        {% block rk_table %}
-            <div class="{{ _rk_c.table_wrap ?? 'nowo-ui-table-wrap' }}">
-            <table class="{{ _rk_c.table ?? 'nowo-ui-table' }}">
-                <thead>
-                    {% block rk_table_head %}
-                        <tr{% if _rk_c.thead_row is defined %} class="{{ _rk_c.thead_row }}"{% endif %}>
-                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ 'panel.col.route'|trans }}</th>
-                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ 'panel.col.locale'|trans }}</th>
-                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ 'panel.col.path'|trans }}</th>
-                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ 'panel.col.canonical'|trans }}</th>
-                            <th{% if _rk_c.th is defined %} class="{{ _rk_c.th }}"{% endif %}>{{ 'panel.col.enabled'|trans }}</th>
-                            {% if _rk_c.th_actions is defined %}<th class="{{ _rk_c.th_actions }}">{{ 'panel.col.actions'|trans }}</th>{% else %}<th></th>{% endif %}
-                        </tr>
-                    {% endblock %}
-                </thead>
-                <tbody>
-                {% for row in definitions %}
-                    {% block rk_row %}
-                        <tr{% if _rk_c.row is defined %} class="{{ _rk_c.row }}"{% endif %}>
-                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}><code>{{ row.routeName }}</code></td>
-                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>{{ row.locale }}</td>
-                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}><code>{{ row.path }}</code></td>
-                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>{{ row.canonicalStyle.value }}</td>
-                            <td{% if _rk_c.td is defined %} class="{{ _rk_c.td }}"{% endif %}>{% block rk_enabled_cell %}{% set _rk_yes = row.enabled %}{% if _rk_c[_rk_yes ? 'badge_yes' : 'badge_no'] is defined %}<span class="{{ _rk_c[_rk_yes ? 'badge_yes' : 'badge_no'] }}">{{ (_rk_yes ? 'panel.yes' : 'panel.no')|trans }}</span>{% else %}{{ (_rk_yes ? 'panel.yes' : 'panel.no')|trans }}{% endif %}{% endblock %}</td>
-                            <td{% if _rk_c.td_actions is defined %} class="{{ _rk_c.td_actions }}"{% endif %}>
-                                <div class="{{ _rk_c.row_actions ?? (ui.row_actions(_css_fw) ~ ' nowo-ui-row-actions--text') }}"{% if _rk_c.th_actions is defined %} aria-label="{{ 'panel.col.actions'|trans }}"{% endif %}>
-                                    {{ block('rk_row_actions') }}
-                                </div>
-                            </td>
-                        </tr>
-                    {% endblock %}
-                {% else %}
-                    {% block rk_empty_state %}
-                        <tr><td colspan="6"{% if _rk_c.empty is defined %} class="{{ _rk_c.empty }}"{% endif %}>{{ 'panel.empty'|trans }}</td></tr>
-                    {% endblock %}
-                {% endfor %}
-                </tbody>
-            </table>
-            </div>
-        {% endblock %}
-
-        {% block rk_pagination %}
-            {{ include(_rk_p.pagination ?? '@NowoUiKitBundle/partials/_pagination.html.twig', {
-                pagination: {
-                    page: page,
-                    per_page: page_size,
-                    total: total,
-                    total_pages: pages,
-                },
-                item_count: item_count,
-                route: 'nowo_routing_kit_panel',
-                route_params: {},
-                framework: _css_fw,
-            }) }}
-        {% endblock %}
-        {% if _rk_c.results is defined %}</section>{% endif %}
-    {% endblock %}
-
-    {% block rk_import %}
-        {% if _rk_import_modal %}
-            {% embed _rk_p.modal_shell ?? '@NowoRoutingKitBundle/panel/_modal_shell.html.twig' with {modal_id: 'modal-routing-import', modal_title: 'panel.import_title'|trans({}, 'NowoRoutingKitBundle')} %}
-                {% trans_default_domain 'NowoRoutingKitBundle' %}
-                {% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
-                {% block rk_modal_body %}
-                    {{ form_start(import_form, {
-                        action: path_prefix ~ '/import',
-                        method: 'POST',
-                        attr: {class: _rk_c.modal_form ?? 'nowo-ui-form'},
-                    }) }}
-                        {% if _rk_c.modal_form_body is defined %}<div class="{{ _rk_c.modal_form_body }}">{% endif %}
-                        {{ form_row(import_form.payload_json) }}
-                        {{ form_row(import_form.replace_all) }}
-                        {% if _rk_c.modal_form_body is defined %}</div>{% endif %}
-                        <div class="{{ _rk_c.modal_actions ?? 'nowo-ui-actions actions' }}">
-                            <button type="button" class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}" {{ ui.modal_dismiss_attrs(_css_fw)|raw }}>{{ 'panel.cancel'|trans }}</button>
-                            <button type="submit" class="{{ _rk_c.btn_primary ?? ui.btn('primary', null, _css_fw) }}">{{ 'panel.import'|trans }}</button>
-                        </div>
-                    {{ form_end(import_form) }}
-                {% endblock %}
-            {% endembed %}
-        {% else %}
-            <h2{% if _rk_c.import_title is defined %} class="{{ _rk_c.import_title }}"{% endif %}>{{ 'panel.import_title'|trans }}</h2>
-            {{ form_start(import_form, {
-                action: path_prefix ~ '/import',
-                method: 'POST',
-                attr: {class: _rk_c.import_form ?? 'nowo-ui-form'},
-            }) }}
-                {{ form_row(import_form.payload_json) }}
-                {{ form_row(import_form.replace_all) }}
-                <div class="{{ _rk_c.form_actions ?? 'nowo-ui-actions actions' }}">
-                    <button type="submit" class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}">{{ 'panel.import'|trans }}</button>
-                </div>
-            {{ form_end(import_form) }}
-        {% endif %}
-    {% endblock %}
-</{{ _rk_main }}>
+{% block nowo_ui_flashes %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_notices.html.twig') }}
 {% endblock %}
 
-{# Row actions for definition `row`. #}
-{% block rk_row_actions %}
-    {% set _rk_l_edit = 'panel.edit'|trans %}
-    {% set _rk_l_delete = 'panel.delete'|trans %}
-    <a
-        class="{{ _rk_c.action_edit ?? ui.action('edit', _css_fw) }}"
-        href="{{ path_prefix }}/edit/{{ row.id }}"
-        title="{{ _rk_l_edit }}"
-        aria-label="{{ _rk_l_edit }}"
-    >{% if _rk_p.action_inner is defined %}{% include _rk_p.action_inner with {display: _rk_display, icon_name: 'edit', label: _rk_l_edit} only %}{% else %}{{ _rk_l_edit }}{% endif %}</a>
-    {% if delete_forms[row.id] is defined %}
-        {% set _rk_confirm = 'panel.delete_confirm'|trans %}
-        {% set _rk_confirm_attr = {} %}
-        {% for name, value in nowo_routing_kit_delete_confirm_attr ?? {} %}
-            {% set _rk_confirm_attr = _rk_confirm_attr|merge({(name): value|replace({'%message%': _rk_confirm})}) %}
-        {% endfor %}
-        {{ form_start(delete_forms[row.id], {
-            action: path_prefix ~ '/delete/' ~ row.id,
-            method: 'POST',
-            attr: {class: _rk_c.delete_form ?? 'nowo-ui-row-actions__form'}|merge(_rk_confirm_attr is empty ? {onsubmit: 'return confirm(' ~ _rk_confirm|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|replace({'"': "'"}) ~ ');'} : _rk_confirm_attr),
+{% block nowo_ui_list_row %}
+    {% set _cell = nowo_ui_class('table_cell', page.bundle) %}
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.route'|trans }}"><code>{{ row.routeName }}</code></td>
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.locale'|trans }}">{{ row.locale }}</td>
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.path'|trans }}"><code>{{ row.path }}</code></td>
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.canonical'|trans }}" data-nowo-ui-priority="3">{{ ('panel.form.canonical_style.' ~ row.canonicalStyle.value)|trans }}</td>
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.enabled'|trans }}" data-nowo-ui-priority="2">
+        <span class="{{ nowo_ui_class(row.enabled ? 'badge_success' : 'badge_neutral', page.bundle) }}">{{ (row.enabled ? 'panel.yes' : 'panel.no')|trans }}</span>
+    </td>
+{% endblock %}
+
+{% block nowo_ui_list_after %}
+    {% if import_display != 'modal' %}
+        {{ include(nowo_ui_partial('card', page.bundle), {
+            id: 'routing-kit-import',
+            title: 'panel.import_title'|trans,
+            body: include('@NowoRoutingKitBundle/panel/_import_form.html.twig', {modal: false}),
+            bundle: page.bundle,
         }) }}
-            {{ form_rest(delete_forms[row.id]) }}
-            <button
-                type="submit"
-                class="{{ _rk_c.action_delete ?? ui.action('delete', _css_fw) }}"
-                title="{{ _rk_l_delete }}"
-                aria-label="{{ _rk_l_delete }}"
-            >{% if _rk_p.action_inner is defined %}{% include _rk_p.action_inner with {display: _rk_display, icon_name: 'delete', label: _rk_l_delete} only %}{% else %}{{ _rk_l_delete }}{% endif %}</button>
-        {{ form_end(delete_forms[row.id], {render_rest: false}) }}
+    {% endif %}
+{% endblock %}
+
+{% block nowo_ui_modals %}
+    {{ parent() }}
+    {% if import_display == 'modal' %}
+        {{ include(nowo_ui_partial('modal_shell', page.bundle), {
+            id: import_modal_id,
+            title: 'panel.import_title'|trans,
+            body: include('@NowoRoutingKitBundle/panel/_import_form.html.twig', {modal: true}),
+            bundle: page.bundle,
+        }) }}
     {% endif %}
 {% endblock %}

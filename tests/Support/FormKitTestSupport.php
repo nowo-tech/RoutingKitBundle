@@ -24,13 +24,16 @@ use function call_user_func;
  */
 final class FormKitTestSupport
 {
-    public static function merger(): FormOptionsMerger
+    /**
+     * @param bool $plain true = profile without framework classes (host / UiKit theme decides; contract test)
+     */
+    public static function merger(bool $plain = false): FormOptionsMerger
     {
         $profile = [
             'translation_domain' => NowoRoutingKitBundle::TRANSLATION_DOMAIN,
             'auto_placeholder'   => false,
             'auto_help'          => false,
-            'defaults'           => [
+            'defaults'           => $plain ? ['attr' => [], 'row_attr' => []] : [
                 'attr'     => ['class' => 'nowo-ui-input form-control'],
                 'row_attr' => ['class' => 'mb-2'],
             ],
@@ -54,26 +57,26 @@ final class FormKitTestSupport
      *
      * @return T
      */
-    public static function withMerger(object $formType): object
+    public static function withMerger(object $formType, bool $plain = false): object
     {
         if (!method_exists($formType, 'setFormOptionsMerger')) {
             return $formType;
         }
 
-        call_user_func([$formType, 'setFormOptionsMerger'], self::merger());
+        call_user_func([$formType, 'setFormOptionsMerger'], self::merger($plain));
 
         return $formType;
     }
 
-    public static function createFormFactory(CsrfTokenManagerInterface $csrfTokenManager): FormFactoryInterface
+    public static function createFormFactory(CsrfTokenManagerInterface $csrfTokenManager, bool $plain = false): FormFactoryInterface
     {
         return Forms::createFormFactoryBuilder()
             ->addExtension(new HttpFoundationExtension())
             ->addExtension(new CsrfExtension($csrfTokenManager))
             ->addType(new RoutingPanelActionType())
-            ->addType(self::withMerger(new RoutingPanelImportType()))
-            ->addType(self::withMerger(new RoutePathDefinitionType()))
-            ->addType(self::withMerger(new UrlRedirectType()))
+            ->addType(self::withMerger(new RoutingPanelImportType(), $plain))
+            ->addType(self::withMerger(new RoutePathDefinitionType(), $plain))
+            ->addType(self::withMerger(new UrlRedirectType(), $plain))
             ->getFormFactory();
     }
 }

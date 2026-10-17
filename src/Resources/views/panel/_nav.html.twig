@@ -1,9 +1,15 @@
-{# Panel section switcher: Routes | Redirects (redirects only when url_redirects.enabled). #}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
-{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
-{% if nowo_routing_kit_url_redirects_enabled|default(false) %}
-<nav class="nowo-ui-actions actions nowo-ui-routing-kit-nav" aria-label="{{ 'nav.label'|trans({}, 'NowoRoutingKitBundle') }}">
-    <a class="{{ ui.btn(current == 'routes' ? 'primary' : 'secondary', 'sm', _css_fw) }}" href="{{ path_prefix }}/"{% if current == 'routes' %} aria-current="page"{% endif %}>{{ 'nav.routes'|trans({}, 'NowoRoutingKitBundle') }}</a>
-    <a class="{{ ui.btn(current == 'redirects' ? 'primary' : 'secondary', 'sm', _css_fw) }}" href="{{ path_prefix }}/redirects"{% if current == 'redirects' %} aria-current="page"{% endif %}>{{ 'nav.redirects'|trans({}, 'NowoRoutingKitBundle') }}</a>
-</nav>
+{#
+  Panel section switcher (Routes | Redirects) under the page header, through the UiKit `tabs` partial (theme slots
+  tabs, tab, tab_active; replace it for this bundle with nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.partials.tabs).
+  Variables: nav (PanelView::nav(), empty when url_redirects is off), nav_current (routes | redirects),
+  path_prefix. A 1.x web_ui.partials.nav override (bridged to that partial) still receives current / path_prefix.
+#}
+{% if nav is not empty %}
+    {{ include(nowo_ui_partial('tabs', 'NowoRoutingKitBundle'), {
+        items: nav,
+        aria_label: 'nav.label'|trans({}, 'NowoRoutingKitBundle'),
+        bundle: 'NowoRoutingKitBundle',
+        current: nav_current,
+        path_prefix: path_prefix,
+    }) }}
 {% endif %}

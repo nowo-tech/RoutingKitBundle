@@ -1,58 +1,22 @@
-{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
-{% trans_default_domain 'NowoRoutingKitBundle' %}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
 {#
-  Admin chrome hooks: slot blocks rk_page_title, rk_page_intro, rk_back_link; page blocks rk_nav, rk_page_header,
-  rk_form, rk_form_heading, rk_form_fields, rk_form_actions. Classes as on the routes form.
+  URL redirect form (REQ-UI-003): UiKit form scaffold. Variable: page (View\FormPage built by
+  UrlRedirectPanelController: deleteAction on edit); redirect (UrlRedirect|null); nav, nav_current, path_prefix,
+  role_gate_disabled.
+  Data block filled: nowo_ui_form_body (form-level errors before the default child loop).
 #}
-{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
-{% set _rk_c = nowo_routing_kit_classes|default({}) %}
-{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
-{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
-{% set _rk_p = nowo_routing_kit_partials|default({}) %}
+{% extends '@NowoUiKit/page/form.html.twig' %}
 
-{% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
-
-{% block rk_page_title %}{{ (redirect ? 'redirects.edit_title' : 'redirects.create_title')|trans }}{% endblock %}
-{% block rk_page_intro %}{{ 'redirects.form_hint'|trans }}{% endblock %}
-{% block rk_back_link %}<a class="{{ _rk_c.btn_link ?? ui.btn('link', null, _css_fw) }}" href="{{ path_prefix }}/redirects">&larr; {{ 'redirects.title'|trans }}</a>{% endblock %}
-
-{% block body %}
-{% block rk_nav %}{{ include(_rk_p.nav ?? '@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}{% endblock %}
-{% block rk_page_header %}
-    {% if not rk_page_header_in_layout|default(false) %}
-        <header class="{{ _rk_c.page_header ?? 'nowo-ui-page-header' }}">
-            <h1{% if _rk_c.page_title is defined %} class="{{ _rk_c.page_title }}"{% endif %}>{{ block('rk_page_title') }}</h1>
-            <p class="{{ _rk_c.page_intro ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
-        </header>
-    {% endif %}
+{% block nowo_ui_page_header %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
 {% endblock %}
-<{{ _rk_main }}>
-    {% block rk_form %}
-        {% if _rk_c.form_panel is defined %}<section class="{{ _rk_c.form_panel }}" data-testid="routing-kit-redirect-form-panel">{% endif %}
-        {% block rk_form_heading %}
-            {% if rk_page_header_in_layout|default(false) %}
-                <h2{% if _rk_c.form_heading is defined %} class="{{ _rk_c.form_heading }}"{% endif %}>{{ block('rk_page_title') }}</h2>
-                <p class="{{ _rk_c.form_hint ?? 'nowo-ui-muted muted' }}">{{ block('rk_page_intro') }}</p>
-            {% endif %}
-        {% endblock %}
-        {{ form_start(form, {attr: {class: _rk_c.form ?? 'nowo-ui-form', 'data-testid': 'redirect-form'}}) }}
-            {{ form_errors(form) }}
-            {% block rk_form_fields %}
-                {% for child in form %}
-                    {% if not child.rendered %}
-                        {{ form_row(child) }}
-                    {% endif %}
-                {% endfor %}
-            {% endblock %}
-            <div class="{{ _rk_c.form_actions ?? 'nowo-ui-actions actions' }}">
-                {% block rk_form_actions %}
-                    <button type="submit" class="{{ _rk_c.btn_primary ?? ui.btn('primary', null, _css_fw) }} nowo-ui-action-save">{{ 'panel.save'|trans }}</button>
-                    <a class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }} nowo-ui-action-cancel" href="{{ path_prefix }}/redirects">{{ 'panel.cancel'|trans }}</a>
-                {% endblock %}
-            </div>
-        {{ form_end(form) }}
-        {% if _rk_c.form_panel is defined %}</section>{% endif %}
-    {% endblock %}
-</{{ _rk_main }}>
+
+{% block nowo_ui_flashes %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_notices.html.twig') }}
+{% endblock %}
+
+{% block nowo_ui_form_body %}
+    {{ form_errors(form) }}
+    {{ parent() }}
 {% endblock %}

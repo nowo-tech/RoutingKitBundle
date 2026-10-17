@@ -8,6 +8,7 @@ use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
@@ -18,7 +19,12 @@ use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
+use Nowo\UiKitBundle\View\Action;
+use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\Label;
+use Nowo\UiKitBundle\View\ListPage;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
 use Symfony\Component\Routing\RequestContext;
@@ -82,15 +88,25 @@ PHP);
             definitions: [new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1')],
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/index.html.twig', $template);
-                self::assertCount(1, $context['definitions']);
+                $page = $context['page'];
+                self::assertInstanceOf(ListPage::class, $page);
+                self::assertCount(1, $page->rows);
+                self::assertSame('NowoRoutingKitBundle', $page->bundle);
+                self::assertNull($page->layout);
                 self::assertSame('/_routing-kit', $context['path_prefix']);
-                self::assertSame(['en', 'es'], $context['locales']);
-                self::assertSame('en', $context['default']);
-                self::assertArrayHasKey('export_form', $context);
-                self::assertArrayHasKey('clear_cache_form', $context);
-                self::assertArrayHasKey('import_form', $context);
-                self::assertArrayHasKey('delete_forms', $context);
-                self::assertArrayHasKey('rk_1', $context['delete_forms']);
+                self::assertSame('inline', $context['import_display']);
+                self::assertSame([], $context['nav']);
+                self::assertFalse($context['role_gate_disabled']);
+                self::assertInstanceOf(FormView::class, $context['import_form']);
+                self::assertSame(['create', 'export', 'custom'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
+                self::assertSame(['%default%' => 'en'], $page->header->intro instanceof Label ? $page->header->intro->params : null);
+                $actions = $page->rowActions($page->rows[0], 0);
+                self::assertSame('/_routing-kit/edit/rk_1', $actions[0]->href);
+                self::assertSame('/_routing-kit/delete/rk_1', $actions[1]->href);
+                self::assertTrue($actions[1]->isPost());
+                self::assertInstanceOf(FormView::class, $actions[1]->form);
+                self::assertNotNull($actions[1]->confirm);
+                self::assertSame(1, $page->pagination?->totalPages);
 
                 return '<html>index</html>';
             }),
@@ -102,14 +118,37 @@ PHP);
         self::assertSame('<html>index</html>', $response->getContent());
     }
 
+    public function testIndexWithImportModalPrimaryActionLastAndNoRowCount(): void
+    {
+        [$controller] = $this->createController(
+            twig: $this->createTwigMock(static function (string $template, array $context): string {
+                $page = $context['page'];
+                self::assertInstanceOf(ListPage::class, $page);
+                self::assertSame(['export', 'custom', 'import', 'create'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
+                self::assertSame(PanelView::IMPORT_MODAL_ID, $page->header->actions[2]->modalId);
+                self::assertNull($page->caption);
+                self::assertSame('modal', $context['import_display']);
+                self::assertSame([], $page->rowActions(new RoutePathDefinition('x', 'en', '/x'), 7));
+
+                return '<html>modal</html>';
+            }),
+            viewOptions: ['importDisplay' => 'modal', 'showRowCount' => false, 'primaryActionLast' => true],
+        );
+
+        self::assertSame('<html>modal</html>', $controller->index(Request::create('/_routing-kit/'))->getContent());
+    }
+
     public function testCreateGetRendersForm(): void
     {
         [$controller] = $this->createController(
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
                 self::assertNull($context['definition']);
-                self::assertArrayHasKey('form', $context);
-                self::assertSame([], $context['errors']);
+                self::assertInstanceOf(FormPage::class, $context['page']);
+                self::assertNull($context['page']->deleteAction);
+                self::assertSame('/_routing-kit/', $context['page']->cancelHref);
+                self::assertSame('panel.create_title', $context['page']->header->title instanceof Label ? $context['page']->header->title->key : null);
+                self::assertSame([], $context['conflicts']);
 
                 return '<html>form</html>';
             }),
@@ -138,8 +177,8 @@ PHP);
         [$controller] = $this->createController(
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
-                self::assertNotEmpty($context['errors']);
-                self::assertSame('app_article_show', $context['definition']->routeName);
+                self::assertNotEmpty(self::formErrors($context['page']->form));
+                self::assertNull($context['definition']);
 
                 return '<html>error</html>';
             }),
@@ -157,7 +196,7 @@ PHP);
         [$controller] = $this->createController(
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
-                self::assertNotEmpty($context['errors']);
+                self::assertNotEmpty(self::formErrors($context['page']->form));
 
                 return '<html>csrf-error</html>';
             }),
@@ -190,6 +229,8 @@ PHP);
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
                 self::assertSame('rk_1', $context['definition']?->id);
+                self::assertSame('/_routing-kit/delete/rk_1', $context['page']->deleteAction?->href);
+                self::assertSame('panel.edit_title', $context['page']->header->title instanceof Label ? $context['page']->header->title->key : null);
 
                 return '<html>edit</html>';
             }),
@@ -213,9 +254,8 @@ PHP);
             definitions: [$existing],
             twig: $this->createTwigMock(static function (string $template, array $context): string {
                 self::assertSame('@NowoRoutingKitBundle/panel/form.html.twig', $template);
-                self::assertNotEmpty($context['errors']);
+                self::assertNotEmpty(self::formErrors($context['page']->form));
                 self::assertSame('rk_1', $context['definition']->id);
-                self::assertSame('/broken', $context['definition']->path);
 
                 return '<html>edit-error</html>';
             }),
@@ -289,6 +329,7 @@ PHP);
 
     /**
      * @param list<RoutePathDefinition> $definitions
+     * @param array<string, mixed> $viewOptions named PanelView arguments
      *
      * @return array{RoutingPanelController, FilesystemRoutePathStorage, WarmableRouterForPanel}
      */
@@ -296,6 +337,7 @@ PHP);
         array $definitions = [],
         ?Environment $twig = null,
         ?CsrfTokenManagerInterface $csrfTokenManager = null,
+        array $viewOptions = [],
     ): array {
         $storage = new FilesystemRoutePathStorage($this->storageFile);
         foreach ($definitions as $definition) {
@@ -324,7 +366,7 @@ PHP);
                 $manager,
                 $discovery,
                 $locales,
-                $twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'),
+                new PanelView($twig ?? $this->createTwigMock(static fn (): string => '<html>default</html>'), '/_routing-kit', ...$viewOptions),
                 FormKitTestSupport::createFormFactory($csrf),
                 new PanelAccessGuard(new AllowAllRoutingKitAccessChecker(), null, false, true),
                 new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!'),
@@ -334,6 +376,22 @@ PHP);
             $storage,
             $router,
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function formErrors(FormView $view): array
+    {
+        $messages = [];
+        foreach ($view->vars['errors'] as $error) {
+            $messages[] = $error->getMessage();
+        }
+        foreach ($view->children as $child) {
+            $messages = [...$messages, ...self::formErrors($child)];
+        }
+
+        return $messages;
     }
 
     private function createTwigMock(callable $callback): Environment

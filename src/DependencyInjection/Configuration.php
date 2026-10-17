@@ -6,13 +6,18 @@ namespace Nowo\RoutingKitBundle\DependencyInjection;
 
 use InvalidArgumentException;
 use Nowo\RoutingKitBundle\Panel\PanelChrome;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
+use function array_diff;
+use function array_filter;
 use function array_key_exists;
+use function array_keys;
 use function array_values;
 use function implode;
 use function is_array;
@@ -26,6 +31,16 @@ use function strlen;
 final class Configuration implements ConfigurationInterface
 {
     public const ALIAS = 'nowo_routing_kit';
+
+    /** Default panel URL prefix (web_ui.path_prefix). */
+    public const DEFAULT_PATH_PREFIX = '/_routing';
+
+    /** 1.x default of web_ui.layout_template (removed template); mapped to null. */
+    public const LEGACY_LAYOUT_TEMPLATE = '@NowoRoutingKitBundle/panel/layout.html.twig';
+
+    private const DEPRECATION_PACKAGE = 'nowo-tech/routing-kit-bundle';
+
+    private const DEPRECATION_VERSION = '1.9';
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -57,12 +72,19 @@ final class Configuration implements ConfigurationInterface
                         $v['security'] = $security;
                     }
 
-                    // Mirror first access role back to panel.role for older docs / demos.
-                    if (array_key_exists('access_roles', $security) && !array_key_exists('role', $panel)) {
-                        $roles         = is_array($security['access_roles']) ? $security['access_roles'] : [];
-                        $first         = $roles[0] ?? null;
-                        $panel['role'] = is_string($first) && $first !== '' ? $first : null;
-                        $v['panel']    = $panel;
+                    // REQ-UI-003 canonical keys: panel.enabled / panel.path_prefix → web_ui.* (the canonical key wins).
+                    $webUi = is_array($v['web_ui'] ?? null) ? $v['web_ui'] : [];
+                    foreach (['enabled', 'path_prefix'] as $key) {
+                        if (array_key_exists($key, $panel) && !array_key_exists($key, $webUi)) {
+                            $webUi[$key] = $panel[$key];
+                        }
+                    }
+                    // The 1.x default layout (a standalone HTML page) is gone: null = UiKit layout.
+                    if (($webUi['layout_template'] ?? null) === self::LEGACY_LAYOUT_TEMPLATE) {
+                        $webUi['layout_template'] = null;
+                    }
+                    if ($webUi !== []) {
+                        $v['web_ui'] = $webUi;
                     }
 
                     return $v;
@@ -108,27 +130,16 @@ final class Configuration implements ConfigurationInterface
                 ->arrayNode('panel')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->booleanNode('enabled')->defaultTrue()->end()
-                        ->scalarNode('path_prefix')
-                            ->defaultValue('/_routing')
-                            ->cannotBeEmpty()
-                            ->validate()
-                                ->ifTrue(static function (mixed $v): bool {
-                                    if (!is_string($v)) {
-                                        return true; // @codeCoverageIgnore
-                                    }
-
-                                    return str_contains($v, '//')
-                                        || str_contains($v, '\\')
-                                        || str_contains($v, '://')
-                                        || preg_match('#^/[A-Za-z0-9/_-]+$#', $v) !== 1;
-                                })
-                                ->thenInvalid('panel.path_prefix must look like /_routing (letters, digits, /, _, - only; no schemes or //).')
-                            ->end()
+                        ->booleanNode('enabled')
+                            ->info('Deprecated alias of web_ui.enabled.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, use "nowo_routing_kit.web_ui.enabled" instead.')
                         ->end()
+                        ->append($this->pathPrefixNode('path_prefix')
+                            ->info('Deprecated alias of web_ui.path_prefix.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, use "nowo_routing_kit.web_ui.path_prefix" instead.'))
                         ->variableNode('role')
-                            ->info('Deprecated BC alias for security.access_roles (scalar or null). Prefer security.access_roles.')
-                            ->defaultValue('ROLE_ADMIN')
+                            ->info('Deprecated alias of security.access_roles (scalar, list or null).')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, use "nowo_routing_kit.security.access_roles" instead.')
                         ->end()
                         ->booleanNode('allow_controller_override')
                             ->info('When false (default), panel cannot set a free-form _controller; discovery controller is used.')
@@ -161,27 +172,45 @@ final class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
                 ->arrayNode('web_ui')
-                    ->info('REQ-UI-001 look-and-feel for the admin panel (layout, CSS stack, icons).')
+                    ->info('REQ-UI-003 admin panel UI: pages extend the UiKit scaffolds; theme them once in nowo_ui_kit.theme.')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('enabled')
+                            ->info('Register the admin panel (paths, redirects, import / export).')
                             ->defaultTrue()
                         ->end()
+                        ->append($this->pathPrefixNode('path_prefix')
+                            ->info('URL prefix of the admin panel.')
+                            ->defaultValue(self::DEFAULT_PATH_PREFIX))
                         ->scalarNode('layout_template')
-                            ->info('Twig layout that panel pages extend (host apps SHOULD set their project layout).')
-                            ->defaultValue('@NowoRoutingKitBundle/panel/layout.html.twig')
-                            ->cannotBeEmpty()
+                            ->info('Layout the panel scaffolds extend instead of nowo_ui_kit.layouts.admin (null = UiKit layout). It must render the UiKit canonical blocks (nowo_ui_content…); a 1.x layout that renders "body" is bridged (deprecated).')
+                            ->defaultNull()
+                        ->end()
+                        ->arrayNode('templates')
+                            ->info('Per-page template override (page => template): ' . implode(', ', array_keys(PanelView::TEMPLATES)) . '. Prefer a thin {% extends \'@!NowoRoutingKitBundle/…\' %} that overrides a data block.')
+                            ->normalizeKeys(false)
+                            ->useAttributeAsKey('page')
+                            ->scalarPrototype()->cannotBeEmpty()->end()
+                            ->validate()
+                                ->ifTrue(static fn (array $v): bool => array_diff(array_keys($v), array_keys(PanelView::TEMPLATES)) !== [])
+                                ->then(static function (array $v): array {
+                                    throw new InvalidArgumentException(sprintf('Unknown nowo_routing_kit.web_ui.templates page(s): %s. Allowed: %s.', implode(', ', array_diff(array_keys($v), array_keys(PanelView::TEMPLATES))), implode(', ', array_keys(PanelView::TEMPLATES))));
+                                })
+                            ->end()
                         ->end()
                         ->enumNode('css_framework')
+                            ->info('Deprecated: set nowo_ui_kit.css_framework (seeded from this key when the host does not set it).')
                             ->values(['bootstrap', 'bootstrap4', 'bootstrap5', 'tailwind', 'foundation', 'custom', 'tabler', 'none'])
-                            ->defaultValue('custom')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, set "nowo_ui_kit.css_framework" instead.')
                         ->end()
                         ->enumNode('icon_set')
+                            ->info('Deprecated: set nowo_ui_kit.icon_set (seeded from this key when the host does not set it).')
                             ->values(['bootstrap-icons', 'tabler-icons', 'ux_icon', 'svg_inline', 'none'])
-                            ->defaultValue('none')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, set "nowo_ui_kit.icon_set" instead.')
                         ->end()
                         ->arrayNode('classes')
-                            ->info('Admin chrome class map (spec 003): key => class list replacing the default classes. Keys: ' . implode(', ', PanelChrome::CLASS_KEYS) . '. Unset keys keep the default markup.')
+                            ->info('Deprecated 1.x class map, bridged into nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.classes (see docs/UPGRADING.md). Keys: ' . implode(', ', PanelChrome::CLASS_KEYS) . '.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, use "nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.classes" (UiKit theme slots) instead.')
                             ->normalizeKeys(false)
                             ->useAttributeAsKey('name')
                             ->scalarPrototype()->end()
@@ -193,7 +222,8 @@ final class Configuration implements ConfigurationInterface
                             ->end()
                         ->end()
                         ->arrayNode('partials')
-                            ->info('Admin chrome partial paths (spec 003): nav, pagination, action_inner (e.g. @NowoUiKitBundle/partials/_action_inner.html.twig), modal_shell.')
+                            ->info('Deprecated 1.x partial map: nav and pagination are bridged into nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.partials (tabs, pagination); action_inner and modal_shell are ignored.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, use "nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.partials" (UiKit partial names) instead.')
                             ->normalizeKeys(false)
                             ->useAttributeAsKey('name')
                             ->scalarPrototype()->end()
@@ -205,16 +235,16 @@ final class Configuration implements ConfigurationInterface
                             ->end()
                         ->end()
                         ->booleanNode('ui_kit_assets')
-                            ->info('Append nowo-ui.css (and nowo-ui-modal.js in import_display: modal) from panel/base.html.twig. Set false when the host layout already loads UiKit assets before its theme.')
-                            ->defaultTrue()
+                            ->info('Deprecated: UiKit assets come from the layout (nowo_ui_kit.layouts.admin). Only read by the 1.x layout bridge.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated, the layout (nowo_ui_kit.layouts.admin) loads the UiKit assets.')
                         ->end()
                         ->enumNode('import_display')
-                            ->info('Signed JSON import: inline section under the table (default) or a modal opened from the page actions.')
+                            ->info('Signed JSON import: a card under the paths table (inline, default) or a UiKit modal opened from the page actions.')
                             ->values(['inline', 'modal'])
                             ->defaultValue('inline')
                         ->end()
                         ->booleanNode('show_row_count')
-                            ->info('Show the "N row(s)" line above the tables.')
+                            ->info('Show the "N row(s)" caption of the tables.')
                             ->defaultTrue()
                         ->end()
                         ->booleanNode('primary_action_last')
@@ -222,11 +252,12 @@ final class Configuration implements ConfigurationInterface
                             ->defaultFalse()
                         ->end()
                         ->booleanNode('main_landmark')
-                            ->info('Wrap panel pages (definitions, form, redirects) in <main>. Set false when the host layout already renders its own <main>: the wrapper becomes a <div> with the same classes (no nested main landmarks).')
-                            ->defaultTrue()
+                            ->info('Deprecated, no effect: the layout (UiKit or host) owns the <main> landmark.')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated and has no effect: the layout owns the <main> landmark.')
                         ->end()
                         ->arrayNode('delete_confirm_attr')
-                            ->info('Attributes for the row delete form (e.g. a Stimulus confirm controller); "%message%" is replaced by the translated confirmation. When set, the inline onsubmit confirm() is not rendered (CSP-friendly).')
+                            ->info('Deprecated, no effect: deletes use the UiKit confirm dialog (CSP-safe).')
+                            ->setDeprecated(self::DEPRECATION_PACKAGE, self::DEPRECATION_VERSION, 'The "%path%.%node%" option is deprecated and has no effect: deletes use the UiKit confirm dialog.')
                             ->normalizeKeys(false)
                             ->useAttributeAsKey('name')
                             ->scalarPrototype()->end()
@@ -292,6 +323,29 @@ final class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    private function pathPrefixNode(string $name): ScalarNodeDefinition
+    {
+        /** @var ScalarNodeDefinition $node */
+        $node = (new TreeBuilder($name, 'scalar'))->getRootNode();
+        $node
+            ->cannotBeEmpty()
+            ->validate()
+                ->ifTrue(static function (mixed $v): bool {
+                    if (!is_string($v)) {
+                        return true; // @codeCoverageIgnore
+                    }
+
+                    return str_contains($v, '//')
+                        || str_contains($v, '\\')
+                        || str_contains($v, '://')
+                        || preg_match('#^/[A-Za-z0-9/_-]+$#', $v) !== 1;
+                })
+                ->thenInvalid('path_prefix must look like /_routing (letters, digits, /, _, - only; no schemes or //).')
+            ->end();
+
+        return $node;
     }
 
     /**

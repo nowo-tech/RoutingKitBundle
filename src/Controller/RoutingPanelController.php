@@ -14,10 +14,20 @@ use Nowo\RoutingKitBundle\Model\AliasMode;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
+use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
+use Nowo\UiKitBundle\View\Action;
+use Nowo\UiKitBundle\View\Column;
+use Nowo\UiKitBundle\View\Confirm;
+use Nowo\UiKitBundle\View\EmptyState;
+use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\ListPage;
+use Nowo\UiKitBundle\View\PageHeader;
+use Nowo\UiKitBundle\View\Pagination;
 use RuntimeException;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,9 +37,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
-use Twig\Environment;
 
 use function array_slice;
+use function array_values;
 use function ceil;
 use function count;
 use function is_array;
@@ -52,13 +62,12 @@ final class RoutingPanelController
         private readonly RoutePathManager $manager,
         private readonly RoutableControllerDiscovery $discovery,
         private readonly LocaleProviderInterface $locales,
-        private readonly Environment $twig,
+        private readonly PanelView $view,
         private readonly FormFactoryInterface $formFactory,
         private readonly PanelAccessGuard $accessGuard,
         private readonly RoutePathImportExport $importExport,
         private readonly string $pathPrefix = '/_routing',
         private readonly bool $allowControllerOverride = false,
-        private readonly bool $roleGateDisabled = false,
         private readonly int $listPageSize = 50,
     ) {
     }
@@ -74,32 +83,58 @@ final class RoutingPanelController
         $pages    = max(1, (int) ceil($total / $pageSize));
         $page     = max(1, min($pages, $request->query->getInt('page', 1)));
         $offset   = ($page - 1) * $pageSize;
-        $rows     = array_slice($all, $offset, $pageSize);
+        $rows     = array_values(array_slice($all, $offset, $pageSize));
 
-        $exportForm     = $this->createPanelActionForm();
-        $clearCacheForm = $this->createPanelActionForm();
-        $importForm     = $this->createPanelImportForm();
-        $deleteForms    = [];
-        foreach ($rows as $row) {
-            $deleteForms[(string) $row->id] = $this->createPanelActionForm()->createView();
+        $rowActions = [];
+        foreach ($rows as $key => $row) {
+            $rowActions[$key] = [
+                Action::edit($this->pathPrefix . '/edit/' . $row->id, PanelView::label('panel.edit')),
+                Action::delete(
+                    $this->pathPrefix . '/delete/' . $row->id,
+                    confirm: $this->deleteConfirm($row),
+                    label: PanelView::label('panel.delete'),
+                    form: $this->createPanelActionForm()->createView(),
+                ),
+            ];
         }
 
-        return new Response($this->twig->render('@NowoRoutingKitBundle/panel/index.html.twig', [
-            'definitions'        => $rows,
-            'path_prefix'        => $this->pathPrefix,
-            'locales'            => $this->locales->getLocales(),
-            'default'            => $this->locales->getDefaultLocale(),
-            'export_form'        => $exportForm->createView(),
-            'clear_cache_form'   => $clearCacheForm->createView(),
-            'import_form'        => $importForm->createView(),
-            'delete_forms'       => $deleteForms,
-            'role_gate_disabled' => $this->roleGateDisabled,
-            'page'               => $page,
-            'pages'              => $pages,
-            'total'              => $total,
-            'page_size'          => $pageSize,
-            'item_count'         => count($rows),
-        ]));
+        $importModal = $this->view->importDisplay === 'modal';
+        $actions     = [
+            new Action('export', PanelView::label('panel.export'), $this->pathPrefix . '/export', method: 'POST', form: $this->createPanelActionForm()->createView()),
+            new Action('custom', PanelView::label('panel.clear_cache'), $this->pathPrefix . '/clear-cache', method: 'POST', form: $this->createPanelActionForm()->createView()),
+        ];
+        if ($importModal) {
+            $actions[] = new Action('import', PanelView::label('panel.import'), modalId: PanelView::IMPORT_MODAL_ID);
+        }
+        $create  = Action::create($this->pathPrefix . '/new', PanelView::label('panel.new'));
+        $actions = $this->view->primaryActionLast ? [...$actions, $create] : [$create, ...$actions];
+
+        $listPage = new ListPage(
+            new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => $this->locales->getDefaultLocale()]), $actions),
+            [
+                new Column('routeName', PanelView::label('panel.col.route'), required: true),
+                new Column('locale', PanelView::label('panel.col.locale')),
+                new Column('path', PanelView::label('panel.col.path'), required: true),
+                new Column('canonicalStyle', PanelView::label('panel.col.canonical'), priority: 3),
+                new Column('enabled', PanelView::label('panel.col.enabled'), priority: 2),
+            ],
+            $rows,
+            rowActions: static fn (mixed $row, int|string $key): array => $rowActions[$key] ?? [],
+            pagination: new Pagination($page, $pageSize, $total, $pages, 'nowo_routing_kit_panel'),
+            empty: new EmptyState(message: PanelView::label('panel.empty')),
+            caption: $this->view->showRowCount ? PanelView::label('panel.count', ['%count%' => $total]) : null,
+            bundle: PanelView::BUNDLE,
+            layout: $this->view->layout(),
+            attributes: ['data-testid' => 'routing-kit-definitions-table'],
+            actionsLabel: PanelView::label('panel.col.actions'),
+        );
+
+        return $this->view->render('index', 'routes', [
+            'page'            => $listPage,
+            'import_form'     => $this->createPanelImportForm()->createView(),
+            'import_display'  => $importModal ? 'modal' : 'inline',
+            'import_modal_id' => PanelView::IMPORT_MODAL_ID,
+        ]);
     }
 
     #[Route('/new', name: 'nowo_routing_kit_panel_create', methods: ['GET', 'POST'])]
@@ -279,41 +314,56 @@ final class RoutingPanelController
 
         $form->handleRequest($request);
 
-        $errors     = [];
-        $conflicts  = [];
-        $definition = $existing;
+        $conflicts = [];
 
-        if ($form->isSubmitted()) {
-            if (!$form->isValid()) {
-                foreach ($form->getErrors(true) as $error) {
-                    $errors[] = $error->getMessage();
-                }
-            } else {
-                /** @var array<string, mixed> $data */
-                $data       = $form->getData() ?? [];
-                $definition = $this->definitionFromFormData($data, $existing?->id);
-                $conflicts  = $this->manager->previewConflicts($definition);
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var array<string, mixed> $data */
+            $data       = $form->getData() ?? [];
+            $definition = $this->definitionFromFormData($data, $existing?->id);
+            $conflicts  = $this->manager->previewConflicts($definition);
 
-                try {
-                    $this->manager->save($definition);
+            try {
+                $this->manager->save($definition);
 
-                    return new RedirectResponse($this->pathPrefix . '/');
-                } catch (Throwable $e) {
-                    $errors[] = $e->getMessage();
-                }
+                return new RedirectResponse($this->pathPrefix . '/');
+            } catch (Throwable $e) {
+                $form->addError(new FormError($e->getMessage()));
             }
-        } elseif ($existing instanceof RoutePathDefinition) {
+        } elseif (!$form->isSubmitted() && $existing instanceof RoutePathDefinition) {
             $conflicts = $this->manager->previewConflicts($existing);
         }
 
-        return new Response($this->twig->render('@NowoRoutingKitBundle/panel/form.html.twig', [
-            'definition'         => $definition,
-            'form'               => $form->createView(),
-            'path_prefix'        => $this->pathPrefix,
-            'errors'             => $errors,
-            'conflicts'          => $conflicts,
-            'role_gate_disabled' => $this->roleGateDisabled,
-        ]));
+        $isEdit = $existing instanceof RoutePathDefinition;
+
+        return $this->view->render('form', 'routes', [
+            'page' => new FormPage(
+                new PageHeader(PanelView::label($isEdit ? 'panel.edit_title' : 'panel.create_title'), PanelView::label('panel.form_hint')),
+                $form->createView(),
+                PanelView::label('panel.save'),
+                $this->pathPrefix . '/',
+                PanelView::label('panel.cancel'),
+                deleteAction: $isEdit ? Action::delete(
+                    $this->pathPrefix . '/delete/' . $existing->id,
+                    confirm: $this->deleteConfirm($existing),
+                    label: PanelView::label('panel.delete'),
+                    form: $this->createPanelActionForm()->createView(),
+                ) : null,
+                bundle: PanelView::BUNDLE,
+                layout: $this->view->layout(),
+                attributes: ['data-testid' => 'routing-kit-definition-form'],
+            ),
+            'definition' => $existing,
+            'conflicts'  => $conflicts,
+        ]);
+    }
+
+    private function deleteConfirm(RoutePathDefinition $definition): Confirm
+    {
+        return new Confirm(
+            PanelView::label('panel.delete_title'),
+            PanelView::label('panel.delete_confirm_message', ['%route%' => $definition->routeName, '%locale%' => $definition->locale, '%path%' => $definition->path]),
+            PanelView::label('panel.delete'),
+        );
     }
 
     /**

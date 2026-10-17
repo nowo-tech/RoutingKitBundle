@@ -1,32 +1,16 @@
-{% extends '@NowoRoutingKitBundle/panel/base.html.twig' %}
-{% trans_default_domain 'NowoRoutingKitBundle' %}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
-{# Admin chrome hooks: slot block rk_page_title; page blocks rk_nav, rk_confirm. Classes: btn_danger, btn_secondary. #}
-{% set _css_fw = nowo_routing_kit_css_framework|default('custom') %}
-{% set _rk_c = nowo_routing_kit_classes|default({}) %}
-{# web_ui.main_landmark: false renders the page wrapper as a div (the host layout owns the main landmark). #}
-{% set _rk_main = (nowo_routing_kit_main_landmark ?? true) ? 'main' : 'div' %}
-{% set _rk_p = nowo_routing_kit_partials|default({}) %}
+{#
+  Delete a URL redirect — full-page confirmation (REQ-UI-003 page/confirm), the no-JS fallback of the list's
+  confirm dialog (GET {path_prefix}/redirects/{id}/delete). Variable: page (View\ConfirmPage); redirect; nav,
+  nav_current, path_prefix, role_gate_disabled. No data blocks.
+#}
+{% extends '@NowoUiKit/page/confirm.html.twig' %}
 
-{% block title %}{{ block('rk_page_title') }}{{ rk_title_suffix|default('') }}{% endblock %}
-{% block rk_page_title %}{{ 'redirects.delete_title'|trans }}{% endblock %}
-
-{% block body %}
-{% block rk_nav %}{{ include(_rk_p.nav ?? '@NowoRoutingKitBundle/panel/_nav.html.twig', {current: 'redirects', path_prefix: path_prefix}) }}{% endblock %}
-{% block rk_confirm %}
-<{{ _rk_main }} class="nowo-ui-confirm__panel">
-    <header class="nowo-ui-confirm__header">
-        <h1 class="nowo-ui-confirm__title">{{ block('rk_page_title') }}</h1>
-    </header>
-    <div class="nowo-ui-confirm__body">
-        <p>{{ 'redirects.delete_confirm'|trans({'%source%': redirect.sourcePath, '%target%': redirect.targetUrl}) }}</p>
-    </div>
-    {# Confirmation page instead of an inline confirm() handler: works under a strict CSP. #}
-    {{ form_start(form, {action: path_prefix ~ '/redirects/' ~ redirect.id ~ '/delete', method: 'POST', attr: {class: 'nowo-ui-confirm__footer nowo-ui-actions actions', 'data-testid': 'redirect-delete-form'}}) }}
-        {{ form_rest(form) }}
-        <button type="submit" class="{{ _rk_c.btn_danger ?? ui.btn('danger', null, _css_fw) }}">{{ 'panel.delete'|trans }}</button>
-        <a class="{{ _rk_c.btn_secondary ?? ui.btn('secondary', null, _css_fw) }}" href="{{ path_prefix }}/redirects">{{ 'panel.cancel'|trans }}</a>
-    {{ form_end(form, {render_rest: false}) }}
-</{{ _rk_main }}>
+{% block nowo_ui_page_header %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
 {% endblock %}
+
+{% block nowo_ui_flashes %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_notices.html.twig') }}
 {% endblock %}

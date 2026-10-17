@@ -8,7 +8,9 @@ use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 
 /**
- * Exposes REQ-UI-001 layout / CSS globals and the admin chrome hooks (spec 003) for panel templates.
+ * Panel Twig globals. Since 1.9 the panel pages extend the UiKit scaffolds (REQ-UI-003) and read none of them except
+ * {@code nowo_routing_kit_ui_kit_assets} (1.x layout bridge); the others stay for host templates written for 1.x and
+ * are removed in 2.0.
  */
 final class RoutingKitTwigExtension extends AbstractExtension implements GlobalsInterface
 {
@@ -18,7 +20,7 @@ final class RoutingKitTwigExtension extends AbstractExtension implements Globals
      * @param array<string, string> $deleteConfirmAttr web_ui.delete_confirm_attr
      */
     public function __construct(
-        private readonly string $layoutTemplate = '@NowoRoutingKitBundle/panel/layout.html.twig',
+        private readonly ?string $layoutTemplate = null,
         private readonly string $cssFramework = 'custom',
         private readonly string $iconSet = 'none',
         private readonly bool $urlRedirectsEnabled = false,
