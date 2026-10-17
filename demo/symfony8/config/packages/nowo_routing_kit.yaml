@@ -9,22 +9,20 @@ nowo_routing_kit:
         scan_dirs:
             - '%kernel.project_dir%/src/Controller'
     panel:
-        enabled: true
-        path_prefix: '/_routing'
-        # Demo has no Security Bundle by default — disable in-bundle role gate.
-        # UNSAFE for public networks. Production: security.access_roles + access_control.
-        role: null
         allow_controller_override: false
         max_definitions: 500
         list_page_size: 50
         reject_conflicts: true
         # Dedicated HMAC key (≥32 chars). Do not reuse in production.
         export_signing_key: 'demo-only-routing-kit-hmac-key-32b!!'
+    # Admin panel on the UiKit page contract (REQ-UI-003): layout and theme come from nowo_ui_kit.
     web_ui:
         enabled: true
-        layout_template: '@NowoRoutingKitBundle/panel/layout.html.twig'
-        css_framework: custom
-        icon_set: none
+        path_prefix: '/_routing'
+        # layout_template: null → nowo_ui_kit.layouts.admin (templates/layouts/admin.html.twig)
+        import_display: inline
+    # Demo has no Security Bundle — the in-bundle role gate is disabled.
+    # UNSAFE for public networks. Production: security.access_roles + access_control.
     security:
         access_roles: []
         allow_unauthenticated: true

@@ -13,7 +13,7 @@ endif
 DOCKER_COMPOSE := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down restart build install shell logs cache-clear update-bundle ensure-up test test-coverage verify release-check
+.PHONY: help up down restart build install shell logs cache-clear update-bundle ensure-up test test-coverage verify release-check test-e2e demo-screenshots
 
 BUNDLE_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
 
@@ -32,6 +32,8 @@ help:
 	@echo "  make test          Run PHPUnit smoke tests"
 	@echo "  make test-coverage Run tests with coverage (if configured)"
 	@echo "  make verify        HTTP healthcheck on PORT"
+	@echo "  make test-e2e      Playwright e2e of the admin panel (REQ-DEMO-013)"
+	@echo "  make demo-screenshots  Refresh docs/images/demo/*.webp"
 	@echo "  make release-check update-bundle + test + verify"
 	@echo ""
 
@@ -98,6 +100,31 @@ verify: ensure-up
 	echo "Healthcheck OK ($$code)"
 
 release-check: update-bundle test verify
+
+# REQ-DEMO-013: Playwright e2e + WebP screenshots (official Playwright image).
+PLAYWRIGHT_IMAGE ?= mcr.microsoft.com/playwright:v1.63.0-jammy
+
+test-e2e: ensure-up
+	@mkdir -p e2e/node_modules
+	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8058}; \
+	docker run --rm --network host \
+		-v "$(CURDIR)/e2e:/e2e" -w /e2e \
+		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
+		$(PLAYWRIGHT_IMAGE) \
+		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=chromium'
+
+demo-screenshots: ensure-up
+	@mkdir -p ../../docs/images/demo e2e/node_modules
+	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8058}; \
+	docker run --rm --network host \
+		-v "$(CURDIR)/e2e:/e2e" \
+		-v "$(CURDIR)/../../docs/images/demo:/screenshots" \
+		-w /e2e \
+		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
+		-e SCREENSHOT_DIR=/screenshots \
+		$(PLAYWRIGHT_IMAGE) \
+		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=screenshots && node scripts/to-webp.mjs /screenshots'
+	@echo "Screenshots written under docs/images/demo/ (WebP)"
 
 # REQ-MAKE-008: update-deps
 # Optional: monorepo helper absent on standalone GitHub Actions checkout (REQ-MAKE-009).

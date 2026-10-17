@@ -13,8 +13,10 @@
     <div class="card">
         <h2>Admin</h2>
         <ul>
-            <li><a href="/_routing">Routing panel</a> (<code>/_routing</code>)</li>
+            <li><a href="/_routing/">Routing panel</a> (<code>/_routing</code>) — locale paths, signed import / export</li>
+            <li><a href="/_routing/redirects">URL redirects</a> (<code>/_routing/redirects</code>) — operator redirects</li>
         </ul>
+        <p>The panel pages extend the UiKit page scaffolds (REQ-UI-003) and render in this demo's host layout (<code>templates/layouts/admin.html.twig</code>, <code>nowo_ui_kit.layouts.admin</code>).</p>
         <p>Mark controllers with <code>#[Routable]</code>, then create <code>(route, locale)</code> path rows. Paths are stored without <code>{_locale}</code>; the loader always applies <code>/{_locale}/…</code>.</p>
     </div>
 

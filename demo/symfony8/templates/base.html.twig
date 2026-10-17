@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"{% block html_attributes %}{% endblock %}>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <style>
         body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1a1a1a; }
         main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.25rem; }
-        a { color: #0b5fff; }
+        a:not([class]) { color: #0b5fff; }
         .card { background: #fff; border: 1px solid #ddd; border-radius: .75rem; padding: 1.25rem; margin-top: 1rem; overflow-x: auto; }
         .banner-unsafe { background: #fff3cd; border: 1px solid #e0c36a; color: #5c4800; padding: 0.85rem 1rem; margin-bottom: 1rem; border-radius: .5rem; font-size: 0.95rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
@@ -15,11 +15,22 @@
         th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
         code { font-size: 0.88em; }
         ul { padding-left: 1.2rem; }
+        main.demo-admin { max-width: 72rem; }
+        .demo-admin-nav { margin-bottom: 1.25rem; font-size: 0.9rem; }
+        /* Host form styling for the panel forms (the FormKit profile only adds classes). */
+        .nowo-ui-form > div:not(.nowo-ui-form__actions) { margin-bottom: 0.85rem; }
+        .nowo-ui-form label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+        .nowo-ui-form .form-check label { display: inline; margin: 0 0 0 0.4rem; }
+        .nowo-ui-form .form-check { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; }
+        .nowo-ui-input, .nowo-ui-form select { width: 100%; max-width: 36rem; box-sizing: border-box; padding: 0.45rem 0.6rem; border: 1px solid #ccc; border-radius: 0.4rem; font: inherit; }
+        .nowo-ui-form .help-text, .nowo-ui-form small { color: #666; font-size: 0.85rem; }
     </style>
+    {% block stylesheets %}{% endblock %}
 </head>
 <body>
-<main>
+<main class="{% block main_class %}{% endblock %}">
     {% block body %}{% endblock %}
 </main>
+{% block javascripts %}{% endblock %}
 </body>
 </html>
