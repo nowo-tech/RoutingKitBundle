@@ -32,14 +32,14 @@
         }
     ],
     "require": {
-        "nowo-tech/form-kit-bundle": "^2.2",
-        "nowo-tech/ui-kit-bundle": "^1.4 || ^1.5 || ^1.7",
         "php": ">=8.2 <8.6",
-        "symfony/form": "^7.4 || ^8.0",
+        "nowo-tech/form-kit-bundle": "^2.2",
+        "nowo-tech/ui-kit-bundle": "^2.0",
         "symfony/config": "^7.4 || ^8.0",
         "symfony/dependency-injection": "^7.4 || ^8.0",
         "symfony/event-dispatcher": "^7.4 || ^8.0",
         "symfony/finder": "^7.4 || ^8.0",
+        "symfony/form": "^7.4 || ^8.0",
         "symfony/http-foundation": "^7.4 || ^8.0",
         "symfony/http-kernel": "^7.4 || ^8.0",
         "symfony/routing": "^7.4 || ^8.0",
