@@ -35,7 +35,7 @@ final class RoutingPanelImportTypeTest extends TestCase
         $attr = $form->get('payload_json')->getConfig()->getOption('attr');
         self::assertSame(6, $attr['rows'] ?? null);
         self::assertTrue($attr['required'] ?? false);
-        self::assertSame('{"version":1,"payload":[],"signature":"..."}', $attr['placeholder'] ?? null);
+        self::assertSame('panel.import_placeholder', $attr['placeholder'] ?? null);
         self::assertSame('nowo-ui-input form-control', $attr['class'] ?? null);
         self::assertFalse($form->get('payload_json')->getConfig()->getOption('required'));
         self::assertFalse($form->get('replace_all')->getConfig()->getOption('required'));

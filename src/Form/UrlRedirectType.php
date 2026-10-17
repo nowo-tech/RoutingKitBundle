@@ -34,13 +34,13 @@ final class UrlRedirectType extends AbstractType
             'label'    => 'redirects.col.source',
             'required' => true,
             'help'     => 'redirects.form.source_help',
-            'attr'     => ['placeholder' => '/old-page', 'maxlength' => UrlRedirect::SOURCE_MAX_LENGTH],
+            'attr'     => ['placeholder' => 'redirects.form.source_placeholder', 'maxlength' => UrlRedirect::SOURCE_MAX_LENGTH],
         ]);
         $this->addText($builder, 'target_url', [
             'label'    => 'redirects.col.target',
             'required' => true,
             'help'     => 'redirects.form.target_help',
-            'attr'     => ['placeholder' => '/new-page', 'maxlength' => UrlRedirect::TARGET_MAX_LENGTH],
+            'attr'     => ['placeholder' => 'redirects.form.target_placeholder', 'maxlength' => UrlRedirect::TARGET_MAX_LENGTH],
         ]);
         $this->addChoice($builder, 'status_code', [
             'label'                     => 'redirects.col.status',

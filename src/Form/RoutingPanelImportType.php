@@ -30,7 +30,7 @@ final class RoutingPanelImportType extends AbstractType
             'attr'     => [
                 'rows'        => 6,
                 'required'    => true,
-                'placeholder' => '{"version":1,"payload":[],"signature":"..."}',
+                'placeholder' => 'panel.import_placeholder',
             ],
         ]);
         $this->addCheckbox($builder, 'replace_all', [

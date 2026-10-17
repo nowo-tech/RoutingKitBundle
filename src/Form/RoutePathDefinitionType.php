@@ -60,7 +60,7 @@ final class RoutePathDefinitionType extends AbstractType
         $this->addText($builder, 'path', [
             'label'    => 'panel.col.path',
             'required' => true,
-            'attr'     => ['placeholder' => '/about'],
+            'attr'     => ['placeholder' => 'panel.form.path_placeholder'],
         ]);
         $this->addChoice($builder, 'canonical_style', [
             'label'   => 'panel.col.canonical',
