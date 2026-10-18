@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.9.1](#to-191)
 - [To 1.9.0](#to-190)
   - [Configuration](#configuration)
   - [Template contract](#template-contract)
@@ -84,6 +85,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.9.1
+
+From **1.9.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 From **1.9.0** (no BC break in the PHP API; two configuration defaults and some labels change):
 

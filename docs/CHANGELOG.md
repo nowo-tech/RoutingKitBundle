@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.9.1] - 2026-10-18](#191---2026-10-18)
 - [[1.9.0] - 2026-10-18](#190---2026-10-18)
 - [[1.8.1] - 2026-10-13](#181---2026-10-13)
 - [[1.8.0] - 2026-10-13](#180---2026-10-13)
@@ -44,7 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Panel polish after the UiKit page-contract migration (visual review of 1.9.0). See [UPGRADING](UPGRADING.md#unreleased).
+## [1.9.1] - 2026-10-18
+
+UiKit icon row actions, consistent Yes/No badges and code cells, import in a dialog by default, confirm titles name the item; row-count caption hidden by default. See [UPGRADING](UPGRADING.md#to-191).
+
+Panel polish after the UiKit page-contract migration (visual review of 1.9.0). See [UPGRADING](UPGRADING.md#to-191).
 
 ### Changed
 
@@ -574,7 +579,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.1...HEAD
+[1.9.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.1...v1.9.0
 [1.8.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.2...v1.8.0
