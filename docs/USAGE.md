@@ -101,21 +101,21 @@ Twig namespace: **`NowoRoutingKitBundle`**. Application files under `templates/b
 | `panel/index.html.twig` | Route paths list (`page/list`) |
 | `panel/form.html.twig` | Route path create / edit (`page/form`) |
 | `panel/redirects/index.html.twig`, `form.html.twig` | URL redirects list / form (`page/list`, `page/form`) |
-| `panel/redirects/delete.html.twig` | No-JS delete confirmation (`page/confirm`) |
-| `panel/_nav.html.twig`, `_notices.html.twig`, `_import_form.html.twig` | Section nav, notices, import form (see [TEMPLATES.md](TEMPLATES.md#bundle-partials)) |
+| `panel/delete.html.twig`, `panel/redirects/delete.html.twig` | No-JS delete confirmations (`page/confirm`) |
+| `panel/_notices.html.twig`, `_import_form.html.twig` | Notices, import form (see [TEMPLATES.md](TEMPLATES.md#bundle-partials)); the section tabs are `page.header.tabs` (UiKit area nav) |
 
 **Procedure:** copy the vendor file to `templates/bundles/NowoRoutingKitBundle/<subpath>`, then `php bin/console cache:clear` if needed.
 
 ## Customising the admin chrome
 
-Since **1.9** the panel follows the UiKit 2 page contract (REQ-UI-003): a host themes each **view type** once in
+Since **1.9** the panel follows the UiKit 2.1 page contract (REQ-UI-003): a host themes each **view type** once in
 UiKit and the panel inherits it — no RoutingKit-specific chrome configuration is needed.
 
 1. **Layout** — `nowo_ui_kit.layouts.admin` (a one-file bridge into your base layout that renders the canonical
    `nowo_ui_*` blocks). `web_ui.layout_template` only when the panel needs a different layout than the other bundles.
 2. **Theme** — `nowo_ui_kit.theme.tokens` and `theme.classes` (slots `btn_primary`, `table`, `badge_success`,
    `action_danger`, `tabs`…) for all bundles; `theme.bundles.NowoRoutingKitBundle` for exceptions of this bundle
-   only; `theme.partials` to replace a UiKit partial (`page_header`, `pagination`, `tabs`, `modal_shell`…).
+   only; `theme.partials` to replace a UiKit partial (`page_header`, `pagination`, `tabs`, `dialog`…).
 3. **Scaffolds** — `templates/bundles/NowoUiKitBundle/page/list.html.twig` (or `form`, `confirm`) re-skins every list /
    form / confirm page of every bundle.
 4. **Options** — `web_ui.import_display: modal`, `web_ui.show_row_count: false`, `web_ui.primary_action_last: true`.

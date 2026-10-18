@@ -88,7 +88,7 @@ From **1.8.1** — the admin panel follows the UiKit 2 page contract (REQ-UI-003
 (deprecated keys are mapped); page template overrides written for 1.x must be migrated.
 
 ```bash
-composer require nowo-tech/ui-kit-bundle:^2.0
+composer require nowo-tech/ui-kit-bundle:^2.1
 composer update nowo-tech/routing-kit-bundle
 php bin/console cache:clear
 ```
@@ -97,7 +97,9 @@ php bin/console cache:clear
    UiKit canonical blocks (`nowo_ui_document_title`, `nowo_ui_head`, `nowo_ui_styles`, `nowo_ui_navigation`,
    `nowo_ui_page_header`, `nowo_ui_flashes`, `nowo_ui_content`, `nowo_ui_modals`, `nowo_ui_scripts`), loads
    `nowo-ui.css` + `nowo_ui_tokens()` and the UiKit scripts (`nowo-ui-confirm.js` for the delete dialogs,
-   `nowo-ui-modal.js` for the modal import). Example: UiKit `docs/PAGE_CONTRACT.md#example-host-integration`, or this
+   `nowo-ui-dialog.js` for the modal import). A host `page_header` partial override must render `header.tabs`
+   (`nowo_ui_partial('tabs')`, see UiKit PAGE_CONTRACT "Area navigation"), or the Routes | Redirects tabs disappear.
+   Example: UiKit `docs/PAGE_CONTRACT.md#example-host-integration`, or this
    bundle's `demo/symfony8/templates/layouts/admin.html.twig`.
 2. Remove `nowo_routing_kit.web_ui.layout_template` (or keep it only to give the panel a different layout — it must
    render the same blocks).
@@ -114,7 +116,7 @@ php bin/console cache:clear
 | `web_ui.layout_template` | default `null` | `null` = `nowo_ui_kit.layouts.admin`. The 1.x default `@NowoRoutingKitBundle/panel/layout.html.twig` (removed) maps to `null`. A layout without `nowo_ui_content` is wrapped by `panel/_legacy_layout.html.twig` (fills `title`, `stylesheets`, `body`, `javascripts`; deprecation logged at runtime) |
 | `web_ui.css_framework`, `web_ui.icon_set` | deprecated | Set `nowo_ui_kit.css_framework` / `icon_set`. When set here and not on UiKit they are still seeded into UiKit. **Changed:** without them, RoutingKit no longer forces `custom` / `none` on UiKit (UiKit defaults apply: `bootstrap5` / `bootstrap-icons`) |
 | `web_ui.classes` | deprecated, bridged | Prepended as `nowo_ui_kit.theme.bundles.NowoRoutingKitBundle.classes` (table below), each value with `framework_defaults: false` (a 1.x value replaced the whole class list). Your own `theme.bundles.NowoRoutingKitBundle` config wins |
-| `web_ui.partials` | deprecated, bridged | `nav` → `theme.bundles.NowoRoutingKitBundle.partials.tabs` (receives `items`, `aria_label` and the 1.x `current`, `path_prefix`), `pagination` → `partials.pagination` (1.x input unchanged). `action_inner` and `modal_shell` are ignored: use `nowo_ui_kit.row_actions_display` / `Action` display modes and a UiKit `modal_shell` override (input `id`, `title`, `body`) |
+| `web_ui.partials` | deprecated, bridged | `nav` → `theme.bundles.NowoRoutingKitBundle.partials.tabs` (receives the UiKit `tabs` input: `items` with `current`, `aria_label`, `attr`, `region`; the 1.x `current` / `path_prefix` variables are no longer passed), `pagination` → `partials.pagination` (1.x input unchanged). `action_inner` and `modal_shell` are ignored: use `nowo_ui_kit.row_actions_display` / `Action` display modes and a UiKit `dialog` override (input `id`, `title`, `body`, `size`, `attr`) for the import dialog |
 | `web_ui.ui_kit_assets` | deprecated | The layout loads UiKit assets; only the legacy layout bridge reads it |
 | `web_ui.main_landmark` | deprecated, no effect | The layout owns `<main>` |
 | `web_ui.delete_confirm_attr` | deprecated, no effect | Deletes open the UiKit confirm `<dialog>` (CSP-safe); remove your Stimulus confirm controller from the panel |
@@ -141,13 +143,16 @@ What hosts may notice:
 
 - **Pages → scaffolds.** `panel/index` and `panel/redirects/index` extend `@NowoUiKit/page/list.html.twig`,
   `panel/form` and `panel/redirects/form` extend `page/form`, `panel/redirects/delete` extends `page/confirm`. Each page
-  receives `page` (UiKit view model) plus the context listed in [TEMPLATES.md](TEMPLATES.md). The 1.x variables
+  receives `page` (UiKit view model) plus the context listed in [TEMPLATES.md](TEMPLATES.md). New page
+  `panel/delete.html.twig` (`page/confirm`, `web_ui.templates.delete`): the no-JS route path delete confirmation. The 1.x variables
   `definitions`, `redirects`, `export_form`, `clear_cache_form`, `delete_forms`, `errors`, `page` (number), `pages`,
   `total`, `page_size`, `item_count` and `form` (now `page.form`) are gone; `import_form`, `path_prefix`, `status`,
   `definition`, `conflicts`, `redirect`, `role_gate_disabled` remain.
 - **Removed templates:** `panel/layout.html.twig`, `panel/base.html.twig`, `panel/_modal_shell.html.twig`. New:
   `panel/_notices.html.twig`, `panel/_import_form.html.twig`, `panel/_legacy_layout.html.twig` (deprecated);
-  `panel/_nav.html.twig` now delegates to the UiKit `tabs` partial.
+  `panel/_nav.html.twig` is removed: the section tabs are `page.header.tabs` (UiKit `AreaNav`), rendered by the
+  `page_header` partial (region `area-nav`); the context variable `nav` is gone (`nav_current` stays). Other menus can
+  reuse the navigation with `nowo_ui_area_nav('routing_kit', {current: …})`.
 - **Blocks:** the `rk_*` blocks are gone. Overrides move to the UiKit data blocks (or to the theme):
 
   | 1.x block | 1.9 |
@@ -156,7 +161,7 @@ What hosts may notice:
   | `rk_table`, `rk_table_head`, `rk_results`, `rk_count`, `rk_pagination`, `rk_empty_state`, `rk_row_actions` | scaffold regions: theme slots, `theme.partials` (`pagination`, `empty`, `row_actions`) or a `page/list` scaffold override; header cells `nowo_ui_list_head` |
   | `rk_import` | `nowo_ui_list_after` (inline card) / `nowo_ui_modals` (modal) |
   | `rk_page_header`, `rk_page_title`, `rk_page_intro`, `rk_page_actions`, `rk_back_link` | `nowo_ui_page_header` (the `page_header` partial; title / intro / actions come from `page.header`) |
-  | `rk_nav` | `nowo_ui_page_header` (nav after `{{ parent() }}`) or the `tabs` partial |
+  | `rk_nav` | `page.header.tabs` (rendered by the `page_header` partial; theme the `tabs` partial / slots) |
   | `rk_status` | `nowo_ui_flashes` |
   | `rk_form`, `rk_form_heading`, `rk_form_errors`, `rk_form_fields`, `rk_form_actions` | `nowo_ui_form_body` (call `{{ parent() }}` for the remaining rows), `nowo_ui_form_aside`; submit / cancel from `page.submitLabel` / `page.cancelHref` |
   | `rk_confirm` | none (`page/confirm` scaffold; `confirm_*` slots) |
@@ -166,12 +171,19 @@ What hosts may notice:
   renders and how `nowo_ui_document_title` is suffixed.
 - **Deletes:** route path and redirect deletes from the lists are UiKit `Action`s with a `Confirm` (toggle button +
   `<dialog>` rendered once after the table, `nowo-ui-confirm.js`); no inline `confirm()`. The edit forms get a danger
-  zone with the same delete. `GET {path_prefix}/redirects/{id}/delete` still renders a full-page confirmation.
+  zone with the same delete. Without JavaScript a `<noscript>` link (`Action::fallbackHref`, class
+  `nowo-ui-action__fallback`) opens the full-page confirmation: `GET {path_prefix}/redirects/{id}/delete` (kept) and
+  the new `GET {path_prefix}/delete/{id}` for route paths (the route accepted only POST before); both delete on POST
+  with the CSRF token.
+- **Import modal** (`web_ui.import_display: modal`): the UiKit `dialog` partial (native `<dialog>`, no Bootstrap
+  classes) opened by the header action's `data-nowo-ui-dialog-open`; Cancel uses `data-nowo-ui-dialog-close`.
+  Host layouts that list UiKit scripts themselves add `js/nowo-ui-dialog.js`.
 - **Markup / test ids:** kept `data-testid` values: `routing-kit-definitions-table`, `routing-kit-definition-form`,
   `routing-kit-redirect-form-panel` (now on the scaffold root, always present), `redirect-table` (scaffold root, was the
   `<table>`), `redirect-new`, `redirect-delete` (dialog toggle button, was a link), `redirect-delete-form` (confirm page
   root, was the `<form>`), `redirect-status`. New: `routing-kit-nav-routes`, `routing-kit-nav-redirects`,
-  `routing-kit-role-gate-warning`, `routing-kit-import-form`, `routing-kit-conflicts`. Scaffold regions carry
+  `routing-kit-role-gate-warning`, `routing-kit-import-form`, `routing-kit-import-open`, `routing-kit-import-dialog`,
+  `routing-kit-delete-form`, `routing-kit-conflicts`. Scaffold regions carry
   `data-nowo-ui-region`.
 - **Count line:** "N row(s)" / "N redirect(s)" is the table `<caption>` (hidden when the list is empty; the empty
   state shows instead).
