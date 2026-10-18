@@ -13,11 +13,11 @@ This bundle is **FrankenPHP worker mode friendly**.
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/images/demo/paths-list.webp" alt="Routing Kit panel listing locale paths with export, clear cache and signed import" />
+      <img src="docs/images/demo/paths-list.webp" alt="Routing Kit panel: Routes tab listing locale paths per route (locale, path, canonical style, enabled badge, edit/delete), header actions New path / Export / Clear routing cache, signed JSON import card, Symfony profiler toolbar" />
       <br /><sub>Locale paths per route — canonical style, enabled state, signed import / export</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/images/demo/redirects-confirm.webp" alt="URL redirects list with the delete confirmation dialog open" />
+      <img src="docs/images/demo/redirects-confirm.webp" alt="Routing Kit panel: Redirects tab with old paths, targets, hit counts and notes, and the UiKit delete confirm dialog open over the list" />
       <br /><sub>Operator URL redirects — delete through the UiKit confirm dialog</sub>
     </td>
   </tr>
