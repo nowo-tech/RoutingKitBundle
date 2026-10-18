@@ -861,8 +861,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         classes?: array<string, scalar|Param|null>,
  *         partials?: array<string, scalar|Param|null>,
  *         ui_kit_assets?: bool|Param, // Deprecated: The "nowo_routing_kit.web_ui.ui_kit_assets.ui_kit_assets" option is deprecated, the layout (nowo_ui_kit.layouts.admin) loads the UiKit assets. // Deprecated: UiKit assets come from the layout (nowo_ui_kit.layouts.admin). Only read by the 1.x layout bridge.
- *         import_display?: "inline"|"modal"|Param, // Signed JSON import: a card under the paths table (inline, default) or a UiKit modal opened from the page actions. // Default: "inline"
- *         show_row_count?: bool|Param, // Show the "N row(s)" caption of the tables. // Default: true
+ *         import_display?: "inline"|"modal"|Param, // Signed JSON import: a UiKit dialog opened from the "Import" page action (modal, default since 1.9.1) or a card under the paths table (inline). // Default: "modal"
+ *         show_row_count?: bool|Param, // Show the "N row(s)" caption of the tables (default false since 1.9.1: the pagination summary already shows the count). // Default: false
  *         primary_action_last?: bool|Param, // Render the primary "New" action after the secondary page actions. // Default: false
  *         main_landmark?: bool|Param, // Deprecated: The "nowo_routing_kit.web_ui.main_landmark.main_landmark" option is deprecated and has no effect: the layout owns the <main> landmark. // Deprecated, no effect: the layout (UiKit or host) owns the <main> landmark.
  *         delete_confirm_attr?: array<string, scalar|Param|null>,

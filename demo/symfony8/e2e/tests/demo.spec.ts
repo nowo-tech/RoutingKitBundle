@@ -21,9 +21,24 @@ test.describe('routing kit panel', () => {
     await expect(page.locator('[data-nowo-ui-region="area-nav"]')).toBeVisible();
     await expect(page.getByTestId('routing-kit-nav-routes')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('routing-kit-role-gate-warning')).toBeVisible();
-    await expect(page.getByTestId('routing-kit-import-form')).toBeVisible();
+    // the signed JSON import opens in the UiKit dialog (web_ui.import_display: modal, default)
+    await expect(page.getByTestId('routing-kit-import-form')).toBeHidden();
+    await page.getByTestId('routing-kit-import-open').click();
+    const importDialog = page.getByTestId('routing-kit-import-dialog');
+    await expect(importDialog).toBeVisible();
+    await expect(importDialog.getByLabel('Signed JSON payload')).toBeVisible();
+    await expect(importDialog.getByLabel('Replace all existing rows')).not.toBeChecked();
+    await importDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(importDialog).toBeHidden();
 
+    // consistent cells: UiKit code slot for route / path, translated enabled badge, no duplicated row-count caption
+    await expect(page.locator('tbody code.nowo-ui-code', { hasText: '/sobre-nosotros' })).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: '/sobre-nosotros' }).getByText('Yes', { exact: true })).toBeVisible();
+    await expect(page.locator('table caption')).toHaveCount(0);
+
+    // icon row actions (nowo_ui_kit.row_actions_display: icon) keep an accessible name
     const row = page.locator('tbody tr', { hasText: '/sobre-nosotros' });
+    await expect(row.locator('.nowo-ui-row-actions--icon svg').first()).toBeVisible();
     await row.getByRole('link', { name: 'Edit' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Edit path' })).toBeVisible();
     await expect(page.locator('[data-nowo-ui-region="danger-zone"]')).toBeVisible();
@@ -39,7 +54,8 @@ test.describe('routing kit panel', () => {
     await row.getByTestId('redirect-delete').click();
     const dialog = page.locator('dialog[open]');
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText(`Delete the redirect from ${source} to /about?`);
+    await expect(dialog.getByRole('heading', { name: `Delete redirect ${source}?` })).toBeVisible();
+    await expect(dialog).toContainText(`Visitors to ${source} are no longer sent to /about`);
     await dialog.getByRole('button', { name: 'Delete' }).click();
 
     await expect(page.getByTestId('redirect-status')).toContainText('Redirect deleted.');

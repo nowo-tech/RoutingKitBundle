@@ -72,6 +72,17 @@ test.describe('panel screenshots', () => {
     await shoot(page, 'paths-list');
   });
 
+  test('paths list with the import dialog', async ({ page }) => {
+    await ensurePath(page, 'app_about', 'es', '/sobre-nosotros');
+
+    await page.goto('/_routing/');
+    await fitViewport(page);
+    await page.getByTestId('routing-kit-import-open').click();
+    await expect(page.getByTestId('routing-kit-import-dialog')).toBeVisible();
+    await page.waitForTimeout(300); // dialog open transition
+    await shoot(page, 'import-dialog');
+  });
+
   test('redirects list with the delete confirm dialog', async ({ page }) => {
     await ensureRedirect(page, '/tratamientos/unas-encarnadas', '/about', 'Old WordPress site');
     await ensureRedirect(page, '/promo-2025', 'https://example.com/sale', 'Campaign ended');

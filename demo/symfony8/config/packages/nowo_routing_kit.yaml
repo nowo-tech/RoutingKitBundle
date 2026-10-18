@@ -20,7 +20,7 @@ nowo_routing_kit:
         enabled: true
         path_prefix: '/_routing'
         # layout_template: null → nowo_ui_kit.layouts.admin (templates/layouts/admin.html.twig)
-        import_display: inline
+        # import_display: modal (default) — the signed JSON import opens in a dialog from the "Import" page action
     # Demo has no Security Bundle — the in-bundle role gate is disabled.
     # UNSAFE for public networks. Production: security.access_roles + access_control.
     security:

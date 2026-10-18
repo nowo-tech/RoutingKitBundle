@@ -19,10 +19,11 @@
         .demo-admin-nav { margin-bottom: 1.25rem; font-size: 0.9rem; }
         /* Host form styling for the panel forms (the FormKit profile only adds classes). */
         .nowo-ui-form > div:not(.nowo-ui-form__actions) { margin-bottom: 0.85rem; }
-        .nowo-ui-form label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+        .nowo-ui-form label:not(.nowo-ui-check) { display: block; margin-bottom: 0.3rem; font-weight: 500; }
         .nowo-ui-form .form-check label { display: inline; margin: 0 0 0 0.4rem; }
         .nowo-ui-form .form-check { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; }
         .nowo-ui-input, .nowo-ui-form select { width: 100%; max-width: 36rem; box-sizing: border-box; padding: 0.45rem 0.6rem; border: 1px solid #ccc; border-radius: 0.4rem; font: inherit; }
+        .nowo-ui-input.nowo-ui-input--full { max-width: none; }
         .nowo-ui-form .help-text, .nowo-ui-form small { color: #666; font-size: 0.85rem; }
     </style>
     {% block stylesheets %}{% endblock %}

@@ -13,12 +13,18 @@ This bundle is **FrankenPHP worker mode friendly**.
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/images/demo/paths-list.webp" alt="Routing Kit panel: Routes tab listing locale paths per route (locale, path, canonical style, enabled badge, edit/delete), header actions New path / Export / Clear routing cache, signed JSON import card, Symfony profiler toolbar" />
-      <br /><sub>Locale paths per route — canonical style, enabled state, signed import / export</sub>
+      <img src="docs/images/demo/paths-list.webp" alt="Routing Kit panel: Routes tab listing locale paths per route (route and path in monospace, locale, canonical style, Yes badge, icon edit/delete actions), header actions New path / Export / Clear routing cache / Import, pagination summary, Symfony profiler toolbar" />
+      <br /><sub>Locale paths per route — canonical style, enabled state, icon row actions</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/images/demo/redirects-confirm.webp" alt="Routing Kit panel: Redirects tab with old paths, targets, hit counts and notes, and the UiKit delete confirm dialog open over the list" />
+      <img src="docs/images/demo/redirects-confirm.webp" alt="Routing Kit panel: Redirects tab with old paths, targets, hit counts and notes, and the UiKit confirm dialog 'Delete redirect /promo-2025?' open over the list" />
       <br /><sub>Operator URL redirects — delete through the UiKit confirm dialog</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/images/demo/import-dialog.webp" alt="Routing Kit panel: signed JSON import dialog over the paths list, full-width payload textarea, Replace all existing rows checkbox, Cancel and Import in the dialog footer" width="50%" />
+      <br /><sub>Signed JSON import in the UiKit dialog (<code>web_ui.import_display: modal</code>, default)</sub>
     </td>
   </tr>
 </table>
