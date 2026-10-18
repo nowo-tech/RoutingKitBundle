@@ -32,9 +32,8 @@
 {% block javascripts %}
     {{ parent() }}
     {% if _rk_assets %}
-        {% for _script in ['nowo-ui-modal', 'nowo-ui-confirm', 'nowo-ui-dialog'] %}
-            <script src="{{ asset('js/' ~ _script ~ '.js', 'nowo_ui_kit') }}" defer{% if _rk_nonce %} nonce="{{ _rk_nonce }}"{% endif %}></script>
-        {% endfor %}
+        {#- UiKit 2.2 `scripts` partial: every UiKit runtime, with the CSP nonce -#}
+        {{ include(nowo_ui_partial('scripts', nowo_ui_bundle|default(null)), {nonce: _rk_nonce ?: null}, false) }}
     {% endif %}
     {% block nowo_ui_scripts %}{% endblock %}
 {% endblock %}

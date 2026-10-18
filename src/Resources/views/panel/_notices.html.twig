@@ -1,7 +1,8 @@
 {#
   Panel notices next to the host flashes (nowo_ui_flashes): the role-gate warning when
   security.allow_unauthenticated is true (translation with markup, slot flash_warning) and the redirect status
-  message (?status=created|saved|deleted) through the UiKit `flashes` partial.
+  message (?status=created|saved|deleted) through the UiKit `flashes` partial (`flash_messages` input, UiKit 2.2:
+  the 2.0 `flashes` input is ignored inside page scaffolds).
 #}
 {% if role_gate_disabled|default(false) %}
     <div class="{{ nowo_ui_class('flash_warning', 'NowoRoutingKitBundle') }}" role="alert" data-testid="routing-kit-role-gate-warning">
@@ -11,7 +12,7 @@
 {% if status|default(null) %}
     <div data-testid="redirect-status">
         {{ include(nowo_ui_partial('flashes', 'NowoRoutingKitBundle'), {
-            flashes: {success: ['redirects.status.' ~ status]},
+            flash_messages: {success: ['redirects.status.' ~ status]},
             trans_domain: 'NowoRoutingKitBundle',
             bundle: 'NowoRoutingKitBundle',
         }) }}
