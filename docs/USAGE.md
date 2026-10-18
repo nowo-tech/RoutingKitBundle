@@ -153,4 +153,4 @@ nowo_routing_kit:
 
 The 1.x hooks (`web_ui.classes`, `web_ui.partials`, `ui_kit_assets`, `main_landmark`, `delete_confirm_attr`, the
 `rk_*` blocks and the `rk_page_header_in_layout` / `rk_title_suffix` layout contract) are deprecated or gone; the
-mapping to UiKit slots and blocks is in [UPGRADING.md](UPGRADING.md#unreleased).
+mapping to UiKit slots and blocks is in [UPGRADING.md](UPGRADING.md#to-190).

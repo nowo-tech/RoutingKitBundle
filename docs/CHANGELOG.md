@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.9.0] - 2026-10-18](#190---2026-10-18)
 - [[1.8.1] - 2026-10-13](#181---2026-10-13)
 - [[1.8.0] - 2026-10-13](#180---2026-10-13)
 - [[1.7.2] - 2026-10-13](#172---2026-10-13)
@@ -43,7 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-UiKit 2 page contract (REQ-UI-003). Requires `nowo-tech/ui-kit-bundle` **^2.1**. See [UPGRADING — Unreleased](UPGRADING.md#unreleased) for the template contract and the migration of overrides.
+## [1.9.0] - 2026-10-18
+
+Panel pages on the UiKit 2.1 standard page contract (REQ-UI-003): list, form and confirm scaffolds, area nav, native import dialog, no-JS delete confirm pages; deprecated panel/web_ui keys bridged. See [UPGRADING](UPGRADING.md#to-190).
+
+Requires `nowo-tech/ui-kit-bundle` **^2.1**.
 
 ### Added
 
@@ -552,7 +557,8 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.1...v1.9.0
 [1.8.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.7.1...v1.7.2

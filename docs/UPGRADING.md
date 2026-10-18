@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.9.0](#to-190)
   - [Configuration](#configuration)
   - [Template contract](#template-contract)
 - [To 1.8.1](#to-181)
@@ -83,6 +84,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.9.0
+
+From **1.8.1**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 From **1.8.1** — the admin panel follows the UiKit 2 page contract (REQ-UI-003). Configuration keeps working
 (deprecated keys are mapped); page template overrides written for 1.x must be migrated.

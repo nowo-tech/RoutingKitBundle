@@ -47,7 +47,7 @@ Root key: `nowo_routing_kit`.
 
 ### Deprecated keys (removed in 2.0)
 
-Still accepted in 1.9 (a deprecation is logged when set); see [UPGRADING.md](UPGRADING.md#unreleased).
+Still accepted in 1.9 (a deprecation is logged when set); see [UPGRADING.md](UPGRADING.md#to-190).
 
 | Key | Replacement |
 | --- | --- |
