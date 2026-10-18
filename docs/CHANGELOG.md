@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.10.0] - 2026-10-18](#1100---2026-10-18)
 - [[1.9.3] - 2026-10-18](#193---2026-10-18)
 - [[1.9.2] - 2026-10-18](#192---2026-10-18)
 - [[1.9.1] - 2026-10-18](#191---2026-10-18)
@@ -46,6 +47,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.10.0] - 2026-10-18
+
+Opt-in default locale without URL prefix for every route that has a bare twin. See [UPGRADING](UPGRADING.md#to-1100).
+
+### Added
+
+- `default_locale_unprefixed` (off by default; `true` or `{enabled, twin_suffix, redirect_prefixed, redirect_status}`):
+  - `Routing\DefaultLocaleRouter` decorates `router.default`: generating a route for the default locale (explicit `_locale` or the request context's) returns its bare twin `<route><twin_suffix>` (default `_unlocalized`, the AuthKit / SiteBackup convention, e.g. `nowo_auth_kit_login_unlocalized` = `/login`) when it exists, so every link, redirect, form action and e-mail URL drops the default-locale prefix, whoever generates it. Routes without a twin and other locales are unchanged; missing twins are memoized (worker-safe, cleared with the router state by `RouteCacheInvalidator`).
+  - `EventSubscriber\DefaultLocalePrefixRedirectSubscriber` (`redirect_prefixed`, default `true`): `GET` / `HEAD` `/{default}/…` of a route with a twin answers `redirect_status` (default 301) to the bare URL, query string kept; POST is never redirected.
+  - Works with `register_unprefixed_default` (RoutingKit's stored routes already use the bare path for the default locale). Extracted from Symfony Beacon.
+
+### Changed
+
+- `RouteCacheInvalidator` unwraps `DefaultLocaleRouter` to reset the decorated Symfony router (and clears its twin memo).
+- `phpunit.xml.dist`: `memory_limit` 512M (several real kernels in the Integration suite).
 
 ## [1.9.3] - 2026-10-18
 

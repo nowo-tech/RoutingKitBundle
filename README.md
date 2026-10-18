@@ -39,6 +39,7 @@ This bundle is **FrankenPHP worker mode friendly**.
 - **`#[Routable]`** — Controllers offered in the CRUD; params + constraints validated on save.
 - **Loader** — `type: nowo_routing_kit` registers `{name}.{locale}` with `_canonical_route` (import last).
 - **Panel** — Twig CRUD under `/_routing` on the **UiKit page contract** (list / form / confirm scaffolds, themed once in `nowo_ui_kit` for every bundle; see [docs/TEMPLATES.md](docs/TEMPLATES.md)) + Symfony forms (FormKit) for create/edit, export, import, and clear-cache actions (auto invalidation after save/delete). Protect with `security.access_roles` (default `[ROLE_ADMIN]`) / `allow_unauthenticated`.
+- **Default locale without prefix** (opt-in, `default_locale_unprefixed`) — Router decorator: the default locale generates the bare twin `<route>_unlocalized` of any route that has one (AuthKit / SiteBackup / app routes), and `GET /{default}/…` 301s to it. See [docs/USAGE.md](docs/USAGE.md#default-locale-without-prefix).
 - **SeoKit** — Optional bridge decorates `SeoPathBuilderInterface` for canonical/hreflang paths.
 - **URL redirects** (opt-in, `url_redirects.enabled`) — Operator-managed old path → new path / URL redirects applied before routing, with a panel section at `/_routing/redirects`, protected paths, live-page detection (`LivePathCheckerInterface`), hit counting (sync or Messenger) and pluggable storage. See [docs/REDIRECTS.md](docs/REDIRECTS.md).
 

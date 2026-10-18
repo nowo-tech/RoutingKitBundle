@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.10.0](#to-1100)
 - [To 1.9.3](#to-193)
 - [To 1.9.2](#to-192)
 - [To 1.9.1](#to-191)
@@ -87,6 +88,17 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.10.0
+
+From **1.9.3** — opt-in, nothing changes unless you enable it.
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+- To serve the default locale without a prefix on routes that have a bare twin (`<route>_unlocalized`, e.g. AuthKit with `locale.in_path: both` + `unlocalized: serve`, or your own `/legal/privacy` twin with `defaults: {_locale: '%default_locale%'}`), set `nowo_routing_kit.default_locale_unprefixed: true`. If your app already decorates `router.default` for this (or 301s `/{default}/…` itself), remove that code: both would run.
+- Name the twin with `twin_suffix` if your convention is not `_unlocalized`; `redirect_prefixed: false` keeps `/{default}/…` serving (no 301).
 
 ## To 1.9.3
 

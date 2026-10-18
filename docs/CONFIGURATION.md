@@ -43,6 +43,10 @@ Root key: `nowo_routing_kit`.
 | `url_redirects.hits.message_bus` | `null` | Messenger bus id for async hit counting (`null` = synchronous write) |
 | `auto_invalidate_cache` | `true` | Clear router cache after CRUD |
 | `register_unprefixed_default` | `true` | Register unprefixed routes for default locale |
+| `default_locale_unprefixed.enabled` | `false` | Opt-in (`default_locale_unprefixed: true` works): decorate `router.default` so the default locale generates the bare twin `<route><twin_suffix>` of any route that has one (AuthKit / SiteBackup / app routes). See [USAGE](USAGE.md#default-locale-without-prefix) |
+| `default_locale_unprefixed.twin_suffix` | `_unlocalized` | Suffix of the bare twin route name |
+| `default_locale_unprefixed.redirect_prefixed` | `true` | `GET` / `HEAD` `/{default}/…` of a route with a twin redirects to the bare URL (query kept; POST never) |
+| `default_locale_unprefixed.redirect_status` | `301` | Status of that redirect (301–308) |
 | `seo_kit_bridge` | `true` | Decorate SeoKit `SeoPathBuilderInterface` when present |
 
 ### Locales from a parameter or env var

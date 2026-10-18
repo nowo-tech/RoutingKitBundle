@@ -25,8 +25,10 @@ final class DefaultLocalePrefixRedirectSubscriberTest extends TestCase
         $request = $this->request('/app/index.php/en/page', '/app/index.php', 'en');
         $event   = $this->dispatch($request, '/app/index.php/page', 302);
 
-        self::assertSame(302, $event->getResponse()?->getStatusCode());
-        self::assertSame('/app/index.php/page', $event->getResponse()?->headers->get('Location'));
+        $response = $event->getResponse();
+        self::assertNotNull($response);
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/app/index.php/page', $response->headers->get('Location'));
     }
 
     public function testIgnoresSubRequestsOtherLocalesAndUnmatchedRequests(): void

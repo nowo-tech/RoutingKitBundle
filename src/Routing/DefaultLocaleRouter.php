@@ -86,6 +86,7 @@ final class DefaultLocaleRouter implements RouterInterface, RequestMatcherInterf
 
     public function setContext(RequestContext $context): void
     {
+        // @igor-ignore - RouterInterface contract: RouterListener sets the request context on every main request (same as the undecorated router)
         $this->inner->setContext($context);
     }
 

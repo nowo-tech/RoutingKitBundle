@@ -8,6 +8,7 @@
 - [SeoKitBundle](#seokitbundle)
 - [URL redirects](#url-redirects)
 - [Custom storage / locales](#custom-storage--locales)
+- [Default locale without prefix](#default-locale-without-prefix)
 - [Overriding templates (REQ-TWIG-001)](#overriding-templates-req-twig-001)
 - [Customising the admin chrome](#customising-the-admin-chrome)
 
@@ -89,6 +90,37 @@ nowo_routing_kit:
 ```
 
 Implement `LocaleProviderInterface` and `RoutePathStorageInterface` (including `replaceAll()` since 1.1.1).
+
+## Default locale without prefix
+
+`register_unprefixed_default` (on by default) serves RoutingKit's own stored paths without `/{locale}` for the default
+locale. Routes of the app and of other bundles keep their `/{_locale}/…` path; when one of them has a **bare twin**
+named `<route>_unlocalized` (AuthKit / SiteBackup with `locale.in_path: both`, or your own), opt in:
+
+```yaml
+nowo_routing_kit:
+    default_locale: '%default_locale%'
+    default_locale_unprefixed: true
+    # or:
+    # default_locale_unprefixed:
+    #     twin_suffix: _unlocalized
+    #     redirect_prefixed: true     # 301 /{default}/… → bare URL
+    #     redirect_status: 301
+```
+
+```php
+// A page with a bare twin for the default locale:
+#[Route('/{_locale}/legal/privacy', name: 'legal_privacy', requirements: ['_locale' => 'en|es'])]
+#[Route('/legal/privacy', name: 'legal_privacy_unlocalized', defaults: ['_locale' => '%default_locale%'])]
+public function privacy(): Response { /* … */ }
+```
+
+- `path('legal_privacy')` / `generate('legal_privacy', ['_locale' => 'en'])` → `/legal/privacy` when `en` is the default
+  locale (explicit `_locale`, or the request context's); `/es/legal/privacy` for `es`. Every generator follows (Twig,
+  controllers, redirects, e-mails, other bundles). Routes without a twin are generated unchanged.
+- `GET /en/legal/privacy?x=1` → `301 /legal/privacy?x=1`. POST is never redirected.
+- The "no twin" lookups are memoized per process (the route set only changes with the cache); RoutingKit's route-table
+  invalidation clears the memo with the router state, so it is safe in FrankenPHP / RoadRunner workers.
 
 ## Overriding templates (REQ-TWIG-001)
 
