@@ -169,13 +169,20 @@ final class RouteCacheInvalidator
     {
         $this->routeLoader?->reset();
 
-        if ($this->router instanceof ResetInterface) {
-            $this->router->reset();
+        $router = $this->router;
+        if ($router instanceof DefaultLocaleRouter) {
+            // default_locale_unprefixed: reset the decorated router and the decorator's twin memo.
+            $router->clearTwinMemo();
+            $router = $router->getInnerRouter();
+        }
+
+        if ($router instanceof ResetInterface) {
+            $router->reset();
 
             return;
         }
 
-        if ($this->router instanceof FrameworkRouter) {
+        if ($router instanceof FrameworkRouter) {
             // Symfony exposes no public API to drop the memoized collection/matcher/generator, nor the
             // per-thread compiled-routes cache used when OPcache is disabled.
             $reset = Closure::bind(static function (FrameworkRouter $router): void {
@@ -188,12 +195,12 @@ final class RouteCacheInvalidator
                     unset(self::$cache[$cacheDir . '/url_matching_routes.php'], self::$cache[$cacheDir . '/url_generating_routes.php']);
                 }
             }, null, Router::class);
-            $reset($this->router);
+            $reset($router);
 
             return;
         }
 
-        $this->logger?->warning('RoutingKit: router "{class}" cannot be rebuilt in-process; restart workers to apply path changes.', ['class' => get_debug_type($this->router)]);
+        $this->logger?->warning('RoutingKit: router "{class}" cannot be rebuilt in-process; restart workers to apply path changes.', ['class' => get_debug_type($router)]);
     }
 
     private function removeDir(string $dir): void

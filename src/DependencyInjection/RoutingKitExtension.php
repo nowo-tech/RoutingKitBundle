@@ -9,6 +9,7 @@ use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\DefaultLocalePrefixRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
@@ -27,6 +28,7 @@ use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
+use Nowo\RoutingKitBundle\Routing\DefaultLocaleRouter;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Security\AllowAllRoutingKitAccessChecker;
 use Nowo\RoutingKitBundle\Security\ConfigurableRoutingKitAccessChecker;
@@ -298,6 +300,35 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $this->configureImportExport($container, $config);
         $this->configureCacheInvalidator($container);
         $this->configureAudit($container);
+        $this->configureDefaultLocaleUnprefixed($container, $config);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function configureDefaultLocaleUnprefixed(ContainerBuilder $container, array $config): void
+    {
+        $options = $config['default_locale_unprefixed'];
+        $container->setParameter('nowo.routing_kit.default_locale_unprefixed', (bool) $options['enabled']);
+        if (!$options['enabled']) {
+            return;
+        }
+
+        $container->setDefinition(DefaultLocaleRouter::class, (new Definition(DefaultLocaleRouter::class))
+            ->setDecoratedService('router.default')
+            ->setArgument('$inner', new Reference(DefaultLocaleRouter::class . '.inner'))
+            ->setArgument('$locales', new Reference(LocaleProviderInterface::class))
+            ->setArgument('$twinSuffix', (string) $options['twin_suffix'])
+            ->setPublic(false));
+
+        if ($options['redirect_prefixed']) {
+            $container->setDefinition(DefaultLocalePrefixRedirectSubscriber::class, (new Definition(DefaultLocalePrefixRedirectSubscriber::class))
+                ->setArgument('$urls', new Reference('router'))
+                ->setArgument('$locales', new Reference(LocaleProviderInterface::class))
+                ->setArgument('$status', (int) $options['redirect_status'])
+                ->addTag('kernel.event_subscriber')
+                ->setPublic(false));
+        }
     }
 
     public function getAlias(): string

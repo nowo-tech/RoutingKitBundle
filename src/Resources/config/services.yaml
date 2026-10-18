@@ -16,6 +16,9 @@ services:
             - '../../Seo/RoutingKitSeoPathBuilderDecorator.php'
             - '../../Redirect/Message/RecordRedirectHit.php'
             - '../../NowoRoutingKitBundle.php'
+            # default_locale_unprefixed (opt-in): registered by the extension only when enabled.
+            - '../../Routing/DefaultLocaleRouter.php'
+            - '../../EventSubscriber/DefaultLocalePrefixRedirectSubscriber.php'
 
     Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider: ~
 
