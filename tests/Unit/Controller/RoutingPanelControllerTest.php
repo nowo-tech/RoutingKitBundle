@@ -96,15 +96,19 @@ PHP);
                 self::assertSame('NowoRoutingKitBundle', $page->bundle);
                 self::assertNull($page->layout);
                 self::assertSame('/_routing-kit', $context['path_prefix']);
-                self::assertSame('inline', $context['import_display']);
+                self::assertSame('modal', $context['import_display']);
+                self::assertNull($page->caption, 'No row-count caption by default.');
                 self::assertNull($page->header->tabs);
                 self::assertSame('routes', $context['nav_current']);
                 self::assertFalse($context['role_gate_disabled']);
                 self::assertInstanceOf(FormView::class, $context['import_form']);
-                self::assertSame(['create', 'export', 'custom'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
+                self::assertSame(['create', 'export', 'custom', 'import'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
                 self::assertSame(['%default%' => 'en'], $page->header->intro instanceof Label ? $page->header->intro->params : null);
                 $actions = $page->rowActions($page->rows[0], 0);
                 self::assertSame('/_routing-kit/edit/rk_1', $actions[0]->href);
+                self::assertSame(['edit', 'delete'], [$actions[0]->icon, $actions[1]->icon]);
+                self::assertNull($actions[0]->display, 'Row actions follow nowo_ui_kit.row_actions_display.');
+                self::assertSame(['%path%' => '/articles/{slug}', '%locale%' => 'en'], $actions[1]->confirm?->title instanceof Label ? $actions[1]->confirm->title->params : null);
                 self::assertSame('/_routing-kit/delete/rk_1', $actions[1]->href);
                 self::assertTrue($actions[1]->isPost());
                 self::assertInstanceOf(FormView::class, $actions[1]->form);
@@ -120,6 +124,25 @@ PHP);
         $response = $controller->index(Request::create('/_routing-kit/', 'GET'));
 
         self::assertSame('<html>index</html>', $response->getContent());
+    }
+
+    public function testIndexWithInlineImportAndRowCount(): void
+    {
+        [$controller] = $this->createController(
+            twig: $this->createTwigMock(static function (string $template, array $context): string {
+                $page = $context['page'];
+                self::assertInstanceOf(ListPage::class, $page);
+                self::assertSame('inline', $context['import_display']);
+                self::assertSame(['create', 'export', 'custom'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
+                self::assertInstanceOf(Label::class, $page->caption);
+                self::assertSame('panel.count', $page->caption->key);
+
+                return '<html>inline</html>';
+            }),
+            viewOptions: ['importDisplay' => 'inline', 'showRowCount' => true],
+        );
+
+        self::assertSame('<html>inline</html>', $controller->index(Request::create('/_routing-kit/'))->getContent());
     }
 
     public function testIndexWithImportModalPrimaryActionLastAndNoRowCount(): void

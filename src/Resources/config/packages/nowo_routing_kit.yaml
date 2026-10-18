@@ -21,8 +21,8 @@ nowo_routing_kit:
         path_prefix: '/_routing'
         layout_template: ~        # null = nowo_ui_kit.layouts.admin (UiKit page contract)
         templates: {}             # index, form, redirects_index, redirects_form, redirects_delete
-        import_display: inline    # inline | modal
-        show_row_count: true
+        import_display: modal     # modal (dialog from the Import action) | inline (card under the table)
+        show_row_count: false     # the pagination summary already shows the count
         primary_action_last: false
     security:
         access_roles: [ROLE_ADMIN]

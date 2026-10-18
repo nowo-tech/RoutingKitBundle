@@ -118,7 +118,8 @@ UiKit and the panel inherits it — no RoutingKit-specific chrome configuration 
    only; `theme.partials` to replace a UiKit partial (`page_header`, `pagination`, `tabs`, `dialog`…).
 3. **Scaffolds** — `templates/bundles/NowoUiKitBundle/page/list.html.twig` (or `form`, `confirm`) re-skins every list /
    form / confirm page of every bundle.
-4. **Options** — `web_ui.import_display: modal`, `web_ui.show_row_count: false`, `web_ui.primary_action_last: true`.
+4. **Options** — `web_ui.import_display: inline` (card instead of the default dialog), `web_ui.show_row_count: true`,
+   `web_ui.primary_action_last: true`. Row actions follow `nowo_ui_kit.row_actions_display` / `icon_set`.
 5. **One page** — `web_ui.templates.<page>` with a template that extends `@!NowoRoutingKitBundle/…` and redefines a
    data block ([TEMPLATES.md](TEMPLATES.md)).
 
@@ -141,7 +142,7 @@ nowo_ui_kit:
 
 nowo_routing_kit:
     web_ui:
-        import_display: modal
+        import_display: inline
         primary_action_last: true
 ```
 

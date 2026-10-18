@@ -20,6 +20,7 @@ use Nowo\UiKitBundle\View\Confirm;
 use Nowo\UiKitBundle\View\ConfirmPage;
 use Nowo\UiKitBundle\View\EmptyState;
 use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\Label;
 use Nowo\UiKitBundle\View\ListPage;
 use Nowo\UiKitBundle\View\PageHeader;
 use Nowo\UiKitBundle\View\Pagination;
@@ -91,7 +92,7 @@ final class UrlRedirectPanelController
         $rowActions = [];
         foreach ($rows as $key => $redirect) {
             $rowActions[$key] = [
-                Action::edit($prefix . '/redirects/' . $redirect->getId() . '/edit', PanelView::label('panel.edit')),
+                new Action('edit', PanelView::label('panel.edit'), $prefix . '/redirects/' . $redirect->getId() . '/edit', icon: 'edit'),
                 $this->deleteAction($redirect, ['data-testid' => 'redirect-delete']),
             ];
         }
@@ -160,7 +161,7 @@ final class UrlRedirectPanelController
 
         return $this->view->render('redirects_delete', 'redirects', [
             'page' => new ConfirmPage(
-                new PageHeader(PanelView::label('redirects.delete_title'), tabs: $this->view->nav('redirects')),
+                new PageHeader($this->deleteTitle($redirect), tabs: $this->view->nav('redirects')),
                 $this->deleteConfirm($redirect),
                 new Action('delete', PanelView::label('panel.delete'), $this->view->pathPrefix . '/redirects/' . $id . '/delete', method: 'POST', form: $form->createView()),
                 $this->view->pathPrefix . '/redirects',
@@ -237,6 +238,7 @@ final class UrlRedirectPanelController
                 bundle: PanelView::BUNDLE,
                 layout: $this->view->layout(),
                 attributes: ['data-testid' => 'routing-kit-redirect-form-panel'],
+                formThemes: [PanelView::FORM_THEME],
             ),
             'redirect' => $existing,
         ]);
@@ -255,16 +257,25 @@ final class UrlRedirectPanelController
             $href,
             method: 'POST',
             confirm: $this->deleteConfirm($redirect),
+            icon: 'delete',
             attributes: $attributes,
             form: $this->deleteForm((string) $redirect->getId())->createView(),
             fallbackHref: $href,
         );
     }
 
+    /**
+     * Confirm title naming the redirect (UiKit confirm pattern: "Delete redirect /promo-2025?").
+     */
+    private function deleteTitle(UrlRedirect $redirect): Label
+    {
+        return PanelView::label('redirects.delete_title', ['%source%' => $redirect->getSourcePath()]);
+    }
+
     private function deleteConfirm(UrlRedirect $redirect): Confirm
     {
         return new Confirm(
-            PanelView::label('redirects.delete_title'),
+            $this->deleteTitle($redirect),
             PanelView::label('redirects.delete_confirm', ['%source%' => $redirect->getSourcePath(), '%target%' => $redirect->getTargetUrl()]),
             PanelView::label('panel.delete'),
         );

@@ -25,8 +25,8 @@ final class PanelChromeConfigTest extends TestCase
         self::assertSame([], $webUi['classes']);
         self::assertSame([], $webUi['partials']);
         self::assertArrayNotHasKey('ui_kit_assets', $webUi);
-        self::assertSame('inline', $webUi['import_display']);
-        self::assertTrue($webUi['show_row_count']);
+        self::assertSame('modal', $webUi['import_display'], 'Import dialog by default since 1.9.1.');
+        self::assertFalse($webUi['show_row_count'], 'No row-count caption by default since 1.9.1.');
         self::assertFalse($webUi['primary_action_last']);
         self::assertSame([], $webUi['delete_confirm_attr']);
         self::assertArrayNotHasKey('main_landmark', $webUi);

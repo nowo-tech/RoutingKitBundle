@@ -1,5 +1,5 @@
 panel.title: Routing Kit
-panel.subtitle: 'Gestiona paths por locale (default: %default%). Se guardan sin {_locale}; el loader siempre aplica /{_locale}/…'
+panel.subtitle: "Path localizado de cada ruta (locale por defecto: %default%). Se guarda sin {_locale}; el loader añade el prefijo."
 panel.new: Nuevo path
 panel.clear_cache: Limpiar caché de rutas
 panel.edit: Editar
@@ -31,15 +31,15 @@ panel.col.actions: "Acciones"
 panel.export: "Exportar"
 panel.import: "Importar"
 panel.import_title: "Importar (JSON firmado)"
-panel.import_payload: "JSON a importar"
+panel.import_payload: "JSON firmado"
 panel.import_placeholder: '{"version":1,"payload":[],"signature":"..."}'
 panel.import_replace_all: "Reemplazar todas las filas existentes"
 panel.count: "%count% fila(s)"
-panel.yes: "sí"
-panel.no: "no"
+panel.yes: "Sí"
+panel.no: "No"
 panel.delete_confirm: "¿Eliminar esta definición de path?"
-panel.delete_title: "Eliminar path"
-panel.delete_confirm_message: "¿Eliminar el path %path% (%locale%) de la ruta %route%? La ruta vuelve a su path por defecto."
+panel.delete_title: "¿Eliminar el path %path% (%locale%)?"
+panel.delete_confirm_message: "La ruta %route% vuelve a su path por defecto para %locale%."
 panel.role_gate_warning: "<strong>INSEGURO:</strong> el control de roles del bundle está desactivado (<code>security.allow_unauthenticated: true</code>). Cualquiera que llegue a esta URL puede gestionar rutas. Úsalo solo en demos locales de confianza, o ponlo a <code>false</code>, mantén <code>security.access_roles: [ROLE_ADMIN]</code> y protege el prefijo con el firewall."
 nav.label: "Secciones de Routing Kit"
 nav.routes: "Rutas"
@@ -63,8 +63,8 @@ redirects.edit_title: "Editar redirección"
 redirects.form_hint: "Usa 301 para cambios permanentes. Las rutas distinguen mayúsculas; la query string de la petición se conserva en destinos internos."
 redirects.form.source_help: "Solo la ruta, p. ej. /pagina-antigua (sin dominio, query string ni fragmento)."
 redirects.form.target_help: "Una ruta de este sitio (/pagina-nueva) o una URL absoluta http(s)://."
-redirects.delete_title: "Eliminar redirección"
-redirects.delete_confirm: "¿Eliminar la redirección de %source% a %target%? Los visitantes volverán a recibir la respuesta normal de esa ruta."
+redirects.delete_title: "¿Eliminar la redirección %source%?"
+redirects.delete_confirm: "Las visitas a %source% dejan de enviarse a %target%; vuelven a recibir la respuesta normal de ese path."
 redirects.status.created: "Redirección creada."
 redirects.status.saved: "Redirección guardada."
 redirects.status.deleted: "Redirección eliminada."

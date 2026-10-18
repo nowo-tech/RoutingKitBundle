@@ -60,6 +60,12 @@ final readonly class PanelView implements AreaNavProviderInterface
     public const IMPORT_MODAL_ID = 'modal-routing-import';
 
     /**
+     * Bundle form theme of the panel forms ({@code FormPage::formThemes}, import form): checkbox rows as UiKit check
+     * labels ({@code ui.check()}), on top of the host's form themes.
+     */
+    public const FORM_THEME = '@NowoRoutingKitBundle/panel/_form_theme.html.twig';
+
+    /**
      * @param array<string, string> $templates web_ui.templates (page id => template)
      */
     public function __construct(
@@ -67,8 +73,8 @@ final readonly class PanelView implements AreaNavProviderInterface
         public string $pathPrefix = '/_routing',
         private ?string $layoutTemplate = null,
         private array $templates = [],
-        public string $importDisplay = 'inline',
-        public bool $showRowCount = true,
+        public string $importDisplay = 'modal',
+        public bool $showRowCount = false,
         public bool $primaryActionLast = false,
         public bool $urlRedirectsEnabled = false,
         public bool $roleGateDisabled = false,

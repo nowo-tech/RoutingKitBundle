@@ -14,11 +14,12 @@
 
 {% block nowo_ui_list_row %}
     {% set _cell = nowo_ui_class('table_cell', page.bundle) %}
-    <td class="{{ _cell }}" data-label="{{ 'redirects.col.source'|trans }}"><code>{{ row.sourcePath }}</code></td>
-    <td class="{{ _cell }}" data-label="{{ 'redirects.col.target'|trans }}"><code>{{ row.targetUrl }}</code></td>
+    {% set _code = nowo_ui_class('code', page.bundle) %}
+    <td class="{{ _cell }}" data-label="{{ 'redirects.col.source'|trans }}"><code class="{{ _code }}"{{ nowo_ui_attrs('code', page.bundle) }}>{{ row.sourcePath }}</code></td>
+    <td class="{{ _cell }}" data-label="{{ 'redirects.col.target'|trans }}"><code class="{{ _code }}"{{ nowo_ui_attrs('code', page.bundle) }}>{{ row.targetUrl }}</code></td>
     <td class="{{ _cell }}" data-label="{{ 'redirects.col.status'|trans }}">{{ row.statusCode }}</td>
     <td class="{{ _cell }}" data-label="{{ 'redirects.col.enabled'|trans }}">
-        <span class="{{ nowo_ui_class(row.enabled ? 'badge_success' : 'badge_neutral', page.bundle) }}">{{ (row.enabled ? 'redirects.yes' : 'redirects.no')|trans }}</span>
+        <span class="{{ nowo_ui_class(row.enabled ? 'badge_success' : 'badge_neutral', page.bundle) }}">{{ (row.enabled ? 'panel.yes' : 'panel.no')|trans }}</span>
     </td>
     <td class="{{ _cell }} nowo-ui-cell--end" data-label="{{ 'redirects.col.hits'|trans }}" data-nowo-ui-priority="2">
         {{ row.hits }}

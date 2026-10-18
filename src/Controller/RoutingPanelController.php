@@ -24,6 +24,7 @@ use Nowo\UiKitBundle\View\Confirm;
 use Nowo\UiKitBundle\View\ConfirmPage;
 use Nowo\UiKitBundle\View\EmptyState;
 use Nowo\UiKitBundle\View\FormPage;
+use Nowo\UiKitBundle\View\Label;
 use Nowo\UiKitBundle\View\ListPage;
 use Nowo\UiKitBundle\View\PageHeader;
 use Nowo\UiKitBundle\View\Pagination;
@@ -89,7 +90,7 @@ final class RoutingPanelController
         $rowActions = [];
         foreach ($rows as $key => $row) {
             $rowActions[$key] = [
-                Action::edit($this->pathPrefix . '/edit/' . $row->id, PanelView::label('panel.edit')),
+                new Action('edit', PanelView::label('panel.edit'), $this->pathPrefix . '/edit/' . $row->id, icon: 'edit'),
                 $this->deleteAction($row),
             ];
         }
@@ -183,7 +184,7 @@ final class RoutingPanelController
 
         return $this->view->render('delete', 'routes', [
             'page' => new ConfirmPage(
-                new PageHeader(PanelView::label('panel.delete_title'), tabs: $this->view->nav('routes')),
+                new PageHeader($this->deleteTitle($definition), tabs: $this->view->nav('routes')),
                 $this->deleteConfirm($definition),
                 new Action('delete', PanelView::label('panel.delete'), $this->pathPrefix . '/delete/' . $id, method: 'POST', form: $form->createView()),
                 $this->pathPrefix . '/',
@@ -366,6 +367,7 @@ final class RoutingPanelController
                 bundle: PanelView::BUNDLE,
                 layout: $this->view->layout(),
                 attributes: ['data-testid' => 'routing-kit-definition-form'],
+                formThemes: [PanelView::FORM_THEME],
             ),
             'definition' => $existing,
             'conflicts'  => $conflicts,
@@ -385,15 +387,24 @@ final class RoutingPanelController
             $href,
             method: 'POST',
             confirm: $this->deleteConfirm($definition),
+            icon: 'delete',
             form: $this->createPanelActionForm()->createView(),
             fallbackHref: $href,
         );
     }
 
+    /**
+     * Confirm title naming the path (UiKit confirm pattern: "Delete path /about-us (en)?").
+     */
+    private function deleteTitle(RoutePathDefinition $definition): Label
+    {
+        return PanelView::label('panel.delete_title', ['%path%' => $definition->path, '%locale%' => $definition->locale]);
+    }
+
     private function deleteConfirm(RoutePathDefinition $definition): Confirm
     {
         return new Confirm(
-            PanelView::label('panel.delete_title'),
+            $this->deleteTitle($definition),
             PanelView::label('panel.delete_confirm_message', ['%route%' => $definition->routeName, '%locale%' => $definition->locale, '%path%' => $definition->path]),
             PanelView::label('panel.delete'),
         );

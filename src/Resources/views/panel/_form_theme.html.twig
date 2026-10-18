@@ -1,0 +1,16 @@
+{#
+  Bundle form theme of the panel forms (PanelView::FORM_THEME, applied through FormPage::formThemes and to the import
+  form), on top of the host's form themes: checkbox rows render as UiKit check labels (ui.check(): `.nowo-ui-check`,
+  the input inside its label, accent colour and focus ring), followed by the field errors and help.
+#}
+{%- block checkbox_row -%}
+    {%- import '@NowoUiKitBundle/macros/ui.html.twig' as ui -%}
+    <div{% for _name, _value in row_attr %} {{ _name }}="{{ _value }}"{% endfor %}>
+        <label class="{{ (ui.check() ~ ' ' ~ label_attr.class|default(''))|trim }}" for="{{ id }}">
+            <input type="checkbox" id="{{ id }}" name="{{ full_name }}"{% if value is defined %} value="{{ value }}"{% endif %}{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}{% if required %} required{% endif %}{% if help is not empty %} aria-describedby="{{ id }}_help"{% endif %}{% for _name, _value in attr %} {{ _name }}="{{ _value }}"{% endfor %}>
+            <span>{{ label is same as(false) ? '' : (translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain)) }}</span>
+        </label>
+        {{- form_errors(form) -}}
+        {{- form_help(form) -}}
+    </div>
+{%- endblock -%}

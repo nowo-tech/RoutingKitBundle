@@ -1,20 +1,29 @@
 {#
-  Signed JSON import form (Symfony form RoutingPanelImportType), rendered in a UiKit card (web_ui.import_display:
-  inline) or in the UiKit `dialog` partial (modal; Cancel closes it with data-nowo-ui-dialog-close). Variables:
-  import_form, path_prefix, modal (bool).
+  Signed JSON import form (Symfony form RoutingPanelImportType), rendered in the UiKit `dialog` partial (modal, default:
+  the form in the body, Cancel (data-nowo-ui-dialog-close) + Import in the dialog footer, bound to the form with
+  form="routing-kit-import-form") or in a UiKit card (web_ui.import_display: inline; the actions under the fields).
+  Variables: import_form, path_prefix, modal (bool), part ('form' (default) | 'actions': the dialog footer buttons).
+  Full-width textarea (slot input_full); checkbox through the bundle form theme (PanelView::FORM_THEME, UiKit check
+  label).
 #}
 {% set _b = 'NowoRoutingKitBundle' %}
-{{ form_start(import_form, {
-    action: path_prefix ~ '/import',
-    method: 'POST',
-    attr: {class: nowo_ui_class('form', _b), 'data-testid': 'routing-kit-import-form'},
-}) }}
-    {{ form_row(import_form.payload_json) }}
-    {{ form_row(import_form.replace_all) }}
-    <div class="{{ nowo_ui_class('form_actions', _b) }}">
-        {% if modal|default(false) %}
-            <button type="button" class="{{ nowo_ui_class('btn_secondary', _b) }}" data-nowo-ui-dialog-close>{{ 'panel.cancel'|trans({}, _b) }}</button>
+{% set _modal = modal|default(false) %}
+{% if part|default('form') == 'actions' %}
+    <button type="button" class="{{ nowo_ui_class('btn_secondary', _b) }}" data-nowo-ui-dialog-close>{{ 'panel.cancel'|trans({}, _b) }}</button>
+    <button type="submit" form="routing-kit-import-form" class="{{ nowo_ui_class('btn_primary', _b) }}">{{ 'panel.import'|trans({}, _b) }}</button>
+{% else %}
+    {% form_theme import_form '@NowoRoutingKitBundle/panel/_form_theme.html.twig' %}
+    {{ form_start(import_form, {
+        action: path_prefix ~ '/import',
+        method: 'POST',
+        attr: {id: 'routing-kit-import-form', class: nowo_ui_class('form', _b), 'data-testid': 'routing-kit-import-form'},
+    }) }}
+        {{ form_row(import_form.payload_json, {attr: import_form.payload_json.vars.attr|merge({class: (import_form.payload_json.vars.attr.class|default('') ~ ' ' ~ nowo_ui_class('input_full', _b))|trim})}) }}
+        {{ form_row(import_form.replace_all) }}
+        {% if not _modal %}
+            <div class="{{ nowo_ui_class('form_actions', _b) }}">
+                <button type="submit" class="{{ nowo_ui_class('btn_secondary', _b) }}">{{ 'panel.import'|trans({}, _b) }}</button>
+            </div>
         {% endif %}
-        <button type="submit" class="{{ nowo_ui_class(modal|default(false) ? 'btn_primary' : 'btn_secondary', _b) }}">{{ 'panel.import'|trans({}, _b) }}</button>
-    </div>
-{{ form_end(import_form) }}
+    {{ form_end(import_form) }}
+{% endif %}

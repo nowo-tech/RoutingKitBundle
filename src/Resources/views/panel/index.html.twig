@@ -15,9 +15,10 @@
 
 {% block nowo_ui_list_row %}
     {% set _cell = nowo_ui_class('table_cell', page.bundle) %}
-    <td class="{{ _cell }}" data-label="{{ 'panel.col.route'|trans }}"><code>{{ row.routeName }}</code></td>
+    {% set _code = nowo_ui_class('code', page.bundle) %}
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.route'|trans }}"><code class="{{ _code }}"{{ nowo_ui_attrs('code', page.bundle) }}>{{ row.routeName }}</code></td>
     <td class="{{ _cell }}" data-label="{{ 'panel.col.locale'|trans }}">{{ row.locale }}</td>
-    <td class="{{ _cell }}" data-label="{{ 'panel.col.path'|trans }}"><code>{{ row.path }}</code></td>
+    <td class="{{ _cell }}" data-label="{{ 'panel.col.path'|trans }}"><code class="{{ _code }}"{{ nowo_ui_attrs('code', page.bundle) }}>{{ row.path }}</code></td>
     <td class="{{ _cell }}" data-label="{{ 'panel.col.canonical'|trans }}" data-nowo-ui-priority="3">{{ ('panel.form.canonical_style.' ~ row.canonicalStyle.value)|trans }}</td>
     <td class="{{ _cell }}" data-label="{{ 'panel.col.enabled'|trans }}" data-nowo-ui-priority="2">
         <span class="{{ nowo_ui_class(row.enabled ? 'badge_success' : 'badge_neutral', page.bundle) }}">{{ (row.enabled ? 'panel.yes' : 'panel.no')|trans }}</span>
@@ -42,6 +43,7 @@
             id: import_modal_id,
             title: 'panel.import_title'|trans,
             body: include('@NowoRoutingKitBundle/panel/_import_form.html.twig', {modal: true}),
+            footer: include('@NowoRoutingKitBundle/panel/_import_form.html.twig', {modal: true, part: 'actions'}),
             size: 'lg',
             attr: {'data-testid': 'routing-kit-import-dialog'},
             bundle: page.bundle,

@@ -20,8 +20,8 @@ Root key: `nowo_routing_kit`.
 | `web_ui.path_prefix` | `/_routing` | Panel URL prefix (`/^/[A-Za-z0-9/_-]+$/`). Replaces `panel.path_prefix` |
 | `web_ui.layout_template` | `null` | Layout the panel scaffolds extend instead of `nowo_ui_kit.layouts.admin` (`null` = UiKit layout). It must render the UiKit canonical blocks; a 1.x layout that only renders `body` is wrapped by a deprecated bridge |
 | `web_ui.templates.<page>` | `{}` | Per-page template override: `index`, `form`, `redirects_index`, `redirects_form`, `redirects_delete` ([TEMPLATES.md](TEMPLATES.md#per-page-overrides)) |
-| `web_ui.import_display` | `inline` | Signed JSON import: `inline` (card under the paths table) or `modal` (UiKit `dialog` `#modal-routing-import`, opened from the page actions; needs `js/nowo-ui-dialog.js`, loaded by the UiKit document layout) |
-| `web_ui.show_row_count` | `true` | "N row(s)" caption of the tables |
+| `web_ui.import_display` | `modal` | Signed JSON import: `modal` (UiKit `dialog` `#modal-routing-import`, opened from the "Import" page action; needs `js/nowo-ui-dialog.js`, loaded by the UiKit document layout; default since 1.9.1) or `inline` (card under the paths table) |
+| `web_ui.show_row_count` | `false` | "N row(s)" caption of the tables (default `false` since 1.9.1: the pagination summary already shows the count) |
 | `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = fail-closed (every panel request is denied). Still firewall the prefix |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |

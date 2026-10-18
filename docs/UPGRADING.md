@@ -85,6 +85,28 @@
 
 ## Unreleased
 
+From **1.9.0** (no BC break in the PHP API; two configuration defaults and some labels change):
+
+- **Import dialog by default.** `web_ui.import_display` now defaults to `modal`: the signed JSON import is a UiKit
+  `dialog` opened from the "Import" page action (the layout must load `js/nowo-ui-dialog.js`; the UiKit document
+  layout does). To keep the card under the paths table, set `nowo_routing_kit.web_ui.import_display: inline`.
+- **No row-count caption by default.** `web_ui.show_row_count` now defaults to `false` (the pagination summary already
+  shows the count). Set it to `true` to keep the "N row(s)" caption.
+- **Icon row actions.** Edit / Delete carry `Action::icon` and follow `nowo_ui_kit.row_actions_display` (default
+  `icon`). With `nowo_ui_kit.icon_set: none` the icon is the label text; use `svg_inline` (no font), a font icon set, or
+  `row_actions_display: text` / `icon_text`.
+- **Confirm titles name the item.** `panel.delete_title` takes `%path%` / `%locale%` and `redirects.delete_title`
+  takes `%source%`; the messages `panel.delete_confirm_message` / `redirects.delete_confirm` were reworded. Host
+  translation overrides of these keys should add the placeholders.
+- **Labels.** `panel.yes` / `panel.no` are capitalised and used by both lists (`redirects.yes` / `redirects.no` are no
+  longer rendered by the bundle templates); `panel.subtitle`, `panel.import_payload` and `panel.import_replace_all`
+  were reworded.
+- **Template contract.** `panel/_import_form.html.twig` takes `part` (`form` | `actions`) and renders the dialog
+  actions in the dialog footer; the form has `id="routing-kit-import-form"`. The panel forms use the bundle form theme
+  `@NowoRoutingKitBundle/panel/_form_theme.html.twig` (`checkbox_row` as a UiKit `.nowo-ui-check` label) on top of
+  the host form themes; a host `checkbox_row` override for these forms must now live in a theme passed after it (or
+  override the bundle template). `<code>` cells carry the `code` slot classes.
+
 ## To 1.9.0
 
 From **1.8.1**:

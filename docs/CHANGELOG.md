@@ -44,6 +44,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Panel polish after the UiKit page-contract migration (visual review of 1.9.0). See [UPGRADING](UPGRADING.md#unreleased).
+
+### Changed
+
+- **`web_ui.import_display` defaults to `modal`** (was `inline`): the signed JSON import opens in the UiKit `dialog` from the "Import" page action instead of a card under the paths table; the dialog footer holds Cancel / Import (bound to the form with `form="routing-kit-import-form"`). Set `import_display: inline` to keep the card.
+- **`web_ui.show_row_count` defaults to `false`** (was `true`): the "N row(s)" `<caption>` duplicated the pagination summary ("Showing 1–3 of 3"). Set it to `true` to keep the caption.
+- Row actions (Edit, Delete) are UiKit icon actions (`Action::icon` `edit` / `delete`, display from `nowo_ui_kit.row_actions_display`; the label stays as `aria-label` / `title` and a visually hidden span). The edit forms' delete action shows the trash icon with its label.
+- Delete confirmations name the item: `panel.delete_title` "Delete path %path% (%locale%)?" and `redirects.delete_title` "Delete redirect %source%?" (dialog, full-page confirm and document title); the messages (`panel.delete_confirm_message`, `redirects.delete_confirm`) now describe the effect instead of repeating the item (7 locales).
+- Route names, paths and redirect source / target cells use the UiKit `code` slot (`<code class="nowo-ui-code">`), so the monospace cells share size and baseline.
+- Import form: full-width textarea (`input_full` slot), labels in sentence case ("Signed JSON payload", "Replace all existing rows"), checkbox as a UiKit check label through the new bundle form theme `@NowoRoutingKitBundle/panel/_form_theme.html.twig` (`PanelView::FORM_THEME`), also applied to the route path and redirect forms (`FormPage::formThemes`).
+- Demo: `nowo_ui_kit.icon_set: svg_inline` (icon row actions without a font), default import dialog, host CSS keeps `input_full` full width and leaves `.nowo-ui-check` labels inline; e2e covers the import dialog, icon row actions, the enabled badge, the code cells and the confirm title; screenshots refreshed (paths list, import dialog, redirect delete confirm).
+
+### Fixed
+
+- Enabled badge text: the paths list printed "yes" / "no" while the redirects list printed "Yes" / "No"; both lists now use `panel.yes` / `panel.no`, capitalised in every shipped locale (en, es, de, fr, it, nl, pt).
+- The paths list intro (`panel.subtitle`) ended with a literal "/{_locale}/…" and read as truncated; rewritten as a complete sentence in every locale.
+
 ## [1.9.0] - 2026-10-18
 
 Panel pages on the UiKit 2.1 standard page contract (REQ-UI-003): list, form and confirm scaffolds, area nav, native import dialog, no-JS delete confirm pages; deprecated panel/web_ui keys bridged. See [UPGRADING](UPGRADING.md#to-190).
