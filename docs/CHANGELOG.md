@@ -55,6 +55,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The deprecated 1.x layout bridge (`panel/_legacy_layout.html.twig`) prints the UiKit runtimes through the UiKit
   `scripts` partial (with the CSP nonce) instead of its own list (modal, confirm, dialog); demo host layout likewise.
 
+### Fixed
+
+- **Missing messages (profiler):** with `panel.allow_controller_override`, the controller select looked the
+  controller FQCNs up as messages of `NowoRoutingKitBundle`. The choices are literals now
+  (`choice_translation_domain: false`) and "— discovery default —" is the select placeholder (`panel.form.controller_empty`,
+  value `''` as before). The literal placeholders (`/about`, JSON) and locale / route choices were already fixed in
+  1.9.0. A contract test renders every panel page (plus the path form with the controller override) with a
+  `DataCollectorTranslator` and asserts no missing message.
+
 ## [1.9.1] - 2026-10-18
 
 UiKit icon row actions, consistent Yes/No badges and code cells, import in a dialog by default, confirm titles name the item; row-count caption hidden by default. See [UPGRADING](UPGRADING.md#to-191).

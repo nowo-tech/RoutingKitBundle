@@ -77,10 +77,12 @@ final class RoutePathDefinitionType extends AbstractType
 
         if ($options['allow_controller_override']) {
             $this->addChoice($builder, 'controller', [
-                'label'       => 'panel.form.controller',
-                'choices'     => $this->controllerChoices($options),
-                'required'    => false,
-                'placeholder' => false,
+                'label'   => 'panel.form.controller',
+                'choices' => $this->controllerChoices($options),
+                // Controller FQCNs are not translation keys; the empty option is the translated placeholder.
+                'choice_translation_domain' => false,
+                'required'                  => false,
+                'placeholder'               => 'panel.form.controller_empty',
             ]);
         }
 
@@ -137,7 +139,7 @@ final class RoutePathDefinitionType extends AbstractType
      */
     private function controllerChoices(array $options): array
     {
-        $choices   = ['panel.form.controller_empty' => ''];
+        $choices   = [];
         $routeName = $options['initial_route_name'];
         $isCreate  = (bool) $options['is_create'];
 

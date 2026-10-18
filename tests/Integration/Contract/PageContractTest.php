@@ -9,7 +9,14 @@ use Nowo\RoutingKitBundle\Tests\Support\PanelPageFixtures;
 use Nowo\UiKitBundle\Test\PageContractTestCase;
 use Nowo\UiKitBundle\Test\PageFixture;
 use Nowo\UiKitBundle\View\ConfirmPage;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Bridge\Twig\Extension\TranslationExtension;
+use Symfony\Component\Translation\DataCollectorTranslator;
 
+use function array_filter;
+use function array_map;
+use function array_values;
+use function assert;
 use function dirname;
 
 /**
@@ -29,6 +36,7 @@ final class PageContractTest extends PageContractTestCase
         yield 'paths list (redirects section off)' => new PageFixture('@NowoRoutingKitBundle/panel/index.html.twig', PanelPageFixtures::index($definitions, redirects: false));
         yield 'path form (create, error + conflicts)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null, ['Path /blog/{slug} (en) conflicts with app_news_show.'], 'Path definitions limit reached.'));
         yield 'path form (edit)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form($definitions[2]));
+        yield 'path form (create, controller override)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null, controllerOverride: true));
         yield 'path delete (no-JS confirm)' => new PageFixture('@NowoRoutingKitBundle/panel/delete.html.twig', PanelPageFixtures::delete($definitions[2]));
         yield 'redirects list' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, 'created'));
         yield 'redirects list (row count)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, rowCount: true));
@@ -36,6 +44,36 @@ final class PageContractTest extends PageContractTestCase
         yield 'redirect form (create)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm(null));
         yield 'redirect form (edit)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm($redirects[0]));
         yield 'redirect delete (no-JS confirm)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/delete.html.twig', PanelPageFixtures::redirectsDelete($redirects[0]));
+    }
+
+    /**
+     * @return iterable<string, array{PageFixture}>
+     */
+    public static function translationPages(): iterable
+    {
+        foreach (self::pageFixtures() as $name => $fixture) {
+            yield $name => [$fixture];
+        }
+    }
+
+    /**
+     * The form theme translates placeholders and choice labels in the field domain: literal examples (`/about`, JSON)
+     * are catalogue entries and literal choices (locale codes, routes, status codes) are not looked up. Every lookup
+     * of a page hits the catalogues (no profiler missing message).
+     */
+    #[DataProvider('translationPages')]
+    public function testPageLooksUpNoMissingMessage(PageFixture $fixture): void
+    {
+        $twig      = $this->createTwig();
+        $collector = $twig->getExtension(TranslationExtension::class)->getTranslator();
+        assert($collector instanceof DataCollectorTranslator);
+        $twig->render($fixture->template, $fixture->context);
+
+        $missing = array_filter(
+            $collector->getCollectedMessages(),
+            static fn (array $message): bool => $message['state'] === DataCollectorTranslator::MESSAGE_MISSING,
+        );
+        self::assertSame([], array_values(array_map(static fn (array $message): string => $message['domain'] . ': ' . $message['id'], $missing)));
     }
 
     protected static function inlineTemplates(): array

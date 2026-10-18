@@ -118,7 +118,7 @@ final class PanelPageFixtures
      *
      * @return array<string, mixed>
      */
-    public static function form(?RoutePathDefinition $existing, array $conflicts = [], ?string $error = null): array
+    public static function form(?RoutePathDefinition $existing, array $conflicts = [], ?string $error = null, bool $controllerOverride = false): array
     {
         $form = self::factory()->createNamed('', RoutePathDefinitionType::class, [
             'route_name' => $existing->routeName ?? 'app_blog_show',
@@ -128,7 +128,7 @@ final class PanelPageFixtures
         ], [
             'routables' => [['route_name' => 'app_blog_show', 'controller' => 'App\\Controller\\BlogController::show'], ['route_name' => 'app_about', 'controller' => 'App\\Controller\\PageController::about']],
             'locales'   => ['en', 'es'],
-        ]);
+        ] + ($controllerOverride ? ['allow_controller_override' => true, 'is_create' => !$existing instanceof RoutePathDefinition, 'initial_route_name' => $existing->routeName ?? null] : []));
         if ($error !== null) {
             $form->addError(new FormError($error));
         }

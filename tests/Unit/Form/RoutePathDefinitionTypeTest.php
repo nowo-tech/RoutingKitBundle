@@ -109,6 +109,8 @@ final class RoutePathDefinitionTypeTest extends TestCase
         self::assertArrayHasKey('App\\Controller\\HomeController::index', $controllerChoices);
         // Invalid controller type / missing controller must not appear as a choice value.
         self::assertNotContains(42, $controllerChoices);
-        self::assertSame('', $controllerChoices['panel.form.controller_empty'] ?? null);
+        self::assertArrayNotHasKey('panel.form.controller_empty', $controllerChoices, 'The empty option is the placeholder.');
+        self::assertSame('panel.form.controller_empty', $form->get('controller')->getConfig()->getOption('placeholder'));
+        self::assertFalse($form->get('controller')->getConfig()->getOption('choice_translation_domain'));
     }
 }
