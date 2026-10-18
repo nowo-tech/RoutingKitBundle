@@ -86,6 +86,13 @@
 
 ## Unreleased
 
+Requires UiKit **^2.2** (`composer require nowo-tech/ui-kit-bundle:^2.2`). No configuration change. What hosts may
+notice (UiKit UPGRADING "Template contract (2.2)"): the delete confirm dialog is centred, has a close button and a
+solid red confirm button (`btn_danger_solid`: a host theme that styled `btn_danger` for confirms sets it too); table
+headers are small uppercase labels and the actions column has a visible "Actions" header; host layouts with their own
+UiKit script list should include `{{ include(nowo_ui_partial('scripts')) }}` instead. Overrides of
+`panel/_notices.html.twig` that pass `flashes:` to the `flashes` partial switch to `flash_messages:`.
+
 ## To 1.9.1
 
 From **1.9.0**:

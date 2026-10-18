@@ -45,6 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Requires `nowo-tech/ui-kit-bundle` **^2.2** (default-theme polish: centred confirm dialog with a close button and a
+  solid destructive button, table header hierarchy, visible actions column header, tinted inline code). See
+  [UPGRADING](UPGRADING.md#unreleased).
+- The redirect status notice passes its message through the `flashes` partial's `flash_messages` input (UiKit 2.2;
+  the 2.0 `flashes` input is deprecated and ignored inside page scaffolds).
+- The deprecated 1.x layout bridge (`panel/_legacy_layout.html.twig`) prints the UiKit runtimes through the UiKit
+  `scripts` partial (with the CSP nonce) instead of its own list (modal, confirm, dialog); demo host layout likewise.
+
 ## [1.9.1] - 2026-10-18
 
 UiKit icon row actions, consistent Yes/No badges and code cells, import in a dialog by default, confirm titles name the item; row-count caption hidden by default. See [UPGRADING](UPGRADING.md#to-191).
