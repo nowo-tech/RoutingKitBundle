@@ -39,11 +39,6 @@ final class PageContractGermanTest extends PageContractTestCase
         return ['none'];
     }
 
-    protected static function allowedClasses(): array
-    {
-        return ['modal-dialog', 'modal-content', 'modal-header', 'modal-title', 'btn-close', 'modal-body', 'modal-footer'];
-    }
-
     protected static function templatePaths(): array
     {
         $views = dirname(__DIR__, 3) . '/src/Resources/views';

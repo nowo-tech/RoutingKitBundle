@@ -28,21 +28,12 @@ final class PageContractTest extends PageContractTestCase
         yield 'paths list (redirects section off)' => new PageFixture('@NowoRoutingKitBundle/panel/index.html.twig', PanelPageFixtures::index($definitions, redirects: false));
         yield 'path form (create, error + conflicts)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null, ['Path /blog/{slug} (en) conflicts with app_news_show.'], 'Path definitions limit reached.'));
         yield 'path form (edit)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form($definitions[2]));
+        yield 'path delete (no-JS confirm)' => new PageFixture('@NowoRoutingKitBundle/panel/delete.html.twig', PanelPageFixtures::delete($definitions[2]));
         yield 'redirects list' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, 'created'));
         yield 'redirects list (empty)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex([]));
         yield 'redirect form (create)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm(null));
         yield 'redirect form (edit)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm($redirects[0]));
         yield 'redirect delete (no-JS confirm)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/delete.html.twig', PanelPageFixtures::redirectsDelete($redirects[0]));
-    }
-
-    /**
-     * UiKit's own `modal_shell` partial (import modal) keeps its 1.x structure classes for every framework (Bootstrap
-     * JS and nowo-ui.css rely on them); the contract allow-list does not cover them yet. Documented in
-     * docs/TEMPLATES.md ("Allowed exceptions").
-     */
-    protected static function allowedClasses(): array
-    {
-        return ['modal', 'fade', 'modal-dialog', 'modal-content', 'modal-header', 'modal-title', 'btn-close', 'modal-body', 'modal-footer'];
     }
 
     protected static function inlineTemplates(): array
@@ -51,6 +42,8 @@ final class PageContractTest extends PageContractTestCase
             // 1.x host layout (renders `body`): wrapped by the deprecated legacy bridge.
             'host/legacy.html.twig' => '<legacy-layout><title>{% block title %}{% endblock %}</title><head-css>{% block stylesheets %}<host-css/>{% endblock %}</head-css>{% block body %}{% endblock %}<js>{% block javascripts %}{% endblock %}</js></legacy-layout>',
             // Thin app override through the bang namespace (REQ-UI-003 "For applications" 4).
+            // The UiKit page header partial itself (the stub host's page_header override does not render header.tabs).
+            'host/page_header.html.twig'    => "{{ include('@NowoUiKitBundle/partials/_page_header.html.twig', {header: page.header, bundle: page.bundle}) }}",
             'host/index_override.html.twig' => "{% extends '@!NowoRoutingKitBundle/panel/index.html.twig' %}{% block nowo_ui_list_after %}<p class=\"host-import\">custom import</p>{% endblock %}",
         ];
     }
@@ -67,28 +60,51 @@ final class PageContractTest extends PageContractTestCase
         self::assertStringContainsString('action="/_routing/export"', $html);
         self::assertStringContainsString('action="/_routing/import"', $html);
         self::assertStringContainsString('3 row(s)', $html);
-        self::assertStringContainsString('href="/_routing/redirects"', $html);
-        self::assertStringContainsString('aria-current="page"', $html);
+        self::assertStringContainsString('<noscript><a class="', $html);
+        self::assertStringContainsString('nowo-ui-action__fallback" href="/_routing/delete/rk_3"', $html);
         self::assertStringNotContainsString('routing-kit-role-gate-warning', $html);
     }
 
-    public function testImportModalRendersThroughTheUiKitModalShell(): void
+    public function testRouteDeleteConfirmPagePostsWithCsrf(): void
+    {
+        $html = $this->renderPage(new PageFixture('@NowoRoutingKitBundle/panel/delete.html.twig', PanelPageFixtures::delete(PanelPageFixtures::definitions()[2])))->html;
+
+        self::assertStringContainsString('data-nowo-ui-page="confirm"', $html);
+        self::assertStringContainsString('action="/_routing/delete/rk_3"', $html);
+        self::assertStringContainsString('value="token-nowo_routing_kit_panel"', $html);
+        self::assertStringContainsString('Delete the path /sobre-nosotros (es) of the route app_about?', $html);
+        self::assertStringContainsString('href="/_routing/"', $html);
+    }
+
+    public function testImportModalRendersThroughTheUiKitDialog(): void
     {
         $html = $this->renderPage(new PageFixture('@NowoRoutingKitBundle/panel/index.html.twig', PanelPageFixtures::index([], 'modal', true)))->html;
 
-        self::assertStringContainsString('id="modal-routing-import"', $html);
-        self::assertStringContainsString('data-nowo-modal-target="modal-routing-import"', $html);
-        self::assertStringContainsString('data-nowo-modal-close', $html);
+        self::assertMatchesRegularExpression('/<dialog id="modal-routing-import" class="[^"]*nowo-ui-dialog--lg"[^>]* data-nowo-ui-dialog/', $html);
+        self::assertStringContainsString('data-nowo-ui-dialog-open="modal-routing-import"', $html);
+        self::assertStringContainsString('data-nowo-ui-dialog-close>', $html);
+        self::assertStringContainsString('data-testid="routing-kit-import-dialog"', $html);
+        self::assertStringNotContainsString('modal-dialog', $html, 'No Bootstrap modal_shell markup.');
         self::assertStringNotContainsString('id="routing-kit-import"', $html, 'No inline import card in modal mode.');
         self::assertStringContainsString('<strong>UNSAFE:</strong>', $html);
         self::assertStringContainsString('No path definitions yet.', $html);
     }
 
-    public function testSectionNavIsHiddenWithoutTheRedirectsSection(): void
+    public function testSectionTabsAreTheUiKitAreaNav(): void
     {
-        $html = $this->renderPage(new PageFixture('@NowoRoutingKitBundle/panel/index.html.twig', PanelPageFixtures::index([], redirects: false)))->html;
+        $twig = $this->createTwig();
 
-        self::assertStringNotContainsString('routing-kit-nav-redirects', $html);
+        $routes = $twig->render('host/page_header.html.twig', PanelPageFixtures::index(PanelPageFixtures::definitions()));
+        self::assertMatchesRegularExpression('/<nav class="[^"]*" aria-label="Routing Kit sections"[^>]* data-nowo-ui-region="area-nav">/', $routes);
+        self::assertMatchesRegularExpression('#href="/_routing/"\s+aria-current="page"\s+data-testid="routing-kit-nav-routes"#', $routes);
+        self::assertMatchesRegularExpression('#href="/_routing/redirects"\s+data-testid="routing-kit-nav-redirects"#', $routes);
+
+        $redirects = $twig->render('host/page_header.html.twig', PanelPageFixtures::redirectsDelete(PanelPageFixtures::redirects()[0]));
+        self::assertMatchesRegularExpression('#href="/_routing/redirects"\s+aria-current="page"#', $redirects);
+
+        $off = $twig->render('host/page_header.html.twig', PanelPageFixtures::index([], redirects: false));
+        self::assertStringNotContainsString('area-nav', $off);
+        self::assertStringNotContainsString('routing-kit-nav-redirects', $off);
     }
 
     public function testFormShowsErrorsAndConflictsBeforeTheFields(): void
@@ -106,6 +122,7 @@ final class PageContractTest extends PageContractTestCase
 
         self::assertStringContainsString('Redirect deleted.', $html);
         self::assertStringContainsString('data-testid="redirect-delete"', $html);
+        self::assertStringContainsString('nowo-ui-action__fallback" href="/_routing/redirects/r1/delete"', $html);
         self::assertStringContainsString('· 2026-10-01 10:00', $html);
     }
 
@@ -121,6 +138,7 @@ final class PageContractTest extends PageContractTestCase
         self::assertStringContainsString('<host-css/>', $html);
         self::assertStringContainsString('css/nowo-ui.css', $html);
         self::assertStringContainsString('js/nowo-ui-confirm.js', $html);
+        self::assertStringContainsString('js/nowo-ui-dialog.js', $html);
         self::assertStringContainsString('data-nowo-ui-bundle="NowoRoutingKitBundle"', $html);
         self::assertStringContainsString('data-nowo-ui-page="confirm"', $html);
     }

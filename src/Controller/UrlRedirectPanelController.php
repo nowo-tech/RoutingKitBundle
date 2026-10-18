@@ -100,7 +100,7 @@ final class UrlRedirectPanelController
             'page' => new ListPage(
                 new PageHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
                     new Action('create', PanelView::label('redirects.new'), $prefix . '/redirects/new', variant: 'primary', attributes: ['data-testid' => 'redirect-new']),
-                ]),
+                ], tabs: $this->view->nav('redirects')),
                 [
                     new Column('sourcePath', PanelView::label('redirects.col.source'), required: true),
                     new Column('targetUrl', PanelView::label('redirects.col.target'), required: true),
@@ -160,7 +160,7 @@ final class UrlRedirectPanelController
 
         return $this->view->render('redirects_delete', 'redirects', [
             'page' => new ConfirmPage(
-                new PageHeader(PanelView::label('redirects.delete_title')),
+                new PageHeader(PanelView::label('redirects.delete_title'), tabs: $this->view->nav('redirects')),
                 $this->deleteConfirm($redirect),
                 new Action('delete', PanelView::label('panel.delete'), $this->view->pathPrefix . '/redirects/' . $id . '/delete', method: 'POST', form: $form->createView()),
                 $this->view->pathPrefix . '/redirects',
@@ -228,7 +228,7 @@ final class UrlRedirectPanelController
 
         return $this->view->render('redirects_form', 'redirects', [
             'page' => new FormPage(
-                new PageHeader(PanelView::label($existing instanceof UrlRedirect ? 'redirects.edit_title' : 'redirects.create_title'), PanelView::label('redirects.form_hint')),
+                new PageHeader(PanelView::label($existing instanceof UrlRedirect ? 'redirects.edit_title' : 'redirects.create_title'), PanelView::label('redirects.form_hint'), tabs: $this->view->nav('redirects')),
                 $form->createView(),
                 PanelView::label('panel.save'),
                 $this->view->pathPrefix . '/redirects',
@@ -247,14 +247,17 @@ final class UrlRedirectPanelController
      */
     private function deleteAction(UrlRedirect $redirect, array $attributes = []): Action
     {
+        $href = $this->view->pathPrefix . '/redirects/' . $redirect->getId() . '/delete';
+
         return new Action(
             'delete',
             PanelView::label('panel.delete'),
-            $this->view->pathPrefix . '/redirects/' . $redirect->getId() . '/delete',
+            $href,
             method: 'POST',
             confirm: $this->deleteConfirm($redirect),
             attributes: $attributes,
             form: $this->deleteForm((string) $redirect->getId())->createView(),
+            fallbackHref: $href,
         );
     }
 

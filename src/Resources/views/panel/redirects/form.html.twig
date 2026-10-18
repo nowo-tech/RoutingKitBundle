@@ -1,15 +1,10 @@
 {#
   URL redirect form (REQ-UI-003): UiKit form scaffold. Variable: page (View\FormPage built by
-  UrlRedirectPanelController: deleteAction on edit); redirect (UrlRedirect|null); nav, nav_current, path_prefix,
+  UrlRedirectPanelController: deleteAction on edit); redirect (UrlRedirect|null); nav_current, path_prefix,
   role_gate_disabled.
   Data block filled: nowo_ui_form_body (form-level errors before the default child loop).
 #}
 {% extends '@NowoUiKit/page/form.html.twig' %}
-
-{% block nowo_ui_page_header %}
-    {{ parent() }}
-    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
-{% endblock %}
 
 {% block nowo_ui_flashes %}
     {{ parent() }}

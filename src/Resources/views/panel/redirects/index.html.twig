@@ -1,16 +1,11 @@
 {#
   URL redirects list (REQ-UI-003): UiKit list scaffold. Variable: page (View\ListPage built by
   UrlRedirectPanelController; delete through the UiKit confirm dialog); status (created | saved | deleted | null);
-  nav, nav_current, path_prefix, role_gate_disabled.
+  nav_current, path_prefix, role_gate_disabled.
   Data block filled: nowo_ui_list_row.
 #}
 {% extends '@NowoUiKit/page/list.html.twig' %}
 {% trans_default_domain 'NowoRoutingKitBundle' %}
-
-{% block nowo_ui_page_header %}
-    {{ parent() }}
-    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
-{% endblock %}
 
 {% block nowo_ui_flashes %}
     {{ parent() }}

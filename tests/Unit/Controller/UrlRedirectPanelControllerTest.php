@@ -79,6 +79,8 @@ final class UrlRedirectPanelControllerTest extends TestCase
         self::assertSame('/_routing/redirects/' . $page->rows[0]->getId() . '/edit', $actions[0]->href);
         self::assertSame('/_routing/redirects/' . $page->rows[0]->getId() . '/delete', $actions[1]->href);
         self::assertTrue($actions[1]->isPost());
+        self::assertSame($actions[1]->href, $actions[1]->fallbackHref, 'No-JS: the full-page confirmation (GET of the same URL).');
+        self::assertSame('/_routing/redirects', $page->header->tabs?->active()?->href);
         self::assertSame(['%source%' => '/b', '%target%' => '/x'], $actions[1]->confirm?->message instanceof Label ? $actions[1]->confirm->message->params : null);
         self::assertSame([], $page->rowActions(new UrlRedirect(), 99));
 

@@ -1,16 +1,11 @@
 {#
   Route path form (REQ-UI-003): UiKit form scaffold. Variable: page (View\FormPage built by RoutingPanelController:
   title create / edit, submit, cancel, deleteAction on edit); definition, conflicts (conflict preview messages);
-  nav, nav_current, path_prefix, role_gate_disabled.
+  nav_current, path_prefix, role_gate_disabled.
   Data block filled: nowo_ui_form_body (form errors and the conflict preview before the default child loop).
 #}
 {% extends '@NowoUiKit/page/form.html.twig' %}
 {% trans_default_domain 'NowoRoutingKitBundle' %}
-
-{% block nowo_ui_page_header %}
-    {{ parent() }}
-    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
-{% endblock %}
 
 {% block nowo_ui_flashes %}
     {{ parent() }}

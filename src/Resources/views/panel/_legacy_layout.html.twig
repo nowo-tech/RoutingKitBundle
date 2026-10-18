@@ -32,7 +32,7 @@
 {% block javascripts %}
     {{ parent() }}
     {% if _rk_assets %}
-        {% for _script in ['nowo-ui-modal', 'nowo-ui-confirm'] %}
+        {% for _script in ['nowo-ui-modal', 'nowo-ui-confirm', 'nowo-ui-dialog'] %}
             <script src="{{ asset('js/' ~ _script ~ '.js', 'nowo_ui_kit') }}" defer{% if _rk_nonce %} nonce="{{ _rk_nonce }}"{% endif %}></script>
         {% endfor %}
     {% endif %}

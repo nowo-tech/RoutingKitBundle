@@ -1,16 +1,12 @@
 {#
   Route paths list (REQ-UI-003): UiKit list scaffold. Variable: page (View\ListPage built by RoutingPanelController);
-  import_form, import_display (inline | modal), import_modal_id; nav, nav_current, path_prefix, role_gate_disabled.
-  Data blocks filled: nowo_ui_list_row, nowo_ui_list_after (inline import card); nowo_ui_modals (import modal).
-  Section nav after the page header, panel notices after the host flashes.
+  import_form, import_display (inline | modal), import_modal_id; nav_current, path_prefix, role_gate_disabled.
+  Data blocks filled: nowo_ui_list_row, nowo_ui_list_after (inline import card); nowo_ui_modals (import dialog: the
+  framework-free UiKit `dialog` partial, opened by the header action's data-nowo-ui-dialog-open).
+  Section tabs: PageHeader::tabs (View\AreaNav). Panel notices after the host flashes.
 #}
 {% extends '@NowoUiKit/page/list.html.twig' %}
 {% trans_default_domain 'NowoRoutingKitBundle' %}
-
-{% block nowo_ui_page_header %}
-    {{ parent() }}
-    {{ include('@NowoRoutingKitBundle/panel/_nav.html.twig') }}
-{% endblock %}
 
 {% block nowo_ui_flashes %}
     {{ parent() }}
@@ -42,10 +38,12 @@
 {% block nowo_ui_modals %}
     {{ parent() }}
     {% if import_display == 'modal' %}
-        {{ include(nowo_ui_partial('modal_shell', page.bundle), {
+        {{ include(nowo_ui_partial('dialog', page.bundle), {
             id: import_modal_id,
             title: 'panel.import_title'|trans,
             body: include('@NowoRoutingKitBundle/panel/_import_form.html.twig', {modal: true}),
+            size: 'lg',
+            attr: {'data-testid': 'routing-kit-import-dialog'},
             bundle: page.bundle,
         }) }}
     {% endif %}

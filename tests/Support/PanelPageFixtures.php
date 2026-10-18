@@ -75,7 +75,7 @@ final class PanelPageFixtures
         foreach ($rows as $key => $row) {
             $rowActions[$key] = [
                 Action::edit(self::PREFIX . '/edit/' . $row->id, PanelView::label('panel.edit')),
-                Action::delete(self::PREFIX . '/delete/' . $row->id, confirm: self::routeDeleteConfirm($row), label: PanelView::label('panel.delete'), form: self::actionForm()),
+                self::routeDeleteAction($row),
             ];
         }
         $actions = [
@@ -84,12 +84,12 @@ final class PanelPageFixtures
             new Action('custom', PanelView::label('panel.clear_cache'), self::PREFIX . '/clear-cache', method: 'POST', form: self::actionForm()),
         ];
         if ($importDisplay === 'modal') {
-            $actions[] = new Action('import', PanelView::label('panel.import'), modalId: PanelView::IMPORT_MODAL_ID);
+            $actions[] = PanelView::importDialogAction();
         }
 
         return [
             'page' => new ListPage(
-                new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => 'en']), $actions),
+                new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => 'en']), $actions, tabs: self::view($redirects)->nav('routes')),
                 [
                     new Column('routeName', PanelView::label('panel.col.route'), required: true),
                     new Column('locale', PanelView::label('panel.col.locale')),
@@ -109,7 +109,7 @@ final class PanelPageFixtures
             'import_form'     => self::factory()->createNamed('', RoutingPanelImportType::class)->createView(),
             'import_display'  => $importDisplay,
             'import_modal_id' => PanelView::IMPORT_MODAL_ID,
-        ] + self::shared('routes', $roleGateDisabled, $redirects);
+        ] + self::shared('routes', $roleGateDisabled);
     }
 
     /**
@@ -134,14 +134,12 @@ final class PanelPageFixtures
 
         return [
             'page' => new FormPage(
-                new PageHeader(PanelView::label($existing instanceof RoutePathDefinition ? 'panel.edit_title' : 'panel.create_title'), PanelView::label('panel.form_hint')),
+                new PageHeader(PanelView::label($existing instanceof RoutePathDefinition ? 'panel.edit_title' : 'panel.create_title'), PanelView::label('panel.form_hint'), tabs: self::view()->nav('routes')),
                 $form->createView(),
                 PanelView::label('panel.save'),
                 self::PREFIX . '/',
                 PanelView::label('panel.cancel'),
-                deleteAction: $existing instanceof RoutePathDefinition
-                    ? Action::delete(self::PREFIX . '/delete/' . $existing->id, confirm: self::routeDeleteConfirm($existing), label: PanelView::label('panel.delete'), form: self::actionForm())
-                    : null,
+                deleteAction: $existing instanceof RoutePathDefinition ? self::routeDeleteAction($existing) : null,
                 bundle: PanelView::BUNDLE,
                 attributes: ['data-testid' => 'routing-kit-definition-form'],
             ),
@@ -169,7 +167,7 @@ final class PanelPageFixtures
             'page' => new ListPage(
                 new PageHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
                     new Action('create', PanelView::label('redirects.new'), self::PREFIX . '/redirects/new', variant: 'primary', attributes: ['data-testid' => 'redirect-new']),
-                ]),
+                ], tabs: self::view()->nav('redirects')),
                 [
                     new Column('sourcePath', PanelView::label('redirects.col.source'), required: true),
                     new Column('targetUrl', PanelView::label('redirects.col.target'), required: true),
@@ -206,7 +204,7 @@ final class PanelPageFixtures
 
         return [
             'page' => new FormPage(
-                new PageHeader(PanelView::label($existing instanceof UrlRedirect ? 'redirects.edit_title' : 'redirects.create_title'), PanelView::label('redirects.form_hint')),
+                new PageHeader(PanelView::label($existing instanceof UrlRedirect ? 'redirects.edit_title' : 'redirects.create_title'), PanelView::label('redirects.form_hint'), tabs: self::view()->nav('redirects')),
                 $form->createView(),
                 PanelView::label('panel.save'),
                 self::PREFIX . '/redirects',
@@ -226,7 +224,7 @@ final class PanelPageFixtures
     {
         return [
             'page' => new ConfirmPage(
-                new PageHeader(PanelView::label('redirects.delete_title')),
+                new PageHeader(PanelView::label('redirects.delete_title'), tabs: self::view()->nav('redirects')),
                 self::redirectDeleteConfirm($redirect),
                 new Action('delete', PanelView::label('panel.delete'), self::PREFIX . '/redirects/' . $redirect->getId() . '/delete', method: 'POST', form: self::actionForm(UrlRedirectPanelController::DELETE_CSRF_TOKEN_PREFIX . $redirect->getId())),
                 self::PREFIX . '/redirects',
@@ -238,21 +236,41 @@ final class PanelPageFixtures
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public static function delete(RoutePathDefinition $definition): array
+    {
+        return [
+            'page' => new ConfirmPage(
+                new PageHeader(PanelView::label('panel.delete_title'), tabs: self::view()->nav('routes')),
+                self::routeDeleteConfirm($definition),
+                new Action('delete', PanelView::label('panel.delete'), self::PREFIX . '/delete/' . $definition->id, method: 'POST', form: self::actionForm()),
+                self::PREFIX . '/',
+                bundle: PanelView::BUNDLE,
+                attributes: ['data-testid' => 'routing-kit-delete-form'],
+            ),
+            'definition' => $definition,
+        ] + self::shared('routes');
+    }
+
+    /**
      * Context PanelView::render() adds to every page.
      *
      * @return array<string, mixed>
      */
-    public static function shared(string $section, bool $roleGateDisabled = false, bool $redirects = true): array
+    public static function shared(string $section, bool $roleGateDisabled = false): array
     {
-        $view = new PanelView(new Environment(new ArrayLoader()), self::PREFIX, urlRedirectsEnabled: $redirects, roleGateDisabled: $roleGateDisabled);
-
         return [
             'path_prefix'                    => self::PREFIX,
-            'nav'                            => $view->nav($section),
             'nav_current'                    => $section,
             'role_gate_disabled'             => $roleGateDisabled,
             'nowo_routing_kit_legacy_layout' => null,
         ];
+    }
+
+    public static function view(bool $redirects = true): PanelView
+    {
+        return new PanelView(new Environment(new ArrayLoader()), self::PREFIX, urlRedirectsEnabled: $redirects);
     }
 
     public static function factory(): FormFactoryInterface
@@ -285,6 +303,13 @@ final class PanelPageFixtures
         return self::factory()->createNamed('', RoutingPanelActionType::class, null, ['csrf_token_id' => $tokenId])->createView();
     }
 
+    private static function routeDeleteAction(RoutePathDefinition $definition): Action
+    {
+        $href = self::PREFIX . '/delete/' . $definition->id;
+
+        return new Action('delete', PanelView::label('panel.delete'), $href, method: 'POST', confirm: self::routeDeleteConfirm($definition), form: self::actionForm(), fallbackHref: $href);
+    }
+
     private static function routeDeleteConfirm(RoutePathDefinition $definition): Confirm
     {
         return new Confirm(
@@ -307,6 +332,7 @@ final class PanelPageFixtures
             confirm: self::redirectDeleteConfirm($redirect),
             attributes: $attributes,
             form: self::actionForm(UrlRedirectPanelController::DELETE_CSRF_TOKEN_PREFIX . $redirect->getId()),
+            fallbackHref: self::PREFIX . '/redirects/' . $redirect->getId() . '/delete',
         );
     }
 

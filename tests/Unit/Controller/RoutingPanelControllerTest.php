@@ -20,6 +20,8 @@ use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use Nowo\UiKitBundle\View\Action;
+use Nowo\UiKitBundle\View\AreaNavItem;
+use Nowo\UiKitBundle\View\ConfirmPage;
 use Nowo\UiKitBundle\View\FormPage;
 use Nowo\UiKitBundle\View\Label;
 use Nowo\UiKitBundle\View\ListPage;
@@ -95,7 +97,8 @@ PHP);
                 self::assertNull($page->layout);
                 self::assertSame('/_routing-kit', $context['path_prefix']);
                 self::assertSame('inline', $context['import_display']);
-                self::assertSame([], $context['nav']);
+                self::assertNull($page->header->tabs);
+                self::assertSame('routes', $context['nav_current']);
                 self::assertFalse($context['role_gate_disabled']);
                 self::assertInstanceOf(FormView::class, $context['import_form']);
                 self::assertSame(['create', 'export', 'custom'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
@@ -106,6 +109,7 @@ PHP);
                 self::assertTrue($actions[1]->isPost());
                 self::assertInstanceOf(FormView::class, $actions[1]->form);
                 self::assertNotNull($actions[1]->confirm);
+                self::assertSame('/_routing-kit/delete/rk_1', $actions[1]->fallbackHref);
                 self::assertSame(1, $page->pagination?->totalPages);
 
                 return '<html>index</html>';
@@ -125,14 +129,16 @@ PHP);
                 $page = $context['page'];
                 self::assertInstanceOf(ListPage::class, $page);
                 self::assertSame(['export', 'custom', 'import', 'create'], array_map(static fn (Action $a): string => $a->kind, $page->header->actions));
-                self::assertSame(PanelView::IMPORT_MODAL_ID, $page->header->actions[2]->modalId);
+                self::assertSame(PanelView::IMPORT_MODAL_ID, $page->header->actions[2]->attributes['data-nowo-ui-dialog-open']);
+                self::assertSame(['/_routing-kit/', '/_routing-kit/redirects'], array_map(static fn (AreaNavItem $item): string => $item->href, $page->header->tabs->items ?? []));
+                self::assertSame('/_routing-kit/', $page->header->tabs?->active()?->href);
                 self::assertNull($page->caption);
                 self::assertSame('modal', $context['import_display']);
                 self::assertSame([], $page->rowActions(new RoutePathDefinition('x', 'en', '/x'), 7));
 
                 return '<html>modal</html>';
             }),
-            viewOptions: ['importDisplay' => 'modal', 'showRowCount' => false, 'primaryActionLast' => true],
+            viewOptions: ['importDisplay' => 'modal', 'showRowCount' => false, 'primaryActionLast' => true, 'urlRedirectsEnabled' => true],
         );
 
         self::assertSame('<html>modal</html>', $controller->index(Request::create('/_routing-kit/'))->getContent());
@@ -302,6 +308,30 @@ PHP);
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/_routing-kit/', $response->headers->get('Location'));
         self::assertSame(0, $router->warmUpCalls);
+    }
+
+    public function testDeleteGetRendersTheFullPageConfirmation(): void
+    {
+        [$controller, $storage] = $this->createController(
+            definitions: [new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_1')],
+            twig: $this->createTwigMock(static function (string $template, array $context): string {
+                self::assertSame('@NowoRoutingKitBundle/panel/delete.html.twig', $template);
+                $page = $context['page'];
+                self::assertInstanceOf(ConfirmPage::class, $page);
+                self::assertSame('/_routing-kit/delete/rk_1', $page->action->href);
+                self::assertTrue($page->action->isPost());
+                self::assertInstanceOf(FormView::class, $page->action->form);
+                self::assertSame('/_routing-kit/', $page->cancelHref);
+                self::assertSame(['%route%' => 'app_article_show', '%locale%' => 'en', '%path%' => '/articles/{slug}'], $page->confirm->message instanceof Label ? $page->confirm->message->params : null);
+                self::assertInstanceOf(RoutePathDefinition::class, $context['definition']);
+
+                return '<html>confirm</html>';
+            }),
+        );
+
+        self::assertSame('<html>confirm</html>', $controller->delete(Request::create('/_routing-kit/delete/rk_1', 'GET'), 'rk_1')->getContent());
+        self::assertSame(404, $controller->delete(Request::create('/_routing-kit/delete/missing', 'GET'), 'missing')->getStatusCode());
+        self::assertNotNull($storage->findById('rk_1'), 'GET never deletes.');
     }
 
     public function testDeleteAndClearCacheSucceedWithValidCsrf(): void

@@ -1,8 +1,8 @@
 {#
   Signed JSON import form (Symfony form RoutingPanelImportType), rendered in a UiKit card (web_ui.import_display:
-  inline) or in the UiKit modal shell (modal). Variables: import_form, path_prefix, modal (bool).
+  inline) or in the UiKit `dialog` partial (modal; Cancel closes it with data-nowo-ui-dialog-close). Variables:
+  import_form, path_prefix, modal (bool).
 #}
-{% import '@NowoUiKitBundle/macros/ui.html.twig' as ui %}
 {% set _b = 'NowoRoutingKitBundle' %}
 {{ form_start(import_form, {
     action: path_prefix ~ '/import',
@@ -13,7 +13,7 @@
     {{ form_row(import_form.replace_all) }}
     <div class="{{ nowo_ui_class('form_actions', _b) }}">
         {% if modal|default(false) %}
-            <button type="button" class="{{ nowo_ui_class('btn_secondary', _b) }}" {{ ui.modal_dismiss_attrs() }}>{{ 'panel.cancel'|trans({}, _b) }}</button>
+            <button type="button" class="{{ nowo_ui_class('btn_secondary', _b) }}" data-nowo-ui-dialog-close>{{ 'panel.cancel'|trans({}, _b) }}</button>
         {% endif %}
         <button type="submit" class="{{ nowo_ui_class(modal|default(false) ? 'btn_primary' : 'btn_secondary', _b) }}">{{ 'panel.import'|trans({}, _b) }}</button>
     </div>

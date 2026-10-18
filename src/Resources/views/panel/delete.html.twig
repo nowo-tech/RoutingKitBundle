@@ -1,0 +1,12 @@
+{#
+  Delete a route path definition — full-page confirmation (REQ-UI-003 page/confirm), the no-JS fallback of the
+  confirm dialog of the list and the edit form (GET {path_prefix}/delete/{id}; the POST deletes, CSRF-protected).
+  Variable: page (View\ConfirmPage built by RoutingPanelController); definition; nav_current, path_prefix,
+  role_gate_disabled. No data blocks.
+#}
+{% extends '@NowoUiKit/page/confirm.html.twig' %}
+
+{% block nowo_ui_flashes %}
+    {{ parent() }}
+    {{ include('@NowoRoutingKitBundle/panel/_notices.html.twig') }}
+{% endblock %}

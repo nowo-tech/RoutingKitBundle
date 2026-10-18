@@ -21,6 +21,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\UiKitBundle\View\Action;
 use Nowo\UiKitBundle\View\Column;
 use Nowo\UiKitBundle\View\Confirm;
+use Nowo\UiKitBundle\View\ConfirmPage;
 use Nowo\UiKitBundle\View\EmptyState;
 use Nowo\UiKitBundle\View\FormPage;
 use Nowo\UiKitBundle\View\ListPage;
@@ -89,12 +90,7 @@ final class RoutingPanelController
         foreach ($rows as $key => $row) {
             $rowActions[$key] = [
                 Action::edit($this->pathPrefix . '/edit/' . $row->id, PanelView::label('panel.edit')),
-                Action::delete(
-                    $this->pathPrefix . '/delete/' . $row->id,
-                    confirm: $this->deleteConfirm($row),
-                    label: PanelView::label('panel.delete'),
-                    form: $this->createPanelActionForm()->createView(),
-                ),
+                $this->deleteAction($row),
             ];
         }
 
@@ -104,13 +100,13 @@ final class RoutingPanelController
             new Action('custom', PanelView::label('panel.clear_cache'), $this->pathPrefix . '/clear-cache', method: 'POST', form: $this->createPanelActionForm()->createView()),
         ];
         if ($importModal) {
-            $actions[] = new Action('import', PanelView::label('panel.import'), modalId: PanelView::IMPORT_MODAL_ID);
+            $actions[] = PanelView::importDialogAction();
         }
         $create  = Action::create($this->pathPrefix . '/new', PanelView::label('panel.new'));
         $actions = $this->view->primaryActionLast ? [...$actions, $create] : [$create, ...$actions];
 
         $listPage = new ListPage(
-            new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => $this->locales->getDefaultLocale()]), $actions),
+            new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => $this->locales->getDefaultLocale()]), $actions, tabs: $this->view->nav('routes')),
             [
                 new Column('routeName', PanelView::label('panel.col.route'), required: true),
                 new Column('locale', PanelView::label('panel.col.locale')),
@@ -158,21 +154,45 @@ final class RoutingPanelController
         return $this->form($request, $definition);
     }
 
-    #[Route('/delete/{id}', name: 'nowo_routing_kit_panel_delete', requirements: ['id' => '[A-Za-z0-9_.-]+'], methods: ['POST'])]
+    /**
+     * Full-page confirmation (page/confirm, the no-JS fallback of the confirm dialog) on GET; deletes on POST (CSRF).
+     */
+    #[Route('/delete/{id}', name: 'nowo_routing_kit_panel_delete', requirements: ['id' => '[A-Za-z0-9_.-]+'], methods: ['GET', 'POST'])]
     public function delete(Request $request, string $id): Response
     {
         $this->accessGuard->assertGranted();
 
         $form = $this->createPanelActionForm();
-        $form->handleRequest($request);
 
-        if (!$form->isSubmitted() || !$form->isValid()) {
-            return new Response('Invalid CSRF token.', 403);
+        if ($request->isMethod('POST')) {
+            $form->handleRequest($request);
+
+            if (!$form->isSubmitted() || !$form->isValid()) {
+                return new Response('Invalid CSRF token.', 403);
+            }
+
+            $this->manager->delete($id);
+
+            return new RedirectResponse($this->pathPrefix . '/');
         }
 
-        $this->manager->delete($id);
+        $definition = $this->manager->get($id);
+        if (!$definition instanceof RoutePathDefinition) {
+            return new Response('Not found', 404);
+        }
 
-        return new RedirectResponse($this->pathPrefix . '/');
+        return $this->view->render('delete', 'routes', [
+            'page' => new ConfirmPage(
+                new PageHeader(PanelView::label('panel.delete_title'), tabs: $this->view->nav('routes')),
+                $this->deleteConfirm($definition),
+                new Action('delete', PanelView::label('panel.delete'), $this->pathPrefix . '/delete/' . $id, method: 'POST', form: $form->createView()),
+                $this->pathPrefix . '/',
+                bundle: PanelView::BUNDLE,
+                layout: $this->view->layout(),
+                attributes: ['data-testid' => 'routing-kit-delete-form'],
+            ),
+            'definition' => $definition,
+        ]);
     }
 
     #[Route('/clear-cache', name: 'nowo_routing_kit_panel_clear_cache', methods: ['POST'])]
@@ -337,17 +357,12 @@ final class RoutingPanelController
 
         return $this->view->render('form', 'routes', [
             'page' => new FormPage(
-                new PageHeader(PanelView::label($isEdit ? 'panel.edit_title' : 'panel.create_title'), PanelView::label('panel.form_hint')),
+                new PageHeader(PanelView::label($isEdit ? 'panel.edit_title' : 'panel.create_title'), PanelView::label('panel.form_hint'), tabs: $this->view->nav('routes')),
                 $form->createView(),
                 PanelView::label('panel.save'),
                 $this->pathPrefix . '/',
                 PanelView::label('panel.cancel'),
-                deleteAction: $isEdit ? Action::delete(
-                    $this->pathPrefix . '/delete/' . $existing->id,
-                    confirm: $this->deleteConfirm($existing),
-                    label: PanelView::label('panel.delete'),
-                    form: $this->createPanelActionForm()->createView(),
-                ) : null,
+                deleteAction: $isEdit ? $this->deleteAction($existing) : null,
                 bundle: PanelView::BUNDLE,
                 layout: $this->view->layout(),
                 attributes: ['data-testid' => 'routing-kit-definition-form'],
@@ -355,6 +370,24 @@ final class RoutingPanelController
             'definition' => $existing,
             'conflicts'  => $conflicts,
         ]);
+    }
+
+    /**
+     * Delete through the UiKit confirm dialog; without JS, a link to the full-page confirmation (GET of the same URL).
+     */
+    private function deleteAction(RoutePathDefinition $definition): Action
+    {
+        $href = $this->pathPrefix . '/delete/' . $definition->id;
+
+        return new Action(
+            'delete',
+            PanelView::label('panel.delete'),
+            $href,
+            method: 'POST',
+            confirm: $this->deleteConfirm($definition),
+            form: $this->createPanelActionForm()->createView(),
+            fallbackHref: $href,
+        );
     }
 
     private function deleteConfirm(RoutePathDefinition $definition): Confirm

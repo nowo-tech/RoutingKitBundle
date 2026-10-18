@@ -6,6 +6,10 @@ namespace Nowo\RoutingKitBundle\Panel;
 
 use InvalidArgumentException;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
+use Nowo\UiKitBundle\Navigation\AreaNavProviderInterface;
+use Nowo\UiKitBundle\View\Action;
+use Nowo\UiKitBundle\View\AreaNav;
+use Nowo\UiKitBundle\View\AreaNavItem;
 use Nowo\UiKitBundle\View\Label;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
@@ -13,19 +17,25 @@ use Twig\Environment;
 use function array_key_exists;
 use function array_keys;
 use function implode;
+use function is_string;
 use function sprintf;
 use function trigger_deprecation;
 
 /**
  * Renders the panel pages on the UiKit page contract (REQ-UI-003): resolves the per-page template
  * ({@code web_ui.templates.<page>}), the layout override for the view models ({@code web_ui.layout_template}; null =
- * {@code nowo_ui_layout.admin}) and the shared page context (section nav, role-gate warning).
+ * {@code nowo_ui_layout.admin}), the area navigation of the panel (Routes | Redirects, {@code PageHeader::$tabs}, also
+ * published to the UiKit {@code AreaNavRegistry} as area {@see self::AREA}) and the shared page context (role-gate
+ * warning).
  *
  * Immutable and request-agnostic (worker safe).
  */
-final readonly class PanelView
+final readonly class PanelView implements AreaNavProviderInterface
 {
     public const BUNDLE = 'NowoRoutingKitBundle';
+
+    /** Area code of the panel navigation in the UiKit area-nav registry ({@code nowo_ui_area_nav('routing_kit')}). */
+    public const AREA = 'routing_kit';
 
     /**
      * Bridge used when {@code web_ui.layout_template} is a 1.x layout that renders {@code body} instead of the UiKit
@@ -41,6 +51,7 @@ final readonly class PanelView
     public const TEMPLATES = [
         'index'            => '@NowoRoutingKitBundle/panel/index.html.twig',
         'form'             => '@NowoRoutingKitBundle/panel/form.html.twig',
+        'delete'           => '@NowoRoutingKitBundle/panel/delete.html.twig',
         'redirects_index'  => '@NowoRoutingKitBundle/panel/redirects/index.html.twig',
         'redirects_form'   => '@NowoRoutingKitBundle/panel/redirects/form.html.twig',
         'redirects_delete' => '@NowoRoutingKitBundle/panel/redirects/delete.html.twig',
@@ -74,6 +85,19 @@ final readonly class PanelView
         return new Label($key, NowoRoutingKitBundle::TRANSLATION_DOMAIN, $params);
     }
 
+    /**
+     * Header action opening the import dialog ({@code web_ui.import_display: modal}): the UiKit {@code dialog} partial
+     * and its framework-free opener ({@code data-nowo-ui-dialog-open}, js/nowo-ui-dialog.js).
+     */
+    public static function importDialogAction(): Action
+    {
+        return new Action('import', self::label('panel.import'), '#' . self::IMPORT_MODAL_ID, attributes: [
+            'data-nowo-ui-dialog-open' => self::IMPORT_MODAL_ID,
+            'aria-haspopup'            => 'dialog',
+            'data-testid'              => 'routing-kit-import-open',
+        ]);
+    }
+
     public function template(string $page): string
     {
         if (!array_key_exists($page, self::TEMPLATES)) {
@@ -97,20 +121,37 @@ final readonly class PanelView
     }
 
     /**
-     * Section switcher items (Routes | Redirects); empty when the redirects section is off.
-     *
-     * @return list<array{label: Label, href: string, current: bool, attr: array<string, string>}>
+     * Area navigation of the panel sections (Routes | Redirects) for {@code PageHeader::$tabs}, with the current
+     * section active; null when the redirects section is off (a single section needs no tab bar).
      */
-    public function nav(string $current): array
+    public function nav(string $current): ?AreaNav
     {
         if (!$this->urlRedirectsEnabled) {
-            return [];
+            return null;
         }
 
-        return [
-            ['label' => self::label('nav.routes'), 'href' => $this->pathPrefix . '/', 'current' => $current === 'routes', 'attr' => ['data-testid' => 'routing-kit-nav-routes']],
-            ['label' => self::label('nav.redirects'), 'href' => $this->pathPrefix . '/redirects', 'current' => $current === 'redirects', 'attr' => ['data-testid' => 'routing-kit-nav-redirects']],
-        ];
+        return new AreaNav([
+            new AreaNavItem(self::label('nav.routes'), $this->pathPrefix . '/', $current === 'routes', ['data-testid' => 'routing-kit-nav-routes']),
+            new AreaNavItem(self::label('nav.redirects'), $this->pathPrefix . '/redirects', $current === 'redirects', ['data-testid' => 'routing-kit-nav-redirects']),
+        ], self::label('nav.label'));
+    }
+
+    /**
+     * The panel navigation for other bundles (DashboardMenu, host menus): area {@see self::AREA}; {@code context.current}
+     * (an href) marks that item active.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function areaNav(string $area, array $context = []): ?AreaNav
+    {
+        if ($area !== self::AREA) {
+            return null;
+        }
+
+        $nav     = $this->nav('');
+        $current = $context['current'] ?? null;
+
+        return $nav instanceof AreaNav && is_string($current) ? $nav->withActive($current) : $nav;
     }
 
     /**
@@ -125,7 +166,6 @@ final readonly class PanelView
 
         return new Response($this->twig->render($this->template($page), $context + [
             'path_prefix'                    => $this->pathPrefix,
-            'nav'                            => $this->nav($section),
             'nav_current'                    => $section,
             'role_gate_disabled'             => $this->roleGateDisabled,
             'nowo_routing_kit_legacy_layout' => $legacy ? $this->layoutTemplate : null,
