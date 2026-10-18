@@ -6,7 +6,7 @@ Root key: `nowo_routing_kit`.
 | --- | --- | --- |
 | `enabled` | `true` | Master switch — when `false`, panel, DB loader and redirect subscribers are not registered |
 | `default_locale` | `en` | Locale published without prefix when style allows |
-| `locales` | `[en]` | All locales |
+| `locales` | `[en]` | All locales (must include `default_locale`). A list, or a parameter / env var holding one — see [Locales from a parameter or env var](#locales-from-a-parameter-or-env-var) |
 | `locale_provider` | `null` | Service id for `LocaleProviderInterface` (overrides YAML locales) |
 | `storage.paths_file` | `%kernel.project_dir%/var/routing_kit/paths.json` | JSON storage path |
 | `storage.path_storage` | `null` | Custom `RoutePathStorageInterface` service id (must implement `replaceAll`) |
@@ -44,6 +44,24 @@ Root key: `nowo_routing_kit`.
 | `auto_invalidate_cache` | `true` | Clear router cache after CRUD |
 | `register_unprefixed_default` | `true` | Register unprefixed routes for default locale |
 | `seo_kit_bridge` | `true` | Decorate SeoKit `SeoPathBuilderInterface` when present |
+
+### Locales from a parameter or env var
+
+Keep one locale list in the host and pass it to the bundle:
+
+```yaml
+parameters:
+    app.locales: ['en', 'es']
+
+nowo_routing_kit:
+    default_locale: en
+    locales: '%app.locales%'            # or '%kernel.enabled_locales%' (framework.enabled_locales)
+    # locales: '%env(json:APP_LOCALES)%' # APP_LOCALES='["en","es"]' (or '%env(csv:APP_LOCALES)%' with APP_LOCALES=en,es)
+```
+
+Parameters are resolved when the container is built (`nowo.routing_kit.locales` holds the resolved list). An env var
+is read at runtime by `ConfigurableLocaleProvider` (the route loader registers `{route}.{locale}` for each env locale
+when the route cache is built; clear the cache after changing it). Values are trimmed and de-duplicated.
 
 ### Deprecated keys (removed in 2.0)
 

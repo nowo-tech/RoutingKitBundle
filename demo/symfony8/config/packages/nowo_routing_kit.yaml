@@ -1,8 +1,12 @@
 # Default demo configuration for RoutingKitBundle
+# One locale list for the app, passed as a parameter (an env var also works: '%env(json:APP_LOCALES)%').
+parameters:
+    app.locales: [en, es]
+
 nowo_routing_kit:
     enabled: true
     default_locale: en
-    locales: [en, es]
+    locales: '%app.locales%'
     storage:
         paths_file: '%kernel.project_dir%/var/routing_kit/paths.json'
     discovery:

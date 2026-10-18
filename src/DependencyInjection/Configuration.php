@@ -98,9 +98,13 @@ final class Configuration implements ConfigurationInterface
                     ->defaultValue('en')
                     ->cannotBeEmpty()
                 ->end()
-                ->arrayNode('locales')
-                    ->scalarPrototype()->end()
+                ->variableNode('locales')
+                    ->info('Locale codes (list, must include default_locale), or a parameter / env var holding one: "%app.locales%", "%kernel.enabled_locales%", "%env(json:APP_LOCALES)%" (resolved at runtime).')
                     ->defaultValue(['en'])
+                    ->validate()
+                        ->ifTrue(static fn (mixed $v): bool => !is_string($v) && !self::isLocaleList($v))
+                        ->thenInvalid('Invalid nowo_routing_kit.locales %s: use a list of locale codes or a parameter / env placeholder holding one.')
+                    ->end()
                 ->end()
                 ->scalarNode('locale_provider')
                     ->info('Service id implementing LocaleProviderInterface. null = ConfigurableLocaleProvider from YAML.')
@@ -430,5 +434,19 @@ final class Configuration implements ConfigurationInterface
             ->end();
 
         return $node;
+    }
+
+    private static function isLocaleList(mixed $v): bool
+    {
+        if (!is_array($v)) {
+            return false;
+        }
+        foreach ($v as $locale) {
+            if (!is_string($locale)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

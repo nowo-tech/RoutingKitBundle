@@ -14,6 +14,7 @@ use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\UrlRedirectSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
+use Nowo\RoutingKitBundle\Locale\ConfiguredLocales;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
@@ -106,7 +107,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             }
         }
 
-        $config   = $this->processConfiguration(new Configuration(), $container->getExtensionConfig(Configuration::ALIAS));
+        $config   = $this->processConfiguration(new Configuration(), $this->webUiConfigs($container));
         $webUi    = is_array($config['web_ui'] ?? null) ? $config['web_ui'] : [];
         $defaults = [];
 
@@ -130,6 +131,32 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         if ($defaults !== []) {
             $container->prependExtensionConfig('nowo_ui_kit', $defaults);
         }
+    }
+
+    /**
+     * The raw host configs reduced to the web_ui / panel keys prepend() needs (panel.* is a deprecated alias of
+     * web_ui.*). prepend() sees the raw config, where any other key may still be a "%parameter%" or env placeholder
+     * (e.g. locales: '%kernel.enabled_locales%', defined by FrameworkExtension::load() after prepend), so the rest of
+     * the tree is not processed here.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function webUiConfigs(ContainerBuilder $container): array
+    {
+        $configs = [];
+        foreach ($container->getExtensionConfig(Configuration::ALIAS) as $cfg) {
+            $subset = [];
+            foreach (['web_ui', 'panel'] as $key) {
+                if (is_array($cfg[$key] ?? null)) {
+                    $subset[$key] = $cfg[$key];
+                }
+            }
+            if ($subset !== []) {
+                $configs[] = $subset;
+            }
+        }
+
+        return $configs;
     }
 
     /**
@@ -207,7 +234,14 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
 
         $container->setParameter('nowo.routing_kit.enabled', $config['enabled']);
         $container->setParameter('nowo.routing_kit.default_locale', $config['default_locale']);
-        $container->setParameter('nowo.routing_kit.locales', array_values($config['locales']));
+        // locales may be a parameter (%app.locales%, %kernel.enabled_locales%): the kernel resolves it before load(),
+        // a direct load() caller may not. An env var (%env(json:APP_LOCALES)%) stays a placeholder until runtime.
+        $locales  = $container->getParameterBag()->resolveValue($config['locales']);
+        $usedEnvs = [];
+        $container->resolveEnvPlaceholders($locales, null, $usedEnvs);
+        $config['locales']         = $usedEnvs !== [] ? $locales : ConfiguredLocales::normalize($locales);
+        $config['runtime_locales'] = $usedEnvs !== [];
+        $container->setParameter('nowo.routing_kit.locales', $config['locales']);
         $container->setParameter('nowo.routing_kit.storage.paths_file', $config['storage']['paths_file']);
         $container->setParameter('nowo.routing_kit.discovery.scan_dirs', $config['discovery']['scan_dirs']);
         $accessRoles = array_values($config['security']['access_roles']);
@@ -371,9 +405,13 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
      */
     private function configureLocales(ContainerBuilder $container, array $config): void
     {
+        // Env var locales are only known at runtime: normalized by a factory when the provider is created.
+        $locales = $config['runtime_locales']
+            ? (new Definition('array'))->setFactory([ConfiguredLocales::class, 'normalize'])->setArguments(['%nowo.routing_kit.locales%'])
+            : $config['locales'];
         $container->getDefinition(ConfigurableLocaleProvider::class)
             ->setArgument('$defaultLocale', $config['default_locale'])
-            ->setArgument('$locales', array_values($config['locales']));
+            ->setArgument('$locales', $locales);
 
         $override = $config['locale_provider'] ?? null;
         if (is_string($override) && $override !== '') {

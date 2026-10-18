@@ -832,7 +832,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * @psalm-type NowoRoutingKitConfig = array{ // Nowo Routing Kit Bundle configuration.
  *     enabled?: bool|Param, // Default: true
  *     default_locale?: scalar|Param|null, // Default: "en"
- *     locales?: list<scalar|Param|null>,
+ *     locales?: mixed, // Locale codes (list, must include default_locale), or a parameter / env var holding one: "%app.locales%", "%kernel.enabled_locales%", "%env(json:APP_LOCALES)%" (resolved at runtime). // Default: ["en"]
  *     locale_provider?: scalar|Param|null, // Service id implementing LocaleProviderInterface. null = ConfigurableLocaleProvider from YAML. // Default: null
  *     storage?: array{
  *         paths_file?: scalar|Param|null, // Default: "%kernel.project_dir%/var/routing_kit/paths.json"

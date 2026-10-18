@@ -11,6 +11,7 @@ services:
             - '../../Model/'
             - '../../Event/'
             - '../../Attribute/'
+            - '../../Locale/ConfiguredLocales.php'
             - '../../Resources/'
             - '../../Seo/RoutingKitSeoPathBuilderDecorator.php'
             - '../../Redirect/Message/RecordRedirectHit.php'
