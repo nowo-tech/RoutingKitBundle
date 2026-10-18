@@ -18,6 +18,7 @@ test.describe('routing kit panel', () => {
     await page.goto('/_routing/');
     await expect(page.locator('[data-nowo-ui-page="list"]')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'Routing Kit' })).toBeVisible();
+    await expect(page.locator('[data-nowo-ui-region="area-nav"]')).toBeVisible();
     await expect(page.getByTestId('routing-kit-nav-routes')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('routing-kit-role-gate-warning')).toBeVisible();
     await expect(page.getByTestId('routing-kit-import-form')).toBeVisible();
@@ -54,5 +55,33 @@ test.describe('routing kit panel', () => {
     await expect(page.locator('[data-nowo-ui-page="confirm"]')).toBeVisible();
     await page.getByTestId('redirect-delete-form').getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByTestId('redirect-status')).toContainText('Redirect deleted.');
+  });
+
+  test('path delete has a no-JS confirm page (POST with CSRF)', async ({ page }) => {
+    const path = `/e2e-del-${Date.now()}`;
+    await ensurePath(page, 'homepage', 'es', path);
+    const href = await page.locator('tbody tr', { hasText: path }).getByRole('link', { name: 'Edit' }).getAttribute('href');
+
+    await page.goto(String(href).replace('/edit/', '/delete/'));
+    await expect(page.locator('[data-nowo-ui-page="confirm"]')).toBeVisible();
+    await expect(page.getByTestId('routing-kit-nav-routes')).toHaveAttribute('aria-current', 'page');
+    const form = page.getByTestId('routing-kit-delete-form');
+    await expect(form.locator('input[type="hidden"][name="_csrf_token"]')).toHaveCount(1);
+    await form.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.locator('[data-nowo-ui-page="list"]')).toBeVisible();
+    await expect(page.locator('tbody tr', { hasText: path })).toHaveCount(0);
+  });
+
+  test('without JavaScript, delete links to the confirm page', async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    const source = `/e2e-nojs-${Date.now()}`;
+    await ensureRedirect(page, source, '/about');
+
+    await page.locator('tbody tr', { hasText: source }).locator('a.nowo-ui-action__fallback').click();
+    await expect(page.locator('[data-nowo-ui-page="confirm"]')).toBeVisible();
+    await page.getByTestId('redirect-delete-form').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByTestId('redirect-status')).toContainText('Redirect deleted.');
+    await context.close();
   });
 });
