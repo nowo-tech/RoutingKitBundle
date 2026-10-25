@@ -2,6 +2,8 @@
   Bundle form theme of the panel forms (PanelView::FORM_THEME, applied through FormPage::formThemes and to the import
   form), on top of the host's form themes: checkbox rows render as UiKit check labels (ui.check(): `.nowo-ui-check`,
   the input inside its label, accent colour and focus ring), followed by the field errors and help.
+  REQ-TWIG-005 form-theme exception: this file implements a Symfony theme block, so it emits the raw <input>;
+  it is the only file allowlisted by .scripts/check-no-raw-html-form.sh.
 #}
 {%- block checkbox_row -%}
     {%- import '@NowoUiKitBundle/macros/ui.html.twig' as ui -%}

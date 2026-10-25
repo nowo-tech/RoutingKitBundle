@@ -50,7 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Developer tooling: `make release-check` runs the full REQ-MAKE-002 chain with `ensure-up` first (then the Cursor co-author, open-PR and Twig `extra` gates, composer-sync, cs-fix, cs-check, rector-dry, phpstan, igor, translations, coverage-check and the demo release-check). `check-no-raw-html-form` (REQ-TWIG-005) is wired once the remaining raw form markup is migrated.
+- Developer tooling: `make release-check` runs the full REQ-MAKE-002 chain with `ensure-up` first (then the Cursor co-author, open-PR and Twig `extra` gates, composer-sync, cs-fix, cs-check, rector-dry, phpstan, igor, translations, coverage-check and the demo release-check).
+- `panel/_import_form.html.twig` renders the import form body through the rendered-aware child loop after the full-width `payload_json` row (the `replace_all` checkbox and the CSRF token are now rendered by the loop; same markup, field names and form theme) (REQ-TWIG-003 / REQ-TWIG-005).
+- Docs: USAGE states the Symfony Form / child-loop rule for panel forms and that host overrides and the demo must not reintroduce raw `<form>` / `<input>` (REQ-TWIG-005 rule 9).
+
+### Added
+
+- Developer tooling: `make check-no-raw-html-form` (REQ-TWIG-005) fails on raw `<form>` / `<input>` / `<textarea>` / `<select>` in bundle views and demo templates (only the form theme `panel/_form_theme.html.twig` is allowlisted) and runs in `make release-check` after the Twig `extra` gate.
 
 ## [1.10.0] - 2026-10-18
 
