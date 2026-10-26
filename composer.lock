@@ -142,16 +142,16 @@
         },
         {
             "name": "nowo-tech/form-kit-bundle",
-            "version": "v2.12.0",
+            "version": "v2.13.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nowo-tech/FormKitBundle.git",
-                "reference": "92ef7e392f0eacd38a42f6472ef51898b83604ee"
+                "reference": "1d8f8f9686e23b93090c7f4e0419d3d97fea3ba4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nowo-tech/FormKitBundle/zipball/92ef7e392f0eacd38a42f6472ef51898b83604ee",
-                "reference": "92ef7e392f0eacd38a42f6472ef51898b83604ee",
+                "url": "https://api.github.com/repos/nowo-tech/FormKitBundle/zipball/1d8f8f9686e23b93090c7f4e0419d3d97fea3ba4",
+                "reference": "1d8f8f9686e23b93090c7f4e0419d3d97fea3ba4",
                 "shasum": ""
             },
             "require": {
@@ -172,12 +172,15 @@
                 "friendsofphp/php-cs-fixer": "^3.95.11",
                 "igor-php/igor-php": "^0.10.0",
                 "nowo-tech/phpstan-frankenphp": "^1.0",
+                "nowo-tech/ui-kit-bundle": "^2.5.3",
                 "phpstan/extension-installer": "^1.2",
                 "phpstan/phpstan": "^2.0",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-symfony": "^2.0",
                 "phpunit/phpunit": "^10.0",
                 "rector/rector": "^2.0",
+                "symfony/css-selector": "^7.4 || ^8.0",
+                "symfony/dom-crawler": "^7.4 || ^8.0",
                 "symfony/framework-bundle": "^7.4 || ^8.0",
                 "symfony/security-csrf": "^7.4 || ^8.0",
                 "vincentlanglet/twig-cs-fixer": "^4.0"
@@ -195,6 +198,7 @@
                 "nowo-tech/slide-to-confirm-bundle": "For addSlideToConfirm() / addSlideToConfirmField() / addSlideToConfirmFieldType()",
                 "nowo-tech/tag-input-bundle": "For addTagInput() / addTagInputField() / addTagInputFieldType()",
                 "nowo-tech/tiptap-editor-bundle": "For addTiptapEditor() / addTiptapEditorField() / addTiptapEditorFieldType()",
+                "nowo-tech/ui-kit-bundle": "^2.5.3: locale tabs (locale_tabs option, TranslatableMapType, _locale_tabs include) render through the UiKit locale_tabs partial (WAI-ARIA tabs, no-JS fieldsets, keyboard, browser validation, Live Component safe); without it FormKit keeps its neutral markup",
                 "symfony/ux-autocomplete": "Entity autocomplete fields; use addAutocompleteField() / addAutocompleteFieldType() with your autocomplete FormType FQCN",
                 "symfony/ux-cropperjs": "For addCropper() / addCropperField() / addCropperFieldType() (image crop widget)",
                 "symfony/ux-dropzone": "For addDropzone() / addDropzoneField() / addDropzoneFieldType() (drag-and-drop file upload)",
@@ -247,7 +251,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-13T14:36:41+00:00"
+            "time": "2026-10-20T08:21:50+00:00"
         },
         {
             "name": "nowo-tech/ui-kit-bundle",
