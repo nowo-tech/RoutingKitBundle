@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.10.1] - 2026-10-26](#1101---2026-10-26)
 - [[1.10.0] - 2026-10-18](#1100---2026-10-18)
 - [[1.9.3] - 2026-10-18](#193---2026-10-18)
 - [[1.9.2] - 2026-10-18](#192---2026-10-18)
@@ -47,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.10.1] - 2026-10-26
+
+Forms in the bundle views are Symfony Form Types rendered with form_start / child loop / form_end, no raw form controls (REQ-TWIG-005). See [UPGRADING](UPGRADING.md#to-1101).
 
 ### Changed
 
@@ -645,7 +650,7 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.3...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.10.1...HEAD
 [1.9.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...v1.9.1
