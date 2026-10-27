@@ -13,7 +13,7 @@
 
 | Control | Behaviour |
 | --- | --- |
-| CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). |
+| CSRF | **Required** (`symfony/security-csrf`). Invalid/missing token → 403 / form error (fail-closed). `CsrfProtectionPass` refuses to compile the container when the panel is registered without `security.csrf.token_manager` + `form.type_extension.csrf`, or with `framework.form.csrf_protection: false` (action forms such as `RoutingPanelActionType` declare their own CSRF options and would otherwise accept tokenless POSTs). |
 | `security.access_roles` | Default `[ROLE_ADMIN]` via `RoutingKitAccessCheckerInterface` / `ConfigurableRoutingKitAccessChecker`. **Empty list is fail-closed (deny).** Use `allow_unauthenticated: true` (dev/demo only) or a custom `access_checker` to relax. `PanelAccessGuard` always runs the checker unless `allow_unauthenticated`. |
 | `panel.role` | BC alias for `security.access_roles` (`null` → empty roles). Prefer `security.access_roles`. |
 | Route / locale allowlist | Saves **and imports** must use a `#[Routable]` route name and a configured locale. |

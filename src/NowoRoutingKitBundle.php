@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle;
 
+use Nowo\RoutingKitBundle\DependencyInjection\Compiler\CsrfProtectionPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\PanelAccessGuardPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\SeoKitBridgePass;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\TwigPathsPass;
@@ -22,6 +23,7 @@ final class NowoRoutingKitBundle extends Bundle
         $container->addCompilerPass(new TwigPathsPass());
         $container->addCompilerPass(new SeoKitBridgePass());
         $container->addCompilerPass(new PanelAccessGuardPass());
+        $container->addCompilerPass(new CsrfProtectionPass());
     }
 
     public function getContainerExtension(): ?ExtensionInterface

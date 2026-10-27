@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit;
 
+use Nowo\RoutingKitBundle\DependencyInjection\Compiler\CsrfProtectionPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\SeoKitBridgePass;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\TwigPathsPass;
 use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
@@ -24,6 +25,7 @@ final class BundleTest extends TestCase
 
         self::assertTrue($this->containsPass($passes, TwigPathsPass::class));
         self::assertTrue($this->containsPass($passes, SeoKitBridgePass::class));
+        self::assertTrue($this->containsPass($passes, CsrfProtectionPass::class));
     }
 
     public function testGetContainerExtensionReturnsMemoizedExtension(): void

@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- CSRF fails closed: new `CsrfProtectionPass` makes the container refuse to compile when the panel (`web_ui.enabled: true`, routing and/or URL-redirect controllers registered) is on and form CSRF protection is unavailable (`security.csrf.token_manager` or `form.type_extension.csrf` missing, or `framework.form.csrf_protection: false`). Before, clear cache / export / import (`RoutingPanelActionType` declares its own CSRF options), the path and redirect forms and redirect delete accepted tokenless cross-site POSTs in that configuration. See [UPGRADING](UPGRADING.md#unreleased) and [SECURITY](SECURITY.md#built-in-controls-114).
+
 ## [1.10.1] - 2026-10-26
 
 Forms in the bundle views are Symfony Form Types rendered with form_start / child loop / form_end, no raw form controls (REQ-TWIG-005). See [UPGRADING](UPGRADING.md#to-1101).

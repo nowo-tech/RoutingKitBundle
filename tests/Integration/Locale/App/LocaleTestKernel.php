@@ -68,6 +68,10 @@ final class LocaleTestKernel extends Kernel
             'test'                 => true,
             'http_method_override' => false,
             'enabled_locales'      => ['de', 'en'],
+            // The panel is on by default and refuses to compile without form CSRF (CsrfProtectionPass).
+            'session'         => ['storage_factory_id' => 'session.storage.factory.mock_file'],
+            'csrf_protection' => true,
+            'form'            => ['csrf_protection' => true],
         ]);
         $container->extension('nowo_routing_kit', $this->routingKitConfig + [
             'storage'   => ['paths_file' => $this->baseDir . '/var/paths.json'],

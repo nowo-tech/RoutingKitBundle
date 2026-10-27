@@ -90,6 +90,10 @@
 
 ## Unreleased
 
+### Panel requires form CSRF protection at compile time
+
+With the panel enabled (`web_ui.enabled: true`) the container no longer compiles without form CSRF protection (`LogicException`: "requires CSRF protection"). Standard Flex hosts (`symfony/security-csrf` installed, `framework.csrf_protection` enabled, `framework.form.csrf_protection` not disabled) need no change. Otherwise enable `framework.csrf_protection: true` — also in the `test` environment of functional suites that enable the panel — or set `web_ui.enabled: false`.
+
 ## To 1.10.1
 
 From **1.10.0**:
