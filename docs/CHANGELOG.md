@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.13.0] - 2026-10-28](#1130---2026-10-28)
 - [[1.12.1] - 2026-10-28](#1121---2026-10-28)
 - [[1.12.0] - 2026-10-28](#1120---2026-10-28)
 - [[1.11.0] - 2026-10-28](#1110---2026-10-28)
@@ -51,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.13.0] - 2026-10-28
+
+RoutingKit: attribute wiring for the hit handler and prefix redirects, injectable clock, Spec Kit inventory 80/80. See [UPGRADING](UPGRADING.md#to-1130).
 
 ### Changed
 
@@ -698,7 +703,7 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.12.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.13.0...HEAD
 [1.9.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...v1.9.1
