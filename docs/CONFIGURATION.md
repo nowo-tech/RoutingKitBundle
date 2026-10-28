@@ -40,7 +40,7 @@ Root key: `nowo_routing_kit`.
 | `url_redirects.protected_prefixes` | `/admin`, `/login`, `/logout`, `/register`, `/reset-password`, `/api`, `/health`, `/build`, `/bundles`, `/media`, `/.well-known` | Whole-segment prefixes never redirected (also behind `/{locale}`); replaces defaults; `web_ui.path_prefix` always added |
 | `url_redirects.protected_starts` | `/_`, `/robots.txt`, `/sitemap`, `/favicon` | Raw string prefixes never redirected; replaces defaults |
 | `url_redirects.hits.enabled` | `true` | Count hits / last hit |
-| `url_redirects.hits.message_bus` | `null` | Messenger bus id for async hit counting (`null` = synchronous write) |
+| `url_redirects.hits.message_bus` | `null` | Messenger bus id for async hit counting (`null` = written by the request itself on `kernel.terminate`, after the response; recommended for high-traffic redirects) |
 | `auto_invalidate_cache` | `true` | Clear router cache after CRUD |
 | `register_unprefixed_default` | `true` | Register unprefixed routes for default locale |
 | `default_locale_unprefixed.enabled` | `false` | Opt-in (`default_locale_unprefixed: true` works): decorate `router.default` so the default locale generates the bare twin `<route><twin_suffix>` of any route that has one (AuthKit / SiteBackup / app routes). See [USAGE](USAGE.md#default-locale-without-prefix) |

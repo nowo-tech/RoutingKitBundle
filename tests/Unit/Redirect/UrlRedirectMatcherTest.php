@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\Redirect;
 
+use ArrayObject;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHit;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
@@ -31,6 +32,36 @@ final class UrlRedirectMatcherTest extends TestCase
         $matcher->reset();
         self::assertNotNull($matcher->match('/old'), 'Reloaded from the cache pool, not the storage.');
         $matcher->recordHit('/old/');
+        $matcher->flushHits();
+    }
+
+    public function testHitsWithoutABusAreWrittenOnFlushNotDuringTheRequest(): void
+    {
+        /** @var ArrayObject<int, string> $writes */
+        $writes  = new ArrayObject();
+        $written = static fn (): array => $writes->getArrayCopy();
+        $storage = $this->createMock(UrlRedirectStorageInterface::class);
+        $storage->method('recordHit')->willReturnCallback(static function (string $path) use ($writes): void {
+            $writes->append($path);
+        });
+        $matcher = new UrlRedirectMatcher($storage);
+
+        $matcher->recordHit('/a/');
+        $matcher->recordHit('/b');
+        self::assertSame([], $written(), 'no storage write (file lock) before the response is sent');
+
+        $matcher->flushHits();
+        self::assertSame(['/a', '/b'], $written());
+        $matcher->flushHits();
+        self::assertSame(['/a', '/b'], $written(), 'flushed hits are not written twice');
+
+        $matcher->recordHit('/c');
+        $matcher->reset();
+        self::assertSame(['/a', '/b', '/c'], $written(), 'reset() (worker, between requests) flushes');
+
+        $matcher->recordHit('/d');
+        unset($matcher);
+        self::assertSame(['/a', '/b', '/c', '/d'], $written(), 'destruction flushes (CLI / no kernel.terminate)');
     }
 
     public function testInvalidateDropsCachedMap(): void
@@ -71,6 +102,16 @@ final class UrlRedirectMatcherTest extends TestCase
         (new UrlRedirectMatcher($storage, null, null, $bus))->recordHit('/old/');
     }
 
+    public function testABusFailureIsLoggedNotThrown(): void
+    {
+        $bus = $this->createStub(MessageBusInterface::class);
+        $bus->method('dispatch')->willThrowException(new RuntimeException('transport down'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+
+        (new UrlRedirectMatcher($this->createStub(UrlRedirectStorageInterface::class), null, $logger, $bus))->recordHit('/old');
+    }
+
     public function testHitTrackingCanBeDisabled(): void
     {
         $storage = $this->createMock(UrlRedirectStorageInterface::class);
@@ -92,6 +133,7 @@ final class UrlRedirectMatcherTest extends TestCase
 
         self::assertNull($matcher->match('/old'));
         $matcher->recordHit('/old');
+        $matcher->flushHits();
         $matcher->invalidate();
     }
 }

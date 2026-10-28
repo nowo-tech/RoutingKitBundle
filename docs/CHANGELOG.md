@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+
+- **Redirect hit counting no longer blocks the redirect.** Without `url_redirects.hits.message_bus`, every redirected
+  request took the filesystem storage's exclusive lock and rewrote its JSON file before answering, so a hot legacy URL
+  made all redirect requests queue on that lock. The write is now deferred to `kernel.terminate` (after the response
+  is sent; also flushed on `kernel.reset` and destruction). For high-traffic redirects, configure a Messenger bus.
+
 ## [1.12.0] - 2026-10-28
 
 Tab icons (NowoUiKitBundle 2.17)

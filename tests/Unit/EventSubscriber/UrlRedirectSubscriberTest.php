@@ -65,7 +65,7 @@ final class UrlRedirectSubscriberTest extends TestCase
 
     public function testSubscribesBeforeRouter(): void
     {
-        self::assertSame([KernelEvents::REQUEST => ['onKernelRequest', 33]], UrlRedirectSubscriber::getSubscribedEvents());
+        self::assertSame([KernelEvents::REQUEST => ['onKernelRequest', 33], KernelEvents::TERMINATE => 'onKernelTerminate'], UrlRedirectSubscriber::getSubscribedEvents());
     }
 
     public function testRedirectsInternalTargetKeepingQueryAndCountsHit(): void
@@ -75,7 +75,9 @@ final class UrlRedirectSubscriberTest extends TestCase
         self::assertNotNull($response);
         self::assertSame(301, $response->getStatusCode());
         self::assertSame('/contact?utm_source=old', $response->headers->get('Location'));
-        self::assertSame(1, $this->storage->findBySource('/tratamientos/Unas')?->getHits());
+        self::assertSame(0, $this->storage->findBySource('/tratamientos/Unas')?->getHits(), 'written after the response');
+        $this->subscriber->onKernelTerminate();
+        self::assertSame(1, $this->storage->findBySource('/tratamientos/Unas')->getHits());
     }
 
     public function testPercentEncodedPathMatchesDecodedSource(): void

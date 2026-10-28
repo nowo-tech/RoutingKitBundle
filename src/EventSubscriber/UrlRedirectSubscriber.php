@@ -38,8 +38,15 @@ final class UrlRedirectSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST => ['onKernelRequest', self::PRIORITY],
+            KernelEvents::REQUEST   => ['onKernelRequest', self::PRIORITY],
+            KernelEvents::TERMINATE => 'onKernelTerminate',
         ];
+    }
+
+    /** Hit counting without Messenger: write after the redirect response is sent. */
+    public function onKernelTerminate(): void
+    {
+        $this->redirects->flushHits();
     }
 
     public function onKernelRequest(RequestEvent $event): void

@@ -21,6 +21,10 @@ use Throwable;
  * writes outside the panel (SQL, backup restore) are picked up when the TTL expires.
  *
  * Every failure (cache, storage, bus) degrades to "no redirect" and a log warning, never a 500.
+ *
+ * Hit counting without a Messenger bus: the storage write (the filesystem storage takes an exclusive lock and rewrites
+ * its file) is deferred to {@see flushHits()} on `kernel.terminate`, after the redirect response is sent, so a hot
+ * legacy URL no longer makes every redirected request wait on that lock.
  */
 final class UrlRedirectMatcher implements ResetInterface
 {
@@ -30,6 +34,9 @@ final class UrlRedirectMatcher implements ResetInterface
 
     /** @var array<string, array{target: string, status: int}>|null */
     private ?array $map = null; // @igor-ignore - Per-request memo cleared by reset() (kernel.reset) and invalidate().
+
+    /** @var list<array{string, DateTimeImmutable}> */
+    private array $pendingHits = []; // @igor-ignore - Hits of the current request, written by flushHits() (kernel.terminate / reset()).
 
     public function __construct(
         private readonly UrlRedirectStorageInterface $storage,
@@ -63,10 +70,27 @@ final class UrlRedirectMatcher implements ResetInterface
             if ($this->bus instanceof MessageBusInterface) {
                 $this->bus->dispatch(new RecordRedirectHit($path, $now));
             } else {
-                $this->storage->recordHit($path, $now);
+                $this->pendingHits[] = [$path, $now];
             }
         } catch (Throwable $exception) {
             $this->logger?->warning('Redirect hit not recorded: {message}', ['message' => $exception->getMessage()]);
+        }
+    }
+
+    /**
+     * Writes the hits recorded without a bus. Called on `kernel.terminate` (after the response is sent), from
+     * {@see reset()} between worker requests and on destruction, so no hit is lost outside HTTP either.
+     */
+    public function flushHits(): void
+    {
+        $hits              = $this->pendingHits;
+        $this->pendingHits = [];
+        foreach ($hits as [$path, $at]) {
+            try {
+                $this->storage->recordHit($path, $at);
+            } catch (Throwable $exception) {
+                $this->logger?->warning('Redirect hit not recorded: {message}', ['message' => $exception->getMessage()]);
+            }
         }
     }
 
@@ -86,7 +110,13 @@ final class UrlRedirectMatcher implements ResetInterface
 
     public function reset(): void
     {
+        $this->flushHits();
         $this->map = null;
+    }
+
+    public function __destruct()
+    {
+        $this->flushHits();
     }
 
     /**
