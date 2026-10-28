@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.12.0](#to-1120)
 - [To 1.11.0](#to-1110)
   - [Panel requires form CSRF protection at compile time](#panel-requires-form-csrf-protection-at-compile-time)
 - [To 1.10.1](#to-1101)
@@ -91,6 +92,11 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.12.0
+
+From **1.11.0**: no change needed. The tabs carry icons that show with NowoUiKitBundle **2.17** or later (older 2.x versions ignore
+them), and only when the host sets `data-tab-style="icon-text"` or `"icon"`.
 
 ## To 1.11.0
 

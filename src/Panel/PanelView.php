@@ -137,8 +137,8 @@ final readonly class PanelView implements AreaNavProviderInterface
         }
 
         return new AreaNav([
-            new AreaNavItem(self::label('nav.routes'), $this->pathPrefix . '/', $current === 'routes', ['data-testid' => 'routing-kit-nav-routes']),
-            new AreaNavItem(self::label('nav.redirects'), $this->pathPrefix . '/redirects', $current === 'redirects', ['data-testid' => 'routing-kit-nav-redirects']),
+            new AreaNavItem(self::label('nav.routes'), $this->pathPrefix . '/', $current === 'routes', ['data-testid' => 'routing-kit-nav-routes'], 'tabler:route'),
+            new AreaNavItem(self::label('nav.redirects'), $this->pathPrefix . '/redirects', $current === 'redirects', ['data-testid' => 'routing-kit-nav-redirects'], 'tabler:arrow-forward-up'),
         ], self::label('nav.label'));
     }
 

@@ -71,6 +71,7 @@ final class PanelViewTest extends TestCase
         self::assertEquals(PanelView::label('nav.redirects'), $nav->items[1]->label);
         self::assertEquals(PanelView::label('nav.label'), $nav->label);
         self::assertSame(['data-testid' => 'routing-kit-nav-routes'], $nav->items[0]->attributes);
+        self::assertSame(['tabler:route', 'tabler:arrow-forward-up'], array_map(static fn (AreaNavItem $item): ?string => $item->icon, $nav->items));
     }
 
     public function testAreaNavIsPublishedForTheRoutingKitArea(): void
