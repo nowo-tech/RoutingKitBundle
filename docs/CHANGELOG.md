@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.12.1] - 2026-10-28](#1121---2026-10-28)
 - [[1.12.0] - 2026-10-28](#1120---2026-10-28)
 - [[1.11.0] - 2026-10-28](#1110---2026-10-28)
 - [[1.10.1] - 2026-10-26](#1101---2026-10-26)
@@ -50,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.12.1] - 2026-10-28
+
+Performance: redirect hits are written after the response (kernel.terminate) when no Messenger bus is configured. See [UPGRADING](UPGRADING.md#to-1121).
 
 ### Performance
 
@@ -677,7 +682,7 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.12.1...HEAD
 [1.9.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...v1.9.1

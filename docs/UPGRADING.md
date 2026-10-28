@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.12.1](#to-1121)
 - [To 1.12.0](#to-1120)
 - [To 1.11.0](#to-1110)
   - [Panel requires form CSRF protection at compile time](#panel-requires-form-csrf-protection-at-compile-time)
@@ -92,6 +93,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.12.1
+
+From **1.12.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 ## To 1.12.0
 
