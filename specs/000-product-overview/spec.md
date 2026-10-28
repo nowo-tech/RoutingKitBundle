@@ -1,4 +1,4 @@
-# RoutingKitBundle — Product Spec (001)
+# RoutingKitBundle — Product overview (000; the normative baseline is `001-baseline`)
 
 ## Goal
 

@@ -52,6 +52,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `RecordRedirectHitHandler` carries `#[AsMessageHandler]` and `DefaultLocalePrefixRedirectSubscriber` is autoconfigured,
+  instead of manual `messenger.message_handler` / `kernel.event_subscriber` tags; both stay conditional (hit bus,
+  `redirect_prefixed`) (REQ-SF-003, REQ-MSG-001).
+- `UrlRedirectMatcher` (hit time) and `UrlRedirectPanelController` (created / updated time) use an optional
+  `Psr\Clock\ClockInterface` (the `clock` service when present) instead of `new DateTimeImmutable()` (REQ-DI-001);
+  `psr/clock` is now a runtime requirement.
+
+### Documentation
+
+- REDIRECTS: retries, failure transport and idempotency of asynchronous hit counting.
+- Security guide (threat model, logging, dependencies), Documentation index order, TOCs, issue templates, Cursor Agent
+  settings; Spec Kit baseline inventory 80/80 (FR-20 … FR-22), duplicate `001-routing-kit` renumbered
+  `000-product-overview`.
+
 ## [1.12.1] - 2026-10-28
 
 Performance: redirect hits are written after the response (kernel.terminate) when no Messenger bus is configured. See [UPGRADING](UPGRADING.md#to-1121).

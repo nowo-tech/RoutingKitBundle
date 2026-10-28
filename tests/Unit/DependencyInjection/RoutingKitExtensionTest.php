@@ -39,6 +39,7 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -46,6 +47,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 use function array_key_exists;
 use function is_array;
@@ -409,7 +411,8 @@ final class RoutingKitExtensionTest extends TestCase
         $matcher = $container->getDefinition(UrlRedirectMatcher::class);
         self::assertNull($matcher->getArgument('$cache'));
         self::assertSame('messenger.default_bus', (string) $matcher->getArgument('$bus'));
-        self::assertTrue($container->getDefinition(RecordRedirectHitHandler::class)->hasTag('messenger.message_handler'));
+        self::assertTrue($container->hasDefinition(RecordRedirectHitHandler::class));
+        self::assertNotEmpty((new ReflectionClass(RecordRedirectHitHandler::class))->getAttributes(AsMessageHandler::class));
     }
 
     public function testUrlRedirectsHitsDisabledDropsHandler(): void

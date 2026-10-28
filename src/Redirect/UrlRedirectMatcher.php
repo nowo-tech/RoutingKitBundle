@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHit;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -45,6 +46,7 @@ final class UrlRedirectMatcher implements ResetInterface
         private readonly ?MessageBusInterface $bus = null,
         private readonly int $cacheTtl = self::DEFAULT_CACHE_TTL,
         private readonly bool $trackHits = true,
+        private readonly ?ClockInterface $clock = null,
     ) {
     }
 
@@ -65,7 +67,7 @@ final class UrlRedirectMatcher implements ResetInterface
         }
 
         $path = UrlRedirect::normalizePath($path);
-        $now  = new DateTimeImmutable();
+        $now  = $this->clock?->now() ?? new DateTimeImmutable();
         try {
             if ($this->bus instanceof MessageBusInterface) {
                 $this->bus->dispatch(new RecordRedirectHit($path, $now));
@@ -83,7 +85,8 @@ final class UrlRedirectMatcher implements ResetInterface
      */
     public function flushHits(): void
     {
-        $hits              = $this->pendingHits;
+        $hits = $this->pendingHits;
+        // @igor-ignore - Request buffer emptied here; reset() (kernel.reset) and kernel.terminate both call flushHits().
         $this->pendingHits = [];
         foreach ($hits as [$path, $at]) {
             try {
@@ -114,6 +117,7 @@ final class UrlRedirectMatcher implements ResetInterface
         $this->map = null;
     }
 
+    // @igor-ignore - Safety net for CLI / non-HTTP use only; in workers kernel.terminate and reset() flush the hits.
     public function __destruct()
     {
         $this->flushHits();

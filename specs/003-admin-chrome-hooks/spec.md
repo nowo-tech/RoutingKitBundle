@@ -3,7 +3,7 @@
 **Feature Branch**: `003-admin-chrome-hooks`  
 **Status**: Implemented (v1.7.0)  
 **Created**: 2026-10-13  
-**Depends on**: [`001-routing-kit`](../001-routing-kit/spec.md), [`002-url-redirects`](../002-url-redirects/spec.md)  
+**Depends on**: [`000-product-overview`](../000-product-overview/spec.md), [`002-url-redirects`](../002-url-redirects/spec.md)  
 **Upstream request**: symfony-beacon spec 134 FR-010 (kit upstream improvements)
 
 ---

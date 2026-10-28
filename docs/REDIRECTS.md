@@ -153,6 +153,8 @@ framework:
             Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHit: async
 ```
 
+`RecordRedirectHitHandler` (`#[AsMessageHandler]`) exists only when `hits.message_bus` is set. Retries and the failure transport are the host's Messenger configuration (`framework.messenger.transports.async.retry_strategy`, `failure_transport`); a failed hit never affects the redirect itself. The handler is not idempotent: a redelivered message counts the hit twice, which only skews the statistics. Dispatch failures are logged as a `warning` ("Redirect hit not recorded") without the visitor URL.
+
 The handler (`RecordRedirectHitHandler`) is registered only when a bus is configured. Unrouted messages are handled synchronously. Hit failures are logged, never surfaced to the visitor. Set `hits.enabled: false` to disable counting.
 
 ## Caching

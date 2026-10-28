@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -100,6 +101,17 @@ final class UrlRedirectMatcherTest extends TestCase
             ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
 
         (new UrlRedirectMatcher($storage, null, null, $bus))->recordHit('/old/');
+    }
+
+    public function testHitTimeComesFromTheInjectedClock(): void
+    {
+        $storage = $this->createStub(UrlRedirectStorageInterface::class);
+        $bus     = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn (object $m): bool => $m instanceof RecordRedirectHit && $m->at->format('Y-m-d H:i:s') === '2026-10-28 12:00:00'))
+            ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
+
+        (new UrlRedirectMatcher($storage, null, null, $bus, clock: new MockClock('2026-10-28 12:00:00')))->recordHit('/old');
     }
 
     public function testABusFailureIsLoggedNotThrown(): void

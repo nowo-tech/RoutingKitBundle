@@ -31,6 +31,9 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-17 | Panel POST actions validate CSRF when `CsrfTokenManagerInterface` is available. |
 | FR-18 | Seven minimum translation locales for the panel domain `NowoRoutingKitBundle`. |
 | FR-19 | Safe under FrankenPHP **worker** with the kernel **not** reset between requests: no per-request state leaks; panel path changes propagate to every worker sharing `%kernel.cache_dir%` on the next main request. |
+| FR-20 | With `default_locale_unprefixed`, the default locale never appears in URLs: `DefaultLocaleRouter` generates bare URLs and `GET /{default}/…` answers a 301 to the bare twin (`DefaultLocalePrefixRedirectSubscriber`). |
+| FR-21 | `CsrfProtectionPass` fails the container build when the panel is enabled without form CSRF protection (fail closed). |
+| FR-22 | Operator URL redirects (opt-in `url_redirects`) per [`002-url-redirects`](../002-url-redirects/spec.md) `REQ-REDIR-001` … `REQ-REDIR-008`. |
 
 ## User scenarios
 
@@ -77,7 +80,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | SC-01 | PHPUnit covers production PHP under `src/` (optional SeoKit bridge excluded when not installed). |
 | SC-02 | PHPStan level 8 passes with `nowo-tech/phpstan-frankenphp` rulesets. |
 | SC-03 | Demo FrankenPHP app boots; panel and sample `#[Routable]` pages smoke-test. |
-| SC-04 | `code-inventory.md` maps 100% of production files under `src/` to one or more `FR-*` IDs. |
+| SC-04 | `code-inventory.md` maps 100% of production files under `src/` (**80/80**, 2026-10-28) to one or more `FR-*` IDs. |
 | SC-05 | Unit tests prove two workers sharing a cache directory pick up a path change without `kernel.reset` (`WorkerRouteTableSyncTest`). |
 
 ## Validation

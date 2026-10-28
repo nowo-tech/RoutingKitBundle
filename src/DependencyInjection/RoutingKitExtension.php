@@ -42,6 +42,7 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Twig\RoutingKitTwigExtension;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Asset\Package;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
@@ -326,7 +327,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
                 ->setArgument('$urls', new Reference('router'))
                 ->setArgument('$locales', new Reference(LocaleProviderInterface::class))
                 ->setArgument('$status', (int) $options['redirect_status'])
-                ->addTag('kernel.event_subscriber')
+                // Conditional service (redirect_prefixed): autoconfigure applies the EventSubscriberInterface tag.
+                ->setAutoconfigured(true)
                 ->setPublic(false));
         }
     }
@@ -416,18 +418,19 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
             ->setArgument('$bus', is_string($bus) && $bus !== '' ? new Reference($bus) : null)
             ->setArgument('$cacheTtl', $redirects['cache_ttl'])
-            ->setArgument('$trackHits', $redirects['hits']['enabled']);
+            ->setArgument('$trackHits', $redirects['hits']['enabled'])
+            ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
-        if (is_string($bus) && $bus !== '' && $redirects['hits']['enabled']) {
-            $container->getDefinition(RecordRedirectHitHandler::class)->addTag('messenger.message_handler');
-        } else {
+        // The handler carries #[AsMessageHandler] (autoconfigured by services.yaml); it only exists with a hit bus.
+        if (!is_string($bus) || $bus === '' || !$redirects['hits']['enabled']) {
             $container->removeDefinition(RecordRedirectHitHandler::class);
         }
 
         if ($container->hasDefinition(UrlRedirectPanelController::class)) {
             $container->getDefinition(UrlRedirectPanelController::class)
                 ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
-                ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
+                ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+                ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
         }
     }
 

@@ -24,6 +24,7 @@ use Nowo\UiKitBundle\View\Label;
 use Nowo\UiKitBundle\View\ListPage;
 use Nowo\UiKitBundle\View\PageHeader;
 use Nowo\UiKitBundle\View\Pagination;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -73,6 +74,7 @@ final class UrlRedirectPanelController
         private readonly ?TranslatorInterface $translator = null,
         private readonly int $listPageSize = 50,
         private readonly ?LoggerInterface $logger = null,
+        private readonly ?ClockInterface $clock = null,
     ) {
     }
 
@@ -197,7 +199,7 @@ final class UrlRedirectPanelController
             $errors = $validator->validate($source, $target, $status, $note, $existing?->getId());
 
             if ($errors === []) {
-                $now      = new DateTimeImmutable();
+                $now      = $this->clock?->now() ?? new DateTimeImmutable();
                 $user     = $this->accessGuard?->userIdentifier();
                 $redirect = $existing ?? (new UrlRedirect())->setCreatedAt($now)->setCreatedBy($user);
                 // @igor-ignore - Per-request value object loaded from storage, not a shared service.
