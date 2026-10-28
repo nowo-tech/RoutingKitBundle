@@ -4,6 +4,15 @@
 composer require nowo-tech/routing-kit-bundle
 ```
 
+## Table of contents
+
+- [Symfony Flex recipe](#symfony-flex-recipe)
+- [Routes](#routes)
+- [Protect the panel](#protect-the-panel)
+- [Assets](#assets)
+  - [Host layout integration (`css_framework: custom`)](#host-layout-integration-css_framework-custom)
+- [Twig Extra Bundle (REQ-TWIG-004)](#twig-extra-bundle-req-twig-004)
+
 ## Symfony Flex recipe
 
 The Flex recipe (`.symfony/recipe/nowo-tech/routing-kit-bundle`) registers the bundle, copies `config/packages/nowo_routing_kit.yaml`, and imports panel routes via `config/routes/nowo_routing_kit.yaml`.

@@ -9,6 +9,18 @@
 | **Verdict** | ✅ **Viable under scenario B** — no per-request state leaks; panel edits propagate to every worker sharing the cache directory on its next main request through a route-table version file |
 | Remediation (2026-09-23) | W-01 resolved (`RouteCacheInvalidator` version file + in-process router reset, `EventSubscriber/RouteTableFreshnessSubscriber`); W-02 resolved (`LOCK_SH` reads, single storage load per request); W-03 resolved (`DbRouteLoader` implements `ResetInterface`). Tests: `tests/Unit/Routing/WorkerRouteTableSyncTest.php` (two workers, real FrameworkBundle `Router` + `DbRouteLoader`), `tests/Unit/Routing/RouteCacheInvalidatorTest.php`, `tests/Unit/Routing/DbRouteLoaderTest.php`, `tests/Unit/EventSubscriber/RouteTableFreshnessSubscriberTest.php` |
 
+## Table of contents
+
+- [Execution model assumed](#execution-model-assumed)
+- [Summary](#summary)
+- [Services reviewed](#services-reviewed)
+- [Findings](#findings)
+  - [W-01 — Panel edits do not reach running workers; the route cache is deleted but not rebuilt in-process (Medium)](#w-01--panel-edits-do-not-reach-running-workers-the-route-cache-is-deleted-but-not-rebuilt-in-process-medium)
+  - [W-02 — Every main request reads the storage file repeatedly under an exclusive lock (Low)](#w-02--every-main-request-reads-the-storage-file-repeatedly-under-an-exclusive-lock-low)
+  - [W-03 — `DbRouteLoader` one-shot guard is never cleared (Info)](#w-03--dbrouteloader-one-shot-guard-is-never-cleared-info)
+- [Usage recommendations in worker mode](#usage-recommendations-in-worker-mode)
+- [Re-audit triggers](#re-audit-triggers)
+
 ## Execution model assumed
 
 FrankenPHP worker mode boots the Symfony kernel once per worker and serves many requests with the same container. This audit assumes the **strict** variant: the kernel is **not** rebooted between requests, so every shared service, static property and PHP global survives from one request to the next. Two scenarios are evaluated:

@@ -136,10 +136,7 @@ make -C demo/symfony8 demo-screenshots   # refreshes docs/images/demo/*.webp
 
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
-- [PSR evaluation (REQ-CS-007)](docs/PSR.md)
-- [Usage](docs/USAGE.md) — including [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) (UiKit layout and theme; no page copies)
-- [Templates](docs/TEMPLATES.md) — panel pages → UiKit scaffolds, view models, data blocks (REQ-UI-003)
-- [URL redirects](docs/REDIRECTS.md)
+- [Usage](docs/USAGE.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Changelog](docs/CHANGELOG.md)
@@ -152,6 +149,10 @@ make -C demo/symfony8 demo-screenshots   # refreshes docs/images/demo/*.webp
 
 ### Additional documentation
 
+- [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) — UiKit layout and theme; no page copies
+- [Templates](docs/TEMPLATES.md) — panel pages → UiKit scaffolds, view models, data blocks (REQ-UI-003)
+- [URL redirects](docs/REDIRECTS.md)
+- [PSR evaluation (REQ-CS-007)](docs/PSR.md)
 - [Demo (FrankenPHP)](docs/DEMO-FRANKENPHP.md)
 - [GitHub Actions CI requirements](docs/GITHUB_CI.md)
 
