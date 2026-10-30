@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.14.0](#to-1140)
 - [To 1.13.1](#to-1131)
 - [To 1.13.0](#to-1130)
 - [To 1.12.1](#to-1121)
@@ -95,6 +96,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.14.0
+
+From **1.13.1**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 **FormKit:** `nowo-tech/form-kit-bundle` `^2.16` is required (it was already a `require` dependency) and
 `Nowo\FormKitBundle\NowoFormKitBundle` must be registered: every panel form type, including the CSRF-only
