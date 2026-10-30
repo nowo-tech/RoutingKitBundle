@@ -96,6 +96,12 @@
 
 ## Unreleased
 
+**FormKit:** `nowo-tech/form-kit-bundle` `^2.16` is required (it was already a `require` dependency) and
+`Nowo\FormKitBundle\NowoFormKitBundle` must be registered: every panel form type, including the CSRF-only
+`RoutingPanelActionType`, is a FormKit Type. Field classes come from `nowo_form_kit.profiles.routing_kit`; define that
+profile in the host to change them (see [CONFIGURATION](CONFIGURATION.md)). Field names and CSRF token ids did not
+change.
+
 ## To 1.13.1
 
 From **1.13.0**:

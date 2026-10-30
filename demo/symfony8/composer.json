@@ -6,6 +6,7 @@
     "require": {
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "nowo-tech/form-kit-bundle": "^2.16",
         "nowo-tech/routing-kit-bundle": "@dev",
         "php": ">=8.4",
         "symfony/asset": "^8.0",

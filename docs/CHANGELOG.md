@@ -54,6 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Forms are FormKit Types (REQ-TWIG-005 rule 11):** the CSRF-only `RoutingPanelActionType` (export, clear cache,
+  delete, redirect delete) now carries `#[FormKitConfig('routing_kit')]` + `FormOptionsTrait` like the other panel
+  types; its `confirmed` hidden field is resolved through the FormKit profile (field name, `_csrf_token` and token id
+  unchanged). The seeded `routing_kit` profile gives hidden inputs no class.
+- `nowo-tech/form-kit-bundle` constraint raised to `^2.16` (already required; removed from `suggest`); the demo
+  requires it explicitly.
+
 ## [1.13.1] - 2026-10-30
 
 Bundle routes are opt-in again: controllers are no longer autoconfigured, so a host's routing.controllers import does not expose them (REQ-SF-004 rule 7). See [UPGRADING](UPGRADING.md#to-1131).

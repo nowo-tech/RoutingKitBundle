@@ -111,8 +111,27 @@ Layout bridge, slot vocabulary and tokens: UiKit `docs/PAGE_CONTRACT.md` and `do
 models and data blocks of this bundle: [TEMPLATES.md](TEMPLATES.md). The demo (`demo/symfony8`) ships a one-file
 bridge (`templates/layouts/admin.html.twig`) and `config/packages/nowo_ui_kit.yaml`.
 
-Form fields use the FormKit profile `routing_kit` (seeded when the host does not define it; override
-`nowo_form_kit.profiles.routing_kit` to change field classes).
+Every panel form type (`RoutePathDefinitionType`, `UrlRedirectType`, `RoutingPanelImportType` and the CSRF-only
+`RoutingPanelActionType`) is a FormKit Type on the profile `nowo_form_kit.profiles.routing_kit` (REQ-TWIG-005 rule 11).
+The bundle prepends that profile unless the host defines the key itself: translation domain `NowoRoutingKitBundle`,
+no convention help / placeholder keys, `nowo-ui-input form-control` on fields, `form-select` on choices,
+`form-check-input` on checkboxes, no class on hidden inputs. To change the field classes, define the whole profile:
+
+```yaml
+# config/packages/nowo_form_kit.yaml
+nowo_form_kit:
+    profiles:
+        routing_kit:
+            alias: routing_kit
+            translation_domain: NowoRoutingKitBundle
+            auto_placeholder: false
+            auto_help: false
+            defaults:
+                attr: { class: 'nowo-ui-input' }
+                row_attr: { class: 'nowo-ui-form-row' }
+            field_types:
+                hidden: { attr: { class: '' }, row_attr: {} }
+```
 
 ### Private access (REQ-UI-002)
 

@@ -37,7 +37,9 @@ final class FormKitTestSupport
                 'attr'     => ['class' => 'nowo-ui-input form-control'],
                 'row_attr' => ['class' => 'mb-2'],
             ],
-            'field_types' => [],
+            'field_types' => [
+                'hidden' => ['attr' => ['class' => ''], 'row_attr' => []],
+            ],
         ];
 
         return new FormOptionsMerger(
@@ -73,7 +75,7 @@ final class FormKitTestSupport
         return Forms::createFormFactoryBuilder()
             ->addExtension(new HttpFoundationExtension())
             ->addExtension(new CsrfExtension($csrfTokenManager))
-            ->addType(new RoutingPanelActionType())
+            ->addType(self::withMerger(new RoutingPanelActionType(), $plain))
             ->addType(self::withMerger(new RoutingPanelImportType(), $plain))
             ->addType(self::withMerger(new RoutePathDefinitionType(), $plain))
             ->addType(self::withMerger(new UrlRedirectType(), $plain))
