@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.13.1](#to-1131)
 - [To 1.13.0](#to-1130)
 - [To 1.12.1](#to-1121)
 - [To 1.12.0](#to-1120)
@@ -94,6 +95,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.13.1
+
+From **1.13.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 No action needed when you import `@NowoRoutingKitBundle/Resources/config/routes.yaml` (as documented). If the panel only appeared through Symfony's default `controllers: { resource: routing.controllers }` (Symfony >= 7.3, without `web_ui.path_prefix`), add that import: the bundle controllers are no longer registered there (REQ-SF-004 rule 7).
 
