@@ -24,8 +24,13 @@ final class RedirectTestKernel extends Kernel
 {
     use MicroKernelTrait;
 
-    public function __construct(private readonly string $baseDir)
-    {
+    /**
+     * @param bool $importBundleRoutes false keeps only the host default `routing.controllers` resource (REQ-SF-004 rule 7)
+     */
+    public function __construct(
+        private readonly string $baseDir,
+        private readonly bool $importBundleRoutes = true,
+    ) {
         parent::__construct('test', false);
     }
 
@@ -89,6 +94,12 @@ final class RedirectTestKernel extends Kernel
 
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
+        if (!$this->importBundleRoutes) {
+            $routes->import('routing.controllers');
+
+            return;
+        }
+
         $routes->import('@NowoRoutingKitBundle/Resources/config/routes.yaml');
         $routes->add('contacto', '/contacto')->controller([PagesController::class, 'page'])->methods(['GET']);
         $routes->add('contact', '/contact')->controller([PagesController::class, 'page'])->methods(['GET']);

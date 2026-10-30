@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Panel routes registered without being imported (REQ-SF-004 rule 7):** on Symfony >= 7.3 `#[AsController]` + autoconfiguration gave `RoutingPanelController` and `UrlRedirectPanelController` the `routing.controller` tag, so a host with the default `controllers: { resource: routing.controllers }` got the `nowo_routing_kit_panel*` / `nowo_routing_kit_redirects*` routes without importing `@NowoRoutingKitBundle/Resources/config/routes.yaml` and outside `web_ui.path_prefix` (the panel index on `/`; still behind the panel access guard). The controllers are no longer autoconfigured and no longer carry `#[AsController]`; the routes exist only where the host imports them. Regression test with a kernel that only loads `routing.controllers`.
+
 ## [1.13.0] - 2026-10-28
 
 RoutingKit: attribute wiring for the hit handler and prefix redirects, injectable clock, Spec Kit inventory 80/80. See [UPGRADING](UPGRADING.md#to-1130).

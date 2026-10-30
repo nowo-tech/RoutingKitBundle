@@ -124,6 +124,7 @@ final class RoutingKitExtensionTest extends TestCase
         $controller = $container->getDefinition(RoutingPanelController::class);
         self::assertSame('/_admin/routing', $controller->getArgument('$pathPrefix'));
         self::assertTrue($controller->isPublic());
+        self::assertFalse($controller->isAutoconfigured(), 'REQ-SF-004 rule 7: no routing.controller tag, routes are opt-in.');
         self::assertCount(2, $controller->getTag('controller.service_arguments'));
 
         $invalidator = $container->getDefinition(RouteCacheInvalidator::class);
