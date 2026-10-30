@@ -56,10 +56,15 @@ services:
     Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber: ~
 
+    # Panel controllers are not autoconfigured (REQ-SF-004 rule 7): on Symfony >= 7.3 a #[Route] class is autoconfigured
+    # with the routing.controller tag, and the host's default `routing.controllers` resource would then expose the panel
+    # routes without the host importing routes.yaml (outside web_ui.path_prefix). Routes are opt-in only.
     Nowo\RoutingKitBundle\Controller\RoutingPanelController:
         public: true
+        autoconfigure: false
         tags: ['controller.service_arguments']
 
     Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController:
         public: true
+        autoconfigure: false
         tags: ['controller.service_arguments']

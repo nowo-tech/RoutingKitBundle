@@ -36,7 +36,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
@@ -52,7 +51,6 @@ use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
-#[AsController]
 final class RoutingPanelController
 {
     public const CSRF_TOKEN_ID = 'nowo_routing_kit_panel';

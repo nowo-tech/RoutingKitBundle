@@ -32,7 +32,6 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -55,7 +54,6 @@ use function min;
  * 404. Access uses the panel guard (security.access_roles). Writes are CSRF-protected; delete uses the UiKit
  * confirm dialog, with a full-page confirmation (page/confirm) as the no-JS fallback (CSP-friendly).
  */
-#[AsController]
 final class UrlRedirectPanelController
 {
     public const CSRF_TOKEN_ID = 'nowo_routing_kit_url_redirect';
