@@ -6,6 +6,7 @@ namespace Nowo\RoutingKitBundle\Tests\Unit\Form;
 
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
+use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Form\Extension\Csrf\CsrfExtension;
 use Symfony\Component\Form\Forms;
@@ -21,7 +22,7 @@ final class RoutingPanelActionTypeTest extends TestCase
 
         $factory = Forms::createFormFactoryBuilder()
             ->addExtension(new CsrfExtension($csrf))
-            ->addType(new RoutingPanelActionType())
+            ->addType(FormKitTestSupport::withMerger(new RoutingPanelActionType()))
             ->getFormFactory();
 
         $form = $factory->createNamed('', RoutingPanelActionType::class);
@@ -31,5 +32,7 @@ final class RoutingPanelActionTypeTest extends TestCase
         self::assertSame('routing_panel_action', $form->getConfig()->getType()->getInnerType()->getBlockPrefix());
         self::assertCount(1, $form);
         self::assertTrue($form->has('confirmed'));
+        self::assertSame('', $form->get('confirmed')->getConfig()->getOption('attr')['class']);
+        self::assertSame('1', $form->get('confirmed')->getData());
     }
 }

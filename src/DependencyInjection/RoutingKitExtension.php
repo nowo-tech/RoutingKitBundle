@@ -220,6 +220,10 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
                         'textarea' => [
                             'attr' => ['class' => 'nowo-ui-input form-control'],
                         ],
+                        'hidden' => [
+                            'attr'     => ['class' => ''],
+                            'row_attr' => [],
+                        ],
                     ],
                 ],
             ];

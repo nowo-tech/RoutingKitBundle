@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Form;
 
+use Nowo\FormKitBundle\Attribute\FormKitConfig;
+use Nowo\FormKitBundle\Form\FormOptionsTrait;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Symfony\Component\Form\AbstractType;
@@ -12,16 +14,20 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Symfony form for toolbar actions that only need CSRF protection.
+ * Symfony form for toolbar actions that only need CSRF protection (FormKit Type, profile {@code routing_kit}).
  *
  * @extends AbstractType<array<string, mixed>|null>
  */
+#[FormKitConfig('routing_kit')]
 final class RoutingPanelActionType extends AbstractType
 {
+    use FormOptionsTrait;
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('confirmed', HiddenType::class, [
-            'data' => '1',
+        $this->addWithDefaults($builder, 'confirmed', HiddenType::class, [
+            'label' => false,
+            'data'  => '1',
         ]);
     }
 
