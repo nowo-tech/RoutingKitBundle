@@ -8,6 +8,7 @@
 - [SeoKitBundle](#seokitbundle)
 - [URL redirects](#url-redirects)
 - [Custom storage / locales](#custom-storage--locales)
+- [Using it from a DDD / hexagonal application](#using-it-from-a-ddd--hexagonal-application)
 - [Default locale without prefix](#default-locale-without-prefix)
 - [Overriding templates (REQ-TWIG-001)](#overriding-templates-req-twig-001)
 - [Customising the admin chrome](#customising-the-admin-chrome)
@@ -91,6 +92,57 @@ nowo_routing_kit:
 ```
 
 Implement `LocaleProviderInterface` and `RoutePathStorageInterface` (including `replaceAll()` since 1.1.1).
+
+## Using it from a DDD / hexagonal application
+
+RoutingKit is an **infrastructure + presentation** bundle: it owns URL data (route path rows, URL redirects), not
+your domain. It never references your entities and needs no Doctrine mapping, no `resolve_target_entities` and no
+base class. Keep it out of your domain layer and wire it from your infrastructure layer.
+
+**Persistence (ports).** The defaults are JSON files. To store rows in your own database, implement the ports in
+your infrastructure layer and point the config at them:
+
+- `Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface` → `nowo_routing_kit.storage.path_storage`
+- `Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface` → `nowo_routing_kit.url_redirects.storage`
+- `Nowo\RoutingKitBundle\Locale\LocaleProviderInterface` → `nowo_routing_kit.locale_provider`
+
+The ports exchange the bundle's own models (`RoutePathDefinition`, `UrlRedirect`); map them to your rows in the
+adapter. Who changed a row is stored as the user identifier string, never a user entity.
+
+**Asking your domain (SPI).** Implement `Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface` (autoconfigured)
+to tell the redirect validator whether a matched route still points to something live:
+
+```php
+final class ProductLivePathChecker implements LivePathCheckerInterface
+{
+    public function __construct(private ProductCatalog $catalog) {} // your domain port
+
+    public function isLive(string $route, array $parameters): ?bool
+    {
+        if ($route !== 'product_show') {
+            return null; // not mine, let other checkers decide
+        }
+
+        return $this->catalog->isPublished((string) ($parameters['slug'] ?? ''));
+    }
+}
+```
+
+Panel access goes through `RoutingKitAccessCheckerInterface::canAccess(object $user)`
+(`nowo_routing_kit.security.access_checker`).
+
+**Reacting to changes.** `Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent` (`definition`, `deleted`) is
+dispatched for every path saved, imported or deleted through `RoutePathManager`. Listen to it in your
+infrastructure layer to update projections. Redirect hit counting can go through Messenger
+(`RecordRedirectHit`) when `url_redirects.hits.message_bus` is set.
+
+**Known limitations.**
+
+- URL redirects have no service or events yet: creating one from application code means calling the
+  `UrlRedirectStorageInterface` adapter, `UrlRedirectValidator::validate()` and `UrlRedirectMatcher::invalidate()`
+  yourself.
+- `RoutePathManager::import(..., replaceAll: true)` does not dispatch `deleted: true` events for the rows it drops.
+- `RoutePathManager`, `PublicPathResolver` and `UrlRedirectMatcher` are final classes without interfaces.
 
 ## Default locale without prefix
 
