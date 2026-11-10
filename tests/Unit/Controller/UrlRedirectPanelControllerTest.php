@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Unit\Controller;
 
 use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
+use Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\Panel\PanelView;
@@ -25,6 +26,7 @@ use Nowo\UiKitBundle\View\ListPage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -40,6 +42,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
+use function array_map;
 use function count;
 
 final class UrlRedirectPanelControllerTest extends TestCase
@@ -198,6 +201,70 @@ final class UrlRedirectPanelControllerTest extends TestCase
         ]);
     }
 
+    /** Since 1.15: create, update and delete dispatch an id-only UrlRedirectChangedEvent after the write. */
+    public function testWritesDispatchUrlRedirectChangedEvents(): void
+    {
+        $tokens = new TokenStorage();
+        $tokens->setToken(new UsernamePasswordToken(new InMemoryUser('alice', null, ['ROLE_ADMIN']), 'main', ['ROLE_ADMIN']));
+        $events     = [];
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(UrlRedirectChangedEvent::class, static function (UrlRedirectChangedEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+        [$controller, $storage] = $this->controller(tokens: $tokens, dispatcher: $dispatcher);
+
+        $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/old', 'target_url' => '/contact', 'status_code' => '301']));
+        $id = (string) $storage->findBySource('/old')?->getId();
+        $controller->edit($this->post('/_routing/redirects/' . $id . '/edit', ['source_path' => '/older', 'target_url' => '/contact', 'status_code' => '302']), $id);
+        $controller->delete(Request::create('/_routing/redirects/' . $id . '/delete', 'POST', ['_csrf_token' => 'token-value', 'confirmed' => '1']), $id);
+
+        self::assertSame([
+            [$id, '/old', UrlRedirectChangedEvent::ACTION_CREATED, 'alice', false],
+            [$id, '/older', UrlRedirectChangedEvent::ACTION_UPDATED, 'alice', false],
+            [$id, '/older', UrlRedirectChangedEvent::ACTION_DELETED, 'alice', true],
+        ], array_map(static fn (UrlRedirectChangedEvent $event): array => [$event->redirectId, $event->sourcePath, $event->action, $event->actorId, $event->isDeleted()], $events));
+    }
+
+    /** KE-R-L1: a throwing listener is logged; the saved / deleted redirect is still reported as such. */
+    public function testAThrowingListenerDoesNotTurnAWriteIntoAFailure(): void
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(UrlRedirectChangedEvent::class, static function (): never {
+            throw new RuntimeException('projection down');
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(2))->method('error')->with(self::stringContains('event listener failed'), self::callback(
+            static fn (array $context): bool => $context['error'] === RuntimeException::class,
+        ));
+        [$controller, $storage] = $this->controller(logger: $logger, dispatcher: $dispatcher);
+
+        $created = $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/old', 'target_url' => '/contact', 'status_code' => '301']));
+        self::assertSame('/_routing/redirects?status=created', $created->headers->get('Location'));
+        $id = (string) $storage->findBySource('/old')?->getId();
+
+        $deleted = $controller->delete(Request::create('/_routing/redirects/' . $id . '/delete', 'POST', ['_csrf_token' => 'token-value', 'confirmed' => '1']), $id);
+        self::assertSame('/_routing/redirects?status=deleted', $deleted->headers->get('Location'));
+        self::assertNull($storage->findById($id));
+    }
+
+    /** Since 1.15: a refused or failed write dispatches nothing. */
+    public function testRefusedWritesDispatchNoEvent(): void
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(UrlRedirectChangedEvent::class, static function (): never {
+            self::fail('no event expected');
+        });
+        $failing = $this->createStub(UrlRedirectStorageInterface::class);
+        $failing->method('findBySource')->willReturn(null);
+        $failing->method('save')->willThrowException(new RuntimeException('disk full'));
+        [$controller] = $this->controller(storage: $failing, dispatcher: $dispatcher);
+        $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/old', 'target_url' => '/contact', 'status_code' => '301']));
+
+        [$controller, $storage] = $this->controller(csrfValid: false, dispatcher: $dispatcher);
+        $id                     = (string) $storage->save((new UrlRedirect())->setSourcePath('/kept')->setTargetUrl('/new'))->getId();
+        self::assertSame(403, $controller->delete(Request::create('/x', 'POST', ['_csrf_token' => 'forged', 'confirmed' => '1']), $id)->getStatusCode());
+    }
+
     public function testEditUnknownIdIs404(): void
     {
         [$controller] = $this->controller();
@@ -275,6 +342,7 @@ final class UrlRedirectPanelControllerTest extends TestCase
         ?PanelAccessGuard $guard = null,
         bool $roleGateDisabled = false,
         ?LoggerInterface $logger = null,
+        ?EventDispatcher $dispatcher = null,
     ): array {
         $storage ??= new FilesystemUrlRedirectStorage($this->file);
         $routes = new RouteCollection();
@@ -302,6 +370,7 @@ final class UrlRedirectPanelControllerTest extends TestCase
             $translator,
             $pageSize,
             $logger,
+            eventDispatcher: $dispatcher,
         );
 
         return [$controller, $storage];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Controller;
 
 use DateTimeImmutable;
+use Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent;
 use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
 use Nowo\RoutingKitBundle\Form\UrlRedirectType;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
@@ -34,6 +35,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -73,6 +75,7 @@ final class UrlRedirectPanelController
         private readonly int $listPageSize = 50,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?ClockInterface $clock = null,
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
     }
 
@@ -155,6 +158,7 @@ final class UrlRedirectPanelController
 
             $this->enabledStorage()->delete($id);
             $this->matcher?->invalidate();
+            $this->dispatchChanged($id, $redirect->getSourcePath(), UrlRedirectChangedEvent::ACTION_DELETED, null);
 
             return new RedirectResponse($this->view->pathPrefix . '/redirects?status=deleted');
         }
@@ -210,15 +214,26 @@ final class UrlRedirectPanelController
                     ->setUpdatedAt($now)
                     ->setUpdatedBy($user);
 
+                $saved = null;
                 try {
-                    $storage->save($redirect);
+                    $saved = $storage->save($redirect);
                     $this->matcher?->invalidate();
-
-                    return new RedirectResponse($this->view->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
                 } catch (Throwable $exception) {
                     // Storage messages may expose file paths or SQL: log them, show a generic error.
                     $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
                     $form->addError(new FormError($this->trans('redirects.error.save_failed'), 'redirects.error.save_failed'));
+                }
+
+                if ($saved instanceof UrlRedirect) {
+                    // Outside the storage try: the redirect is saved even when a listener fails (KE-R-L1).
+                    $this->dispatchChanged(
+                        (string) $saved->getId(),
+                        $saved->getSourcePath(),
+                        $existing instanceof UrlRedirect ? UrlRedirectChangedEvent::ACTION_UPDATED : UrlRedirectChangedEvent::ACTION_CREATED,
+                        $now,
+                    );
+
+                    return new RedirectResponse($this->view->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
                 }
             }
 
@@ -289,6 +304,27 @@ final class UrlRedirectPanelController
         return $this->formFactory->createNamed('', RoutingPanelActionType::class, null, [
             'csrf_token_id' => self::DELETE_CSRF_TOKEN_PREFIX . $id,
         ]);
+    }
+
+    /**
+     * Since 1.15: id-only event after a successful write (no dispatcher: nothing). The write is done: a listener that
+     * throws is logged (its class only) and the panel still answers as saved / deleted.
+     *
+     * @param UrlRedirectChangedEvent::ACTION_* $action
+     */
+    private function dispatchChanged(string $id, string $sourcePath, string $action, ?DateTimeImmutable $at): void
+    {
+        try {
+            $this->eventDispatcher?->dispatch(new UrlRedirectChangedEvent(
+                $id,
+                $sourcePath,
+                $action,
+                $this->accessGuard?->userIdentifier(),
+                $at ?? $this->clock?->now() ?? new DateTimeImmutable(),
+            ));
+        } catch (Throwable $failure) {
+            $this->logger?->error('RoutingKit: URL redirect {action} event listener failed: {error}', ['action' => $action, 'error' => $failure::class, 'redirect_id' => $id]);
+        }
     }
 
     private function find(string $id): UrlRedirect
