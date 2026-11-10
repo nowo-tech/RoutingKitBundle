@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.15.0](#to-1150)
 - [To 1.14.0](#to-1140)
 - [To 1.13.1](#to-1131)
 - [To 1.13.0](#to-1130)
@@ -96,6 +97,19 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.15.0
+
+Target **1.15.0**, from **1.14.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
+
+- Nothing to change. Two additive event changes:
+  - A replace-all import now also dispatches `RoutePathsChangedEvent` with `deleted: true` for each removed row
+    (after the kept rows' events). A listener that assumed only saves during an import should check `$event->deleted`.
+  - New `UrlRedirectChangedEvent` after panel redirect writes; listen to it if you project or audit redirects.
 
 ## To 1.14.0
 

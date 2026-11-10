@@ -132,16 +132,18 @@ Panel access goes through `RoutingKitAccessCheckerInterface::canAccess(object $u
 (`nowo_routing_kit.security.access_checker`).
 
 **Reacting to changes.** `Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent` (`definition`, `deleted`) is
-dispatched for every path saved, imported or deleted through `RoutePathManager`. Listen to it in your
-infrastructure layer to update projections. Redirect hit counting can go through Messenger
+dispatched for every path saved, imported or deleted through `RoutePathManager`, including (since 1.15) a
+`deleted: true` event for each row a replace-all import removed. URL redirect writes from the panel dispatch
+`Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent` (since 1.15) after the storage write: scalars only
+(`redirectId`, `sourcePath`, `action` = `created` / `updated` / `deleted`, `actorId`, `occurredAt`). Listen to them
+in your infrastructure layer to update projections or write an audit. Redirect hit counting can go through Messenger
 (`RecordRedirectHit`) when `url_redirects.hits.message_bus` is set.
 
 **Known limitations.**
 
-- URL redirects have no service or events yet: creating one from application code means calling the
+- URL redirects have no application service yet: creating one from application code means calling the
   `UrlRedirectStorageInterface` adapter, `UrlRedirectValidator::validate()` and `UrlRedirectMatcher::invalidate()`
-  yourself.
-- `RoutePathManager::import(..., replaceAll: true)` does not dispatch `deleted: true` events for the rows it drops.
+  yourself, and no `UrlRedirectChangedEvent` is dispatched for such writes (only panel writes dispatch it).
 - `RoutePathManager`, `PublicPathResolver` and `UrlRedirectMatcher` are final classes without interfaces.
 
 ## Default locale without prefix

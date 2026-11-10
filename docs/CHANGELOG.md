@@ -55,6 +55,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target **1.15.0** (minor, additive).
+
+### Added
+
+- `Event\UrlRedirectChangedEvent`: the URL redirect panel dispatches it after a successful create, update or delete,
+  with scalars only (`redirectId`, `sourcePath`, `action`, `actorId`, `occurredAt`). `UrlRedirectPanelController`
+  takes an optional `$eventDispatcher` (last argument).
+
+### Fixed
+
+- `RoutePathManager::import(..., replaceAll: true)` now dispatches `RoutePathsChangedEvent(deleted: true)` for every
+  row the import removed, so listeners (and the built-in audit subscriber) no longer drift.
+
 ### Documentation
 
 - USAGE: new section "Using it from a DDD / hexagonal application" (where the bundle sits in a hexagonal host, the ports, events and DTOs to build an anti-corruption layer on, and the known limitations).

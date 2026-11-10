@@ -22,6 +22,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_map;
 use function count;
 
 final class RoutePathManagerTest extends TestCase
@@ -249,6 +250,38 @@ PHP);
             new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
             new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
         ], replaceAll: true);
+    }
+
+    /** Since 1.15: a replace-all import dispatches `deleted: true` for every row it removed. */
+    public function testImportReplaceAllDispatchesDeletedEventsForRemovedRows(): void
+    {
+        $storage = new InMemoryRoutePathStorage([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}', id: 'rk_kept'),
+            new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}', id: 'rk_gone'),
+        ]);
+        /** @var list<RoutePathsChangedEvent> $events */
+        $events     = [];
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnCallback(static function (RoutePathsChangedEvent $event) use (&$events): object {
+            $events[] = $event;
+
+            return $event;
+        });
+        $manager = new RoutePathManager(
+            $storage,
+            $this->createValidator(),
+            new RouteCacheInvalidator(new WarmableRouterSpy(), $this->cacheDir),
+            $dispatcher,
+            $this->createConflictDetector($storage),
+            autoInvalidateCache: false,
+            rejectConflicts: false,
+        );
+
+        $manager->import([new RoutePathDefinition('app_article_show', 'en', '/posts/{slug}', id: 'rk_kept')], replaceAll: true);
+
+        $summary = array_map(static fn (RoutePathsChangedEvent $event): array => [$event->definition->id, $event->deleted], $events);
+        self::assertSame([['rk_kept', false], ['rk_gone', true]], $summary);
+        self::assertSame('/articulos/{slug}', $events[1]->definition->path, 'the event carries the removed row');
     }
 
     public function testImportMergeEnforcesMaxDefinitions(): void

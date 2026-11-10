@@ -102,9 +102,18 @@ final class RoutePathManager
         $this->assertNoConflicts($prepared, $replaceAll);
 
         if ($replaceAll) {
+            $previous  = $this->storage->all();
             $savedRows = $this->storage->replaceAll($prepared);
+            $kept      = [];
             foreach ($savedRows as $saved) {
+                $kept[(string) $saved->id] = true;
                 $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+            }
+            // Since 1.15: the rows the import removed get their `deleted: true` event, like delete().
+            foreach ($previous as $removed) {
+                if (!isset($kept[(string) $removed->id])) {
+                    $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($removed, deleted: true));
+                }
             }
         } else {
             foreach ($prepared as $definition) {
