@@ -280,8 +280,8 @@ PHP);
         $manager->import([new RoutePathDefinition('app_article_show', 'en', '/posts/{slug}', id: 'rk_kept')], replaceAll: true);
 
         $summary = array_map(static fn (RoutePathsChangedEvent $event): array => [$event->definition->id, $event->deleted], $events);
-        self::assertSame([['rk_kept', false], ['rk_gone', true]], $summary);
-        self::assertSame('/articulos/{slug}', $events[1]->definition->path, 'the event carries the removed row');
+        self::assertSame([['rk_gone', true], ['rk_kept', false]], $summary, 'deletions first');
+        self::assertSame('/articulos/{slug}', $events[0]->definition->path, 'the event carries the removed row');
     }
 
     public function testImportMergeEnforcesMaxDefinitions(): void

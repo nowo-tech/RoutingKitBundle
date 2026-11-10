@@ -66,7 +66,8 @@ Target **1.15.0** (minor, additive).
 ### Fixed
 
 - `RoutePathManager::import(..., replaceAll: true)` now dispatches `RoutePathsChangedEvent(deleted: true)` for every
-  row the import removed, so listeners (and the built-in audit subscriber) no longer drift.
+  row the import removed, so listeners (and the built-in audit subscriber) no longer drift. The deletions are
+  dispatched before the saved rows.
 
 ### Documentation
 

@@ -225,6 +225,28 @@ final class UrlRedirectPanelControllerTest extends TestCase
         ], array_map(static fn (UrlRedirectChangedEvent $event): array => [$event->redirectId, $event->sourcePath, $event->action, $event->actorId, $event->isDeleted()], $events));
     }
 
+    /** KE-R-L1: a throwing listener is logged; the saved / deleted redirect is still reported as such. */
+    public function testAThrowingListenerDoesNotTurnAWriteIntoAFailure(): void
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(UrlRedirectChangedEvent::class, static function (): never {
+            throw new RuntimeException('projection down');
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(2))->method('error')->with(self::stringContains('event listener failed'), self::callback(
+            static fn (array $context): bool => $context['error'] === RuntimeException::class,
+        ));
+        [$controller, $storage] = $this->controller(logger: $logger, dispatcher: $dispatcher);
+
+        $created = $controller->create($this->post('/_routing/redirects/new', ['source_path' => '/old', 'target_url' => '/contact', 'status_code' => '301']));
+        self::assertSame('/_routing/redirects?status=created', $created->headers->get('Location'));
+        $id = (string) $storage->findBySource('/old')?->getId();
+
+        $deleted = $controller->delete(Request::create('/_routing/redirects/' . $id . '/delete', 'POST', ['_csrf_token' => 'token-value', 'confirmed' => '1']), $id);
+        self::assertSame('/_routing/redirects?status=deleted', $deleted->headers->get('Location'));
+        self::assertNull($storage->findById($id));
+    }
+
     /** Since 1.15: a refused or failed write dispatches nothing. */
     public function testRefusedWritesDispatchNoEvent(): void
     {

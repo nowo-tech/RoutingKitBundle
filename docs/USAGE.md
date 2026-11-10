@@ -136,7 +136,9 @@ dispatched for every path saved, imported or deleted through `RoutePathManager`,
 `deleted: true` event for each row a replace-all import removed. URL redirect writes from the panel dispatch
 `Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent` (since 1.15) after the storage write: scalars only
 (`redirectId`, `sourcePath`, `action` = `created` / `updated` / `deleted`, `actorId`, `occurredAt`). Listen to them
-in your infrastructure layer to update projections or write an audit. Redirect hit counting can go through Messenger
+in your infrastructure layer to update projections or write an audit. Key projections by `definition->id` /
+`redirectId`: a replace-all import sends the deletions first, then the saved rows, and an import from another
+environment re-creates rows under new ids. A listener that throws on a redirect event is logged; the write stands. Redirect hit counting can go through Messenger
 (`RecordRedirectHit`) when `url_redirects.hits.message_bus` is set.
 
 **Known limitations.**

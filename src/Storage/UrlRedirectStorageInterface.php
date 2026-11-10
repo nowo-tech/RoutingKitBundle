@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Storage;
 
 use DateTimeImmutable;
+use Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use RuntimeException;
 
@@ -13,7 +14,8 @@ use RuntimeException;
  *
  * Default: {@see FilesystemUrlRedirectStorage} (JSON file). Hosts that keep redirects in a database
  * implement this interface (e.g. over a Doctrine repository) and set
- * `nowo_routing_kit.url_redirects.storage` to the service id.
+ * `nowo_routing_kit.url_redirects.storage` to the service id. `save()` and `delete()` must commit before they return:
+ * the panel dispatches {@see UrlRedirectChangedEvent} right after them (since 1.15).
  */
 interface UrlRedirectStorageInterface
 {

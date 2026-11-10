@@ -108,8 +108,11 @@ composer update nowo-tech/routing-kit-bundle
 
 - Nothing to change. Two additive event changes:
   - A replace-all import now also dispatches `RoutePathsChangedEvent` with `deleted: true` for each removed row
-    (after the kept rows' events). A listener that assumed only saves during an import should check `$event->deleted`.
-  - New `UrlRedirectChangedEvent` after panel redirect writes; listen to it if you project or audit redirects.
+    (before the saved rows' events). A listener that assumed only saves during an import should check
+    `$event->deleted`; key projections by id.
+  - New `UrlRedirectChangedEvent` after panel redirect writes; listen to it if you project or audit redirects. A
+    listener exception is logged and does not undo or fail the write. A custom `UrlRedirectStorageInterface` adapter
+    must commit in `save()` / `delete()`.
 
 ## To 1.14.0
 

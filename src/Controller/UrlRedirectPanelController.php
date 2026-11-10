@@ -158,7 +158,7 @@ final class UrlRedirectPanelController
 
             $this->enabledStorage()->delete($id);
             $this->matcher?->invalidate();
-            $this->dispatchChanged($id, $redirect->getSourcePath(), UrlRedirectChangedEvent::ACTION_DELETED);
+            $this->dispatchChanged($id, $redirect->getSourcePath(), UrlRedirectChangedEvent::ACTION_DELETED, null);
 
             return new RedirectResponse($this->view->pathPrefix . '/redirects?status=deleted');
         }
@@ -214,9 +214,18 @@ final class UrlRedirectPanelController
                     ->setUpdatedAt($now)
                     ->setUpdatedBy($user);
 
+                $saved = null;
                 try {
                     $saved = $storage->save($redirect);
                     $this->matcher?->invalidate();
+                } catch (Throwable $exception) {
+                    // Storage messages may expose file paths or SQL: log them, show a generic error.
+                    $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
+                    $form->addError(new FormError($this->trans('redirects.error.save_failed'), 'redirects.error.save_failed'));
+                }
+
+                if ($saved instanceof UrlRedirect) {
+                    // Outside the storage try: the redirect is saved even when a listener fails (KE-R-L1).
                     $this->dispatchChanged(
                         (string) $saved->getId(),
                         $saved->getSourcePath(),
@@ -225,10 +234,6 @@ final class UrlRedirectPanelController
                     );
 
                     return new RedirectResponse($this->view->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
-                } catch (Throwable $exception) {
-                    // Storage messages may expose file paths or SQL: log them, show a generic error.
-                    $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
-                    $form->addError(new FormError($this->trans('redirects.error.save_failed'), 'redirects.error.save_failed'));
                 }
             }
 
@@ -302,19 +307,24 @@ final class UrlRedirectPanelController
     }
 
     /**
-     * Since 1.15: id-only event after a successful write (no dispatcher: nothing).
+     * Since 1.15: id-only event after a successful write (no dispatcher: nothing). The write is done: a listener that
+     * throws is logged (its class only) and the panel still answers as saved / deleted.
      *
      * @param UrlRedirectChangedEvent::ACTION_* $action
      */
-    private function dispatchChanged(string $id, string $sourcePath, string $action, ?DateTimeImmutable $at = null): void
+    private function dispatchChanged(string $id, string $sourcePath, string $action, ?DateTimeImmutable $at): void
     {
-        $this->eventDispatcher?->dispatch(new UrlRedirectChangedEvent(
-            $id,
-            $sourcePath,
-            $action,
-            $this->accessGuard?->userIdentifier(),
-            $at ?? $this->clock?->now() ?? new DateTimeImmutable(),
-        ));
+        try {
+            $this->eventDispatcher?->dispatch(new UrlRedirectChangedEvent(
+                $id,
+                $sourcePath,
+                $action,
+                $this->accessGuard?->userIdentifier(),
+                $at ?? $this->clock?->now() ?? new DateTimeImmutable(),
+            ));
+        } catch (Throwable $failure) {
+            $this->logger?->error('RoutingKit: URL redirect {action} event listener failed: {error}', ['action' => $action, 'error' => $failure::class, 'redirect_id' => $id]);
+        }
     }
 
     private function find(string $id): UrlRedirect
