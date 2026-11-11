@@ -57,6 +57,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target: 1.15.2 (patch).
+
+### Fixed
+
+- **Stale canonical redirects in a worker that never runs the services resetter (1.8.0 – 1.15.1):**
+  `CanonicalRedirectSubscriber` memoised the resolved canonical / alias path table for the life of the service, and
+  only `kernel.reset` or a `RoutePathsChangedEvent` in the same worker dropped it. With the stock Symfony kernel the
+  services resetter runs before every request (also with `FRANKENPHP_RESET_KERNEL=false`), so stock hosts are not
+  affected. A host that removes, replaces or bypasses `services_resetter` (or drives `http_kernel` directly) kept
+  redirecting a path another worker had disabled, renamed or deleted, until the worker restarted. The subscriber now
+  holds no table at all: it resolves it once per main request from the cache pool (keyed by the route-table version,
+  so another worker's edit is seen on the next request) or, with no pool, from the storage. `reset()` stays as a BC
+  no-op. No user or tenant data is involved. Test: `CanonicalRedirectKeptAliveKernelTest` (600 requests through
+  `http_kernel` without the resetter, two locales alternating, path disabled by another worker mid-run, memory
+  margin 2 MiB).
+
 ## [1.15.1] - 2026-11-11
 
 Target: 1.15.1 (patch).

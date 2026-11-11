@@ -18,6 +18,8 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
+use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
@@ -254,18 +256,36 @@ final class CanonicalRedirectSubscriberTest extends TestCase
         self::assertSame('/about', $event->getResponse()?->headers->get('Location'));
     }
 
-    public function testTableIsMemoizedUntilReset(): void
+    public function testEachMainRequestStartsFromTheStorageNotFromAnEarlierMemo(): void
     {
         $storage    = $this->countingStorage([$this->redirectingAbout()]);
         $subscriber = $this->subscriberFor($storage);
 
         $subscriber->onKernelRequest($this->createEvent('/en/about'));
         $subscriber->onKernelRequest($this->createEvent('/other'));
-        self::assertSame(1, $storage->reads);
+        self::assertSame(2, $storage->reads, 'Without a cache pool the storage is read once per main request.');
 
-        $subscriber->reset();
+        $subscriber->onKernelRequest($this->createEvent('/other', HttpKernelInterface::SUB_REQUEST));
+        self::assertSame(2, $storage->reads, 'Sub-requests do not read the table.');
+    }
+
+    public function testResetKeepsTheSubscriberUsableAndHoldsNoTable(): void
+    {
+        $storage    = $this->countingStorage([$this->redirectingAbout()]);
+        $subscriber = $this->subscriberFor($storage);
+
         $subscriber->onKernelRequest($this->createEvent('/other'));
+        $subscriber->reset();
+        $event = $this->createEvent('/en/about');
+        $subscriber->onKernelRequest($event);
+
         self::assertSame(2, $storage->reads);
+        self::assertSame('/about', $event->getResponse()?->headers->get('Location'));
+        $mutable = array_filter(
+            (new ReflectionClass($subscriber))->getProperties(),
+            static fn (ReflectionProperty $property): bool => !$property->isReadOnly(),
+        );
+        self::assertSame([], $mutable, 'No mutable state: nothing can survive between requests.');
     }
 
     public function testCachePoolAvoidsStorageReadsAcrossInstances(): void

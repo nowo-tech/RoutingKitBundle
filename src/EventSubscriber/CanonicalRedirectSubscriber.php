@@ -29,18 +29,17 @@ use function rtrim;
  * Redirects non-canonical locale/path twins and trailing-slash variants when configured.
  *
  * Only safe methods (GET/HEAD) are redirected, and the query string is carried over to the target.
- * The resolved path table is memoized for the current request and, when a cache pool is configured,
- * cached under the current route-table version ({@see RouteCacheInvalidator}) so the JSON storage is
- * not read (and locked) on every request. Writes through the panel / RoutePathManager drop the entry.
+ * The resolved path table is never kept in this service (it is resolved once per main request) and, when a cache pool
+ * is configured, cached under the current route-table version ({@see RouteCacheInvalidator}) so the JSON storage is
+ * not read (and locked) on every request. Writes through the panel / RoutePathManager drop the entry and bump the
+ * version, so every worker follows on its next request, also a FrankenPHP worker kept alive without the services
+ * resetter.
  */
 final class CanonicalRedirectSubscriber implements EventSubscriberInterface, ResetInterface
 {
     public const CACHE_KEY = 'nowo_routing_kit.canonical_table.v1';
 
     public const DEFAULT_CACHE_TTL = 3600;
-
-    /** @var list<array{canonical: string, alias: string, redirectAlias: bool, slash: string}>|null */
-    private ?array $table = null; // @igor-ignore - Per-request memo cleared by reset() (kernel.reset) and on RoutePathsChangedEvent.
 
     public function __construct(
         private readonly RoutePathStorageInterface $storage,
@@ -109,7 +108,6 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
 
     public function onRoutePathsChanged(): void
     {
-        $this->table = null;
         if (!$this->cache instanceof CacheInterface) {
             return;
         }
@@ -121,9 +119,12 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
         }
     }
 
+    /**
+     * Nothing to drop: since 1.15.2 the path table is not memoised in the service, so a worker kept alive without the
+     * services resetter reads the shared cache / storage on every main request. Kept for BC (`kernel.reset` tag).
+     */
     public function reset(): void
     {
-        $this->table = null;
     }
 
     /**
@@ -131,10 +132,6 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
      */
     private function table(): array
     {
-        if ($this->table !== null) {
-            return $this->table;
-        }
-
         try {
             if ($this->cache instanceof CacheInterface) {
                 /** @var list<array{canonical: string, alias: string, redirectAlias: bool, slash: string}> $table */
@@ -151,7 +148,7 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
             $table = [];
         }
 
-        return $this->table = $table;
+        return $table;
     }
 
     /**
