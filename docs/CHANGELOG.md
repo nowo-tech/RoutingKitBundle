@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[1.15.2] - 2026-11-11](#1152---2026-11-11)
 - [[1.15.1] - 2026-11-11](#1151---2026-11-11)
 - [[1.15.0] - 2026-11-10](#1150---2026-11-10)
 - [[1.14.0] - 2026-10-30](#1140---2026-10-30)
@@ -56,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-07-26](#100---2026-07-26)
 
 ## [Unreleased]
+
+## [1.15.2] - 2026-11-11
 
 Target: 1.15.2 (patch).
 
@@ -779,7 +782,7 @@ First stable release of **Routing Kit Bundle**.
 - **Symfony** `^7.4 || ^8.0` (CI minors: **7.4**, **8.0**, **8.1**).
 - Twig for the CRUD panel templates.
 
-[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.15.1...HEAD
+[Unreleased]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.15.2...HEAD
 [1.9.3]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.2...v1.9.3
 [1.9.2]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/nowo-tech/RoutingKitBundle/compare/v1.9.0...v1.9.1
