@@ -56,6 +56,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target: 1.15.1 (patch).
+
+### Fixed
+
+- **FrankenPHP worker without the services resetter:** the URL redirect matcher memoised the redirect map for the life of
+  the worker (only `kernel.reset` or an edit made in the same worker dropped it), so a redirect changed, disabled or
+  deleted from another worker kept being served. The map is now dropped at the request boundary (main
+  `kernel.request` and `kernel.terminate`); the configured cache pool still saves the storage reads.
+
+### Changed
+
+- CI: standalone `igor` job (igor-php worker-state audit, REQ-CS-008). `docs/FRANKENPHP-WORKER-AUDIT.md` re-audited.
+
 ## [1.15.0] - 2026-11-10
 
 Target **1.15.0** (minor, additive).
