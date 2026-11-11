@@ -34,7 +34,7 @@ final class UrlRedirectMatcher implements ResetInterface
     public const DEFAULT_CACHE_TTL = 3600;
 
     /** @var array<string, array{target: string, status: int}>|null */
-    private ?array $map = null; // @igor-ignore - Per-request memo cleared by reset() (kernel.reset) and invalidate().
+    private ?array $map = null; // @igor-ignore - Per-request memo cleared at the request boundary (UrlRedirectSubscriber), by reset() and invalidate().
 
     /** @var list<array{string, DateTimeImmutable}> */
     private array $pendingHits = []; // @igor-ignore - Hits of the current request, written by flushHits() (kernel.terminate / reset()).
@@ -111,10 +111,17 @@ final class UrlRedirectMatcher implements ResetInterface
         }
     }
 
+    /**
+     * Request boundary (main `kernel.request`, `kernel.terminate`) and `kernel.reset`: writes the pending hits and
+     * drops the memoised redirect map, so a kept-alive worker without the services resetter reads the redirects
+     * changed by another worker on its next request (the shared cache pool, when configured, still saves the reads).
+     */
     public function reset(): void
     {
         $this->flushHits();
-        $this->map = null;
+        // Already emptied by flushHits(); assigned here as well so the reset contract is explicit.
+        $this->pendingHits = [];
+        $this->map         = null;
     }
 
     // @igor-ignore - Safety net for CLI / non-HTTP use only; in workers kernel.terminate and reset() flush the hits.

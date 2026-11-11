@@ -13,6 +13,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\TerminableInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 
 /**
  * End-to-end: panel CRUD (real Twig templates, forms, CSRF, translations) and the public listener.
@@ -160,6 +163,47 @@ final class UrlRedirectKernelTest extends TestCase
         self::assertSame(301, $hit->getStatusCode(), 'Browsers send accented paths percent-encoded.');
         self::assertSame('/contact', $hit->headers->get('Location'));
         self::assertSame('page:contacto', $this->request('GET', '/contacto')->getContent(), 'The live page wins over a stale redirect.');
+    }
+
+    /**
+     * FrankenPHP worker mode with the kernel kept alive and no services resetter (`http_kernel` handle / terminate,
+     * never `Kernel::handle()`, which runs the resetter): a redirect changed by another worker (storage written, this
+     * worker's matcher never invalidated) is honoured from the next request on, and hits are written per request.
+     */
+    public function testKeptAliveKernelSeesRedirectsChangedByAnotherWorker(): void
+    {
+        $this->storage()->save((new UrlRedirect())->setSourcePath('/legacy')->setTargetUrl('/contact'));
+        $http = $this->kernel->getContainer()->get('http_kernel');
+        self::assertInstanceOf(HttpKernelInterface::class, $http);
+        self::assertInstanceOf(TerminableInterface::class, $http);
+        $before = 0;
+
+        for ($i = 0; $i < 400; ++$i) {
+            if ($i === 200) {
+                // Another worker disables the redirect: only the shared storage changes.
+                $redirect = $this->storage()->findBySource('/legacy');
+                self::assertNotNull($redirect);
+                $this->storage()->save($redirect->setEnabled(false));
+                // What that worker's UrlRedirectMatcher::invalidate() does to the shared pool; this worker's matcher is not told.
+                $container = $this->kernel->getContainer()->get('test.service_container');
+                self::assertInstanceOf(ContainerInterface::class, $container);
+                $pool = $container->get('cache.app');
+                self::assertInstanceOf(CacheInterface::class, $pool);
+                $pool->delete(UrlRedirectMatcher::CACHE_KEY);
+            }
+            $request  = Request::create('/legacy');
+            $response = $http->handle($request);
+            self::assertSame($i < 200 ? 301 : 404, $response->getStatusCode(), 'request #' . $i);
+            $http->terminate($request, $response);
+
+            if ($i === 49) {
+                gc_collect_cycles();
+                $before = memory_get_usage();
+            }
+        }
+        gc_collect_cycles();
+        self::assertLessThan(2 * 1024 * 1024, memory_get_usage() - $before, 'Memory must stay flat over 350 requests.');
+        self::assertSame(200, $this->storage()->findBySource('/legacy')?->getHits(), 'Every redirected request wrote its hit.');
     }
 
     private function storage(): UrlRedirectStorageInterface

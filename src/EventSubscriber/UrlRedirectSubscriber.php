@@ -43,16 +43,25 @@ final class UrlRedirectSubscriber implements EventSubscriberInterface
         ];
     }
 
-    /** Hit counting without Messenger: write after the redirect response is sent. */
+    /**
+     * Hit counting without Messenger: write after the redirect response is sent. Also drops the matcher's memoised
+     * redirect map (request boundary; FrankenPHP worker without the services resetter).
+     */
     public function onKernelTerminate(): void
     {
-        $this->redirects->flushHits();
+        $this->redirects->reset();
     }
 
     public function onKernelRequest(RequestEvent $event): void
     {
+        if (!$event->isMainRequest()) {
+            return;
+        }
+        // Request boundary: start from the shared storage / cache, never from a map memoised by an earlier request.
+        $this->redirects->reset();
+
         $request = $event->getRequest();
-        if (!$event->isMainRequest() || !$request->isMethodCacheable()) {
+        if (!$request->isMethodCacheable()) {
             return;
         }
 
