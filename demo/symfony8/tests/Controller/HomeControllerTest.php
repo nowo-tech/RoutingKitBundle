@@ -62,7 +62,7 @@ final class HomeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-nowo-ui-page="' . $pageType . '"]');
         self::assertSelectorExists('#nowo-ui-content[data-nowo-ui-bundle="NowoRoutingKitBundle"]');
-        self::assertSelectorExists('nav.demo-admin-nav');
+        self::assertSelectorExists('header[data-testid="demo-masthead"] nav[aria-label="Demo"]');
         self::assertStringNotContainsString('cdn.', (string) $client->getResponse()->getContent());
     }
 }

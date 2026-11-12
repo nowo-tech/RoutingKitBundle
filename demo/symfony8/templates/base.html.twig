@@ -1,37 +1,20 @@
-<!DOCTYPE html>
-<html lang="en"{% block html_attributes %}{% endblock %}>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Routing Kit Demo{% endblock %}</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1a1a1a; }
-        main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1.25rem; }
-        a:not([class]) { color: #0b5fff; }
-        .card { background: #fff; border: 1px solid #ddd; border-radius: .75rem; padding: 1.25rem; margin-top: 1rem; overflow-x: auto; }
-        .banner-unsafe { background: #fff3cd; border: 1px solid #e0c36a; color: #5c4800; padding: 0.85rem 1rem; margin-bottom: 1rem; border-radius: .5rem; font-size: 0.95rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid #e6e6e6; vertical-align: top; }
-        th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
-        code { font-size: 0.88em; }
-        ul { padding-left: 1.2rem; }
-        main.demo-admin { max-width: 72rem; }
-        .demo-admin-nav { margin-bottom: 1.25rem; font-size: 0.9rem; }
-        /* Host form styling for the panel forms (the FormKit profile only adds classes). */
-        .nowo-ui-form > div:not(.nowo-ui-form__actions) { margin-bottom: 0.85rem; }
-        .nowo-ui-form label:not(.nowo-ui-check) { display: block; margin-bottom: 0.3rem; font-weight: 500; }
-        .nowo-ui-form .form-check label { display: inline; margin: 0 0 0 0.4rem; }
-        .nowo-ui-form .form-check { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; }
-        .nowo-ui-input, .nowo-ui-form select { width: 100%; max-width: 36rem; box-sizing: border-box; padding: 0.45rem 0.6rem; border: 1px solid #ccc; border-radius: 0.4rem; font: inherit; }
-        .nowo-ui-input.nowo-ui-input--full { max-width: none; }
-        .nowo-ui-form .help-text, .nowo-ui-form small { color: #666; font-size: 0.85rem; }
-    </style>
-    {% block stylesheets %}{% endblock %}
-</head>
-<body>
-<main class="{% block main_class %}{% endblock %}">
-    {% block body %}{% endblock %}
-</main>
-{% block javascripts %}{% endblock %}
-</body>
-</html>
+{#- REQ-DEMO-014: the demo shell is UiKit's admin layout with UiKit's default theme (nowo-ui.css from the bundle's own
+    asset package, no CSS framework, no CDN). It is also the host layout of the Routing Kit panel pages
+    (nowo_ui_kit.layouts.admin). The header menu lists the demo pages with the active item. -#}
+{% extends '@NowoUiKit/layout/admin.html.twig' %}
+
+{% block nowo_ui_document_title %}{% block title %}Routing Kit Demo{% endblock %}{% endblock %}
+
+{% block nowo_ui_navigation %}
+    {% set _route = app.request.attributes.get('_route')|default('') %}
+    <header class="nowo-ui-header" data-testid="demo-masthead">
+        <a class="nowo-ui-brand" href="/">Routing Kit Demo</a>
+        <nav class="nowo-ui-menu" aria-label="Demo">
+            <a class="nowo-ui-link" href="/"{% if _route == 'homepage' %} aria-current="page"{% endif %}>Home</a>
+            <a class="nowo-ui-link" href="/_routing/">Routing panel</a>
+            <a class="nowo-ui-link" href="/_routing/redirects">URL redirects</a>
+        </nav>
+    </header>
+{% endblock %}
+
+{% block nowo_ui_content %}{% block body %}{% endblock %}{% endblock %}

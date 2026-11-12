@@ -3,29 +3,33 @@
 {% block title %}Routing Kit Bundle Demo{% endblock %}
 
 {% block body %}
-    <div class="banner-unsafe" role="alert">
+    <div class="nowo-ui-flash nowo-ui-flash--warning" role="alert">
         <strong>Demo only — UNSAFE.</strong> No Security Bundle; <code>security.access_roles: []</code> / <code>allow_unauthenticated: true</code>.
         Do not expose this instance publicly. Production: <code>ROLE_ADMIN</code> + firewall (see docs/SECURITY.md).
     </div>
     <h1>Routing Kit Bundle</h1>
     <p>FrankenPHP demo for <code>nowo-tech/routing-kit-bundle</code> — locale paths, canonical styles, and CRUD panel.</p>
 
-    <div class="card">
-        <h2>Admin</h2>
+    <section class="nowo-ui-card">
+        <div class="nowo-ui-card__header"><h2 class="nowo-ui-card__title">Admin</h2></div>
+        <div class="nowo-ui-card__body">
         <ul>
-            <li><a href="/_routing/">Routing panel</a> (<code>/_routing</code>) — locale paths, signed import / export</li>
-            <li><a href="/_routing/redirects">URL redirects</a> (<code>/_routing/redirects</code>) — operator redirects</li>
+            <li><a class="nowo-ui-link" href="/_routing/">Routing panel</a> (<code>/_routing</code>) — locale paths, signed import / export</li>
+            <li><a class="nowo-ui-link" href="/_routing/redirects">URL redirects</a> (<code>/_routing/redirects</code>) — operator redirects</li>
         </ul>
-        <p>The panel pages extend the UiKit page scaffolds (REQ-UI-003) and render in this demo's host layout (<code>templates/layouts/admin.html.twig</code>, <code>nowo_ui_kit.layouts.admin</code>).</p>
+        <p>The panel pages extend the UiKit page scaffolds (REQ-UI-003) and render in this demo's host layout (<code>templates/base.html.twig</code>, <code>nowo_ui_kit.layouts.admin</code>).</p>
         <p>Mark controllers with <code>#[Routable]</code>, then create <code>(route, locale)</code> path rows. Paths are stored without <code>{_locale}</code>; the loader always applies <code>/{_locale}/…</code>.</p>
-    </div>
+        </div>
+    </section>
 
-    <div class="card">
-        <h2>Sample pages</h2>
+    <section class="nowo-ui-card">
+        <div class="nowo-ui-card__header"><h2 class="nowo-ui-card__title">Sample pages</h2></div>
+        <div class="nowo-ui-card__body">
         <ul>
-            <li><a href="/about">About</a> (<code>app_about</code>)</li>
-            <li><a href="/blog/hello-world">Blog post</a> (<code>app_blog_show</code>)</li>
-            <li><a href="/health">Health</a></li>
+            <li><a class="nowo-ui-link" href="/about">About</a> (<code>app_about</code>)</li>
+            <li><a class="nowo-ui-link" href="/blog/hello-world">Blog post</a> (<code>app_blog_show</code>)</li>
+            <li><a class="nowo-ui-link" href="/health">Health</a></li>
         </ul>
-    </div>
+        </div>
+    </section>
 {% endblock %}
