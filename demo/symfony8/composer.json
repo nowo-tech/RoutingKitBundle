@@ -9,6 +9,7 @@
         "nowo-tech/form-kit-bundle": "^2.16",
         "nowo-tech/routing-kit-bundle": "@dev",
         "php": ">=8.4",
+        "nowo-tech/ui-kit-bundle": "^2.49",
         "symfony/asset": "^8.0",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
