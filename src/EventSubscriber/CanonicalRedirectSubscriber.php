@@ -58,7 +58,7 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST         => ['onKernelRequest', 33],
+            KernelEvents::REQUEST                  => ['onKernelRequest', 33],
             RoutePathDefinitionChangedEvent::class => 'onRoutePathsChanged',
         ];
     }

@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
 
 /**
@@ -26,7 +27,7 @@ use Throwable;
  * its file) is deferred to {@see flushHits()} on `kernel.terminate`, after the redirect response is sent, so a hot
  * legacy URL no longer makes every redirected request wait on that lock.
  */
-final class UrlRedirectMatcher implements UrlRedirectMatcherInterface
+final class UrlRedirectMatcher implements UrlRedirectMatcherInterface, ResetInterface
 {
     public const CACHE_KEY = 'nowo_routing_kit.url_redirects.v1';
 
