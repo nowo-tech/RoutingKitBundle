@@ -3,7 +3,8 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
-  - [To 1.17.0](#to-1170)
+- [To 1.17.0](#to-1170)
+  - [To 1.17.0](#to-1170-1)
 - [To 1.16.1](#to-1161)
 - [To 1.16.0](#to-1160)
 - [To 1.15.2](#to-1152)
@@ -103,6 +104,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.17.0
+
+From **1.16.1**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 ### To 1.17.0
 
