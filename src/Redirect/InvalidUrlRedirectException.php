@@ -22,6 +22,9 @@ final class InvalidUrlRedirectException extends InvalidArgumentException
     }
 
     /**
+     * The values are translation keys the panel renders to the operator (an unknown key is shown as-is), never
+     * messages: keep user data, storage messages and internal detail out of them.
+     *
      * @return array<string, string> field => translation key (domain NowoRoutingKitBundle)
      */
     public function getErrors(): array

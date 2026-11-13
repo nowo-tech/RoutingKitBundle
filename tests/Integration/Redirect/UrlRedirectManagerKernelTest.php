@@ -24,6 +24,7 @@ use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
 use Nowo\RoutingKitBundle\Tests\Integration\Redirect\App\RecordingRoutePathManager;
 use Nowo\RoutingKitBundle\Tests\Integration\Redirect\App\RedirectTestKernel;
 use OutOfBoundsException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -139,9 +140,8 @@ final class UrlRedirectManagerKernelTest extends TestCase
     /**
      * The target rules are reachable from host code now that the manager is public API: nothing else pins them at
      * this level, so a scheme-relative or javascript: target must be refused by the manager itself.
-     *
-     * @dataProvider unsafeTargets
      */
+    #[DataProvider('unsafeTargets')]
     public function testManagerRefusesUnsafeTargets(string $target): void
     {
         $container = $this->boot();
@@ -160,6 +160,25 @@ final class UrlRedirectManagerKernelTest extends TestCase
         self::assertInstanceOf(UrlRedirectStorageInterface::class, $storage);
         self::assertSame([], $storage->all());
         self::assertSame([], $this->eventsOf(UrlRedirectChangedEvent::class));
+    }
+
+    /**
+     * The counterpart of the refusals above: an off-site target is the point of the feature, so pin that it is still
+     * accepted. Without this, over-tightening isExternalTarget() would kill the feature with unsafeTargets green.
+     */
+    public function testManagerAcceptsALegitimateOffSiteTarget(): void
+    {
+        $container = $this->boot();
+        $manager   = $this->manager($container);
+
+        self::assertSame([], $manager->validate(new UrlRedirectData('/old', 'https://host.example/path?a=1')));
+
+        $saved = $manager->save(new UrlRedirectData('/old', 'https://host.example/path?a=1', 301), actorId: 'editor');
+        self::assertSame('https://host.example/path?a=1', $saved->getTargetUrl());
+
+        $matcher = $container->get(UrlRedirectMatcherInterface::class);
+        self::assertInstanceOf(UrlRedirectMatcherInterface::class, $matcher);
+        self::assertSame(['target' => 'https://host.example/path?a=1', 'status' => 301], $matcher->match('/old'));
     }
 
     /**

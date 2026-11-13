@@ -86,6 +86,27 @@ final class UrlRedirectPanelRaceKernelTest extends TestCase
         self::assertCount(1, $storage->all());
     }
 
+    /**
+     * A decimal integer-like key is an int by the time it reaches the loop, which `FormInterface::has()` rejects
+     * under strict_types. Contrived, but it is the same 500 the guard exists to prevent.
+     */
+    public function testRefusalReportedOnANumericFieldKeyStaysOnTheForm(): void
+    {
+        $container = $this->boot('0');
+
+        $real = $container->get(UrlRedirectManager::class);
+        self::assertInstanceOf(UrlRedirectManagerInterface::class, $real);
+        $real->save(new UrlRedirectData('/old', '/new', 301));
+
+        $response = $this->submit('/old', '/other');
+        self::assertSame(200, $response->getStatusCode(), 'A numeric error key must not 500 the panel.');
+        self::assertStringContainsString('already a redirect', html_entity_decode((string) $response->getContent()));
+
+        $storage = $container->get(UrlRedirectStorageInterface::class);
+        self::assertInstanceOf(UrlRedirectStorageInterface::class, $storage);
+        self::assertCount(1, $storage->all());
+    }
+
     private function boot(?string $unknownField = null): ContainerInterface
     {
         $host = static function (ContainerConfigurator $config) use ($unknownField): void {

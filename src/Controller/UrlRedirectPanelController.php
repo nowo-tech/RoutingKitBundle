@@ -227,7 +227,9 @@ final class UrlRedirectPanelController
                 // The bundle's validator only returns form field names, but UrlRedirectManagerInterface is a
                 // replaceable service: a host manager may report a field this form does not have. Show it on the
                 // form instead of letting $form->get() throw a 500 on a write that was correctly refused (KE-R-M2).
-                $errorTarget = $form->has($field) ? $form->get($field) : $form;
+                // Cast the key: PHP turns a decimal integer-like array key into an int, which has() would reject.
+                $name        = (string) $field;
+                $errorTarget = $form->has($name) ? $form->get($name) : $form;
                 $errorTarget->addError(new FormError($this->trans($key), $key));
             }
         }

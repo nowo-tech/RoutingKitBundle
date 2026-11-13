@@ -20,6 +20,10 @@ interface UrlRedirectManagerInterface
     /**
      * Validation errors for a candidate redirect, without writing anything.
      *
+     * The values are **translation keys**, not messages: the panel renders them to the operator through the
+     * NowoRoutingKitBundle domain (an unknown key is shown as-is). A replacement manager must not put user data,
+     * storage messages or internal detail in them.
+     *
      * @return array<string, string> field (source_path, target_url, status_code, note) => translation key; empty when valid
      */
     public function validate(UrlRedirectData $data, ?string $currentId = null): array;

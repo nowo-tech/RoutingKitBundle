@@ -110,7 +110,10 @@ From **1.16.1**: no change needed; everything is additive and the defaults are u
 
 - Listen to `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` instead of the deprecated
   `RoutePathsChangedEvent` (removed in **2.0**). Both are dispatched for every row, the deprecated one first; do not
-  listen to both or you handle each change twice. Map `$event->definition` → `$event->definition` (same object),
+  listen to both unless your handler is idempotent, or you handle each change twice. (The bundle's own
+  `CanonicalRedirectSubscriber` does listen to both, on purpose: its handler only deletes a cache entry, so running
+  it twice is the same as running it once. `RoutePathAuditSubscriber` writes a log line, which is not idempotent, so
+  it listens to the new event only.) Map `$event->definition` → `$event->definition` (same object),
   `$event->deleted` → `$event->deleted`, and prefer the scalar `id`, `routeName`, `locale`, `path`, `enabled`.
 - The bundle's `RoutePathAuditSubscriber` and `CanonicalRedirectSubscriber` now subscribe to the new event. If you
   stopped propagation of `RoutePathsChangedEvent` to silence them, stop `RoutePathDefinitionChangedEvent` instead
