@@ -4,6 +4,7 @@
 
 - [Unreleased](#unreleased)
   - [To 1.17.0](#to-1170)
+- [To 1.16.1](#to-1161)
 - [To 1.16.0](#to-1160)
 - [To 1.15.2](#to-1152)
 - [To 1.15.1](#to-1151)
@@ -105,7 +106,7 @@
 
 ### To 1.17.0
 
-From **1.16.0**: no change needed; everything is additive and the defaults are unchanged. 1.16.0 was tagged by mistake without this code; this release contains the features first announced for 1.16.0.
+From **1.16.1**: no change needed; everything is additive and the defaults are unchanged. 1.16.0 was tagged by mistake without this code; this release contains the features first announced for 1.16.0.
 
 - Listen to `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` instead of the deprecated
   `RoutePathsChangedEvent` (removed in **2.0**). Both are dispatched for every row, the deprecated one first; do not
@@ -119,6 +120,14 @@ From **1.16.0**: no change needed; everything is additive and the defaults are u
 - Prefer the interfaces in your type hints: `Service\RoutePathManagerInterface`, `Routing\PublicPathResolverInterface`,
   `Redirect\UrlRedirectMatcherInterface`. The class ids still resolve. `UrlRedirectPanelController` takes an optional
   `$manager` (last constructor argument).
+
+## To 1.16.1
+
+From **1.16.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 ## To 1.16.0
 
