@@ -71,6 +71,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Event\RoutePathsChangedEvent` (extends `Symfony\Contracts\EventDispatcher\Event`): listen to `RoutePathDefinitionChangedEvent`; removed in 2.0. `RoutePathAuditSubscriber::onPathsChanged()` is deprecated with it.
 
+### Fixed
+
+- `CanonicalRedirectSubscriber` keeps `RoutePathsChangedEvent` registered until 2.0, so a host storage adapter that writes rows outside `RoutePathManager` and dispatches only the deprecated event still drops the canonical path table instead of redirecting an alias it just changed until the route-table version or the cache TTL moves. The handler is an idempotent cache delete, so the twin dispatched by `RoutePathManager` costs nothing. `RoutePathAuditSubscriber` stays on the new event only (listening to both would log every manager write twice); UPGRADING says so.
+- `UrlRedirectPanelController` shows an error reported for a field the form does not have on the form itself instead of letting `$form->get()` throw. The bundle's validator only ever reports form fields, but `UrlRedirectManagerInterface` is replaceable: a host manager that threw `InvalidUrlRedirectException` with another key turned a correctly refused concurrent write into a 500.
+- `RoutePathAuditSubscriber` logs the event's own `id` scalar instead of the nullable `definition->id` (same output).
+
+### Documentation
+
+- `docs/ARCHITECTURE.md`, `docs/REDIRECTS.md` and `docs/UPGRADING.md` state that `UrlRedirectManagerInterface` and `RoutePathManagerInterface` validate but perform **no authorization**: the caller (your controller, command, API endpoint or message handler) must guard the write. Being mounted under `/admin` is not a check.
+
 ## [1.16.1] - 2026-11-13
 
 ### Fixed

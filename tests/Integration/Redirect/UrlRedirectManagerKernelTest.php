@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Integration\Redirect;
 
 use Closure;
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
+use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent;
+use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Redirect\InvalidUrlRedirectException;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectData;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectManager;
@@ -27,6 +31,8 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
+use function is_array;
+use function is_object;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
@@ -130,6 +136,45 @@ final class UrlRedirectManagerKernelTest extends TestCase
         $manager->save(new UrlRedirectData('/b', '/contact'), 'missing-id');
     }
 
+    /**
+     * The target rules are reachable from host code now that the manager is public API: nothing else pins them at
+     * this level, so a scheme-relative or javascript: target must be refused by the manager itself.
+     *
+     * @dataProvider unsafeTargets
+     */
+    public function testManagerRefusesUnsafeTargets(string $target): void
+    {
+        $container = $this->boot();
+        $manager   = $this->manager($container);
+
+        self::assertSame(['target_url' => 'redirects.error.target_invalid'], $manager->validate(new UrlRedirectData('/old', $target)));
+
+        try {
+            $manager->save(new UrlRedirectData('/old', $target));
+            self::fail($target . ' must be refused.');
+        } catch (InvalidUrlRedirectException $exception) {
+            self::assertSame(['target_url' => 'redirects.error.target_invalid'], $exception->getErrors());
+        }
+
+        $storage = $container->get(UrlRedirectStorageInterface::class);
+        self::assertInstanceOf(UrlRedirectStorageInterface::class, $storage);
+        self::assertSame([], $storage->all());
+        self::assertSame([], $this->eventsOf(UrlRedirectChangedEvent::class));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unsafeTargets(): iterable
+    {
+        yield 'protocol-relative' => ['//evil.com'];
+        yield 'protocol-relative path' => ['//evil.com/promo'];
+        yield 'backslash-relative' => ['/\\evil.com'];
+        yield 'javascript scheme' => ['javascript:alert(1)'];
+        yield 'javascript scheme spaced' => [' javascript:alert(1)'];
+        yield 'data scheme' => ['data:text/html,<script>1</script>'];
+    }
+
     public function testListenerFailureIsLoggedAndTheWriteStands(): void
     {
         $container  = $this->boot();
@@ -144,6 +189,32 @@ final class UrlRedirectManagerKernelTest extends TestCase
         $storage = $container->get(UrlRedirectStorageInterface::class);
         self::assertInstanceOf(UrlRedirectStorageInterface::class, $storage);
         self::assertSame($saved->getId(), $storage->findBySource('/gone')?->getId());
+    }
+
+    /**
+     * A host storage adapter that writes rows outside RoutePathManager and dispatches only the deprecated
+     * RoutePathsChangedEvent still makes the bundle drop its canonical path table (kept until 2.0). The audit
+     * subscriber deliberately stays on the new event only: listening to both would log every manager write twice.
+     */
+    public function testDispatchingTheDeprecatedEventStillReachesTheCanonicalSubscriberOnly(): void
+    {
+        $container  = $this->boot();
+        $dispatcher = $container->get('event_dispatcher');
+        self::assertInstanceOf(EventDispatcherInterface::class, $dispatcher);
+
+        $listeners = array_map(
+            static fn (array|callable $listener): string => is_array($listener) && is_object($listener[0]) ? $listener[0]::class : 'closure',
+            $dispatcher->getListeners(RoutePathsChangedEvent::class),
+        );
+        self::assertContains(CanonicalRedirectSubscriber::class, $listeners);
+        self::assertNotContains(RoutePathAuditSubscriber::class, $listeners);
+
+        $newListeners = array_map(
+            static fn (array|callable $listener): string => is_array($listener) && is_object($listener[0]) ? $listener[0]::class : 'closure',
+            $dispatcher->getListeners(RoutePathDefinitionChangedEvent::class),
+        );
+        self::assertContains(CanonicalRedirectSubscriber::class, $newListeners);
+        self::assertContains(RoutePathAuditSubscriber::class, $newListeners);
     }
 
     public function testHostReplacesTheRoutePathManagerByAliasingTheInterface(): void

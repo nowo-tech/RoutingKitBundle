@@ -9,6 +9,7 @@ Operators send retired public URLs (old site, renamed pages, deleted posts) to a
 - [Protected paths](#protected-paths)
 - [Live pages and slug routes](#live-pages-and-slug-routes)
 - [Panel](#panel)
+- [Writing redirects from your own code](#writing-redirects-from-your-own-code)
 - [Storage](#storage)
 - [Hit counting](#hit-counting)
 - [Caching](#caching)
@@ -102,6 +103,19 @@ final class BlogLivePathChecker implements LivePathCheckerInterface
 - Rules (`UrlRedirectValidator`): source `/…` without spaces, `?`, `#`, `\` (≤255); target internal path or `http(s)://` URL (≤500); status 301/302/307/308; note ≤255; source not protected and not live; target ≠ source (loop); target not another row's source (chain); source unique.
 - Audit: `createdAt` / `updatedAt` and `createdBy` / `updatedBy` (the panel user's **identifier string**, e.g. e-mail — no foreign key to a User entity).
 - Translations: `NowoRoutingKitBundle` domain (`redirects.*`, `nav.*`) in en, es, fr, de, it, pt, nl.
+
+## Writing redirects from your own code
+
+Write through `Redirect\UrlRedirectManagerInterface` (see
+[ARCHITECTURE.md](ARCHITECTURE.md#application-services)) so your writes get the same rules, cache invalidation and
+`UrlRedirectChangedEvent` as the panel's.
+
+**The manager validates; it does no authorization.** It never checks the current user, the configured
+`security.access_roles` or `RoutingKitAccessCheckerInterface` — `$actorId` is only recorded and sent in the event.
+The panel is guarded by the access checker plus form CSRF *before* it calls the manager; your own controller,
+command, API endpoint or message handler must add that check itself. A route being under `/admin` is not a check: an
+unguarded `POST /admin/api/redirects` typed on `UrlRedirectManagerInterface` lets any authenticated user publish
+`/promo -> https://attacker.example`, served as a 301 to every visitor from the next cache miss onwards.
 
 ## Storage
 

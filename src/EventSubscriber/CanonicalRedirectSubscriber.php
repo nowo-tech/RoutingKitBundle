@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\EventSubscriber;
 
 use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
+use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
@@ -60,6 +61,9 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
         return [
             KernelEvents::REQUEST                  => ['onKernelRequest', 33],
             RoutePathDefinitionChangedEvent::class => 'onRoutePathsChanged',
+            // Still honoured until 2.0 so a host storage adapter that dispatches only the deprecated event keeps
+            // dropping the canonical table; the handler is an idempotent cache delete, so the twin costs nothing.
+            RoutePathsChangedEvent::class => 'onRoutePathsChanged',
         ];
     }
 

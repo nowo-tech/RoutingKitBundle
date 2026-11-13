@@ -73,6 +73,14 @@ $this->redirects->delete((string) $redirect->getId(), 'editor');
 invalidates the matcher cache and dispatches `UrlRedirectChangedEvent`. `$actorId` is the user identifier you want
 recorded (`createdBy` / `updatedBy`) and sent in the event; the panel passes the logged-in user's identifier.
 
+> **The application services validate; they do not authorize.** `UrlRedirectManagerInterface` and
+> `RoutePathManagerInterface` never look at the current user, the roles or a voter: `$actorId` is only recorded and
+> sent in the event. The bundle's own panel is guarded by `security.access_roles` /
+> `RoutingKitAccessCheckerInterface` plus form CSRF before it reaches the manager; **a controller, command, API
+> endpoint or message handler of your own must do its own authorization check.** Being mounted under `/admin` is not
+> one: an unguarded `POST /admin/api/redirects` lets any authenticated user publish `/promo → https://attacker.example`
+> as a 301 to every visitor from the next cache miss onwards.
+
 ## Events
 
 | Event | When | Payload |

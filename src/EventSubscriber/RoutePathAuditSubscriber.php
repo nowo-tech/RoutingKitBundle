@@ -49,7 +49,7 @@ final class RoutePathAuditSubscriber implements EventSubscriberInterface
             'route_name' => $event->routeName,
             'locale'     => $event->locale,
             'path'       => $event->path,
-            'id'         => $event->definition->id,
+            'id'         => $event->id,
             'user'       => $this->currentUserIdentifier(),
         ]);
     }

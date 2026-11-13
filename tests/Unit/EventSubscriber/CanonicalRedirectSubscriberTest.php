@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Unit\EventSubscriber;
 
 use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
+use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\AliasMode;
@@ -49,6 +50,9 @@ final class CanonicalRedirectSubscriberTest extends TestCase
         self::assertSame([
             'kernel.request'                       => ['onKernelRequest', 33],
             RoutePathDefinitionChangedEvent::class => 'onRoutePathsChanged',
+            // Kept until 2.0 so a host adapter that writes rows outside RoutePathManager and dispatches only the
+            // deprecated event still drops the canonical table; the handler is an idempotent cache delete.
+            RoutePathsChangedEvent::class => 'onRoutePathsChanged',
         ], CanonicalRedirectSubscriber::getSubscribedEvents());
     }
 

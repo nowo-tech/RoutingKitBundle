@@ -117,6 +117,15 @@ From **1.16.1**: no change needed; everything is additive and the defaults are u
   (it is not a stoppable event: remove or decorate the subscriber).
 - Write URL redirects from application code through `Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface`
   instead of calling the storage, the validator and the matcher yourself: it also dispatches `UrlRedirectChangedEvent`.
+  **It validates but does not authorize**: it never looks at the current user, `security.access_roles` or
+  `RoutingKitAccessCheckerInterface` (`$actorId` is only recorded). The bundle's panel is guarded by the access
+  checker plus form CSRF before it calls the manager; a controller, command, API endpoint or message handler of your
+  own must do its own authorization check. Being mounted under `/admin` is not one.
+- If your own `RoutePathStorageInterface` adapter writes rows outside `RoutePathManager` and **dispatches**
+  `RoutePathsChangedEvent` to make the bundle drop its canonical table, that keeps working until **2.0**:
+  `CanonicalRedirectSubscriber` still listens to the deprecated event as well. `RoutePathAuditSubscriber` does not
+  (it would log every manager write twice), so dispatch `RoutePathDefinitionChangedEvent` if you want the audit line
+  — and dispatch only the new event once you no longer need 1.16-era listeners.
 - Prefer the interfaces in your type hints: `Service\RoutePathManagerInterface`, `Routing\PublicPathResolverInterface`,
   `Redirect\UrlRedirectMatcherInterface`. The class ids still resolve. `UrlRedirectPanelController` takes an optional
   `$manager` (last constructor argument).
