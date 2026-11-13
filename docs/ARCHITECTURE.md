@@ -18,13 +18,13 @@ and a DDD / hexagonal host wire them.
 
 | Kind | Types |
 | --- | --- |
-| Application services (interfaces) | `Service\RoutePathManagerInterface`, `Redirect\UrlRedirectManagerInterface` (since 1.16.0) |
-| Query services (interfaces) | `Routing\PublicPathResolverInterface`, `Redirect\UrlRedirectMatcherInterface` (since 1.16.0) |
+| Application services (interfaces) | `Service\RoutePathManagerInterface`, `Redirect\UrlRedirectManagerInterface` (since 1.17.0) |
+| Query services (interfaces) | `Routing\PublicPathResolverInterface`, `Redirect\UrlRedirectMatcherInterface` (since 1.17.0) |
 | Persistence ports | `Storage\RoutePathStorageInterface`, `Storage\UrlRedirectStorageInterface` |
 | SPI (you implement it) | `Locale\LocaleProviderInterface`, `Redirect\LivePathCheckerInterface`, `Security\RoutingKitAccessCheckerInterface` |
-| Value objects / models | `Model\RoutePathDefinition` (immutable), `Model\UrlRedirect`, `Redirect\UrlRedirectData` (since 1.16.0), enums `Model\CanonicalStyle`, `Model\TrailingSlashStyle`, `Model\AliasMode` |
-| Events | `Event\RoutePathDefinitionChangedEvent` (since 1.16.0), `Event\UrlRedirectChangedEvent`; deprecated `Event\RoutePathsChangedEvent` |
-| Exceptions | `Redirect\InvalidUrlRedirectException` (since 1.16.0) |
+| Value objects / models | `Model\RoutePathDefinition` (immutable), `Model\UrlRedirect`, `Redirect\UrlRedirectData` (since 1.17.0), enums `Model\CanonicalStyle`, `Model\TrailingSlashStyle`, `Model\AliasMode` |
+| Events | `Event\RoutePathDefinitionChangedEvent` (since 1.17.0), `Event\UrlRedirectChangedEvent`; deprecated `Event\RoutePathsChangedEvent` |
+| Exceptions | `Redirect\InvalidUrlRedirectException` (since 1.17.0) |
 
 The class ids of the defaults (`RoutePathManager`, `PublicPathResolver`, `UrlRedirectMatcher`, `UrlRedirectManager`)
 keep working; type your code against the interfaces.
@@ -50,7 +50,7 @@ services as the panel, so it gets the same validation, limits and events:
 
 - **Route paths** — `RoutePathManagerInterface::save()`, `import()`, `delete()`: validation, the
   `max_definitions` limit, conflict detection, route cache invalidation and the events below.
-- **URL redirects** (since 1.16.0, with `url_redirects.enabled: true`) — `UrlRedirectManagerInterface`:
+- **URL redirects** (since 1.17.0, with `url_redirects.enabled: true`) — `UrlRedirectManagerInterface`:
 
 ```php
 use Nowo\RoutingKitBundle\Redirect\InvalidUrlRedirectException;
@@ -77,7 +77,7 @@ recorded (`createdBy` / `updatedBy`) and sent in the event; the panel passes the
 
 | Event | When | Payload |
 | --- | --- | --- |
-| `RoutePathDefinitionChangedEvent` (since 1.16.0) | every row saved, imported or deleted through `RoutePathManagerInterface`, after the storage write | `id`, `routeName`, `locale`, `path`, `enabled`, `deleted`, and the immutable `definition` |
+| `RoutePathDefinitionChangedEvent` (since 1.17.0) | every row saved, imported or deleted through `RoutePathManagerInterface`, after the storage write | `id`, `routeName`, `locale`, `path`, `enabled`, `deleted`, and the immutable `definition` |
 | `UrlRedirectChangedEvent` | every redirect created, updated or deleted through `UrlRedirectManagerInterface` (panel or your code), after the storage write | `redirectId`, `sourcePath`, `action`, `actorId`, `occurredAt` |
 | `RoutePathsChangedEvent` (deprecated, removed in 2.0) | right before each `RoutePathDefinitionChangedEvent`, same rows | `definition`, `deleted`; extends `Symfony\Contracts\EventDispatcher\Event` |
 

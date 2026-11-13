@@ -9,7 +9,7 @@ use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use RuntimeException;
 
 /**
- * Application service for route path rows (since 1.16.0, REQ-ARCH-001 rule 1): the panel, the import and your own code
+ * Application service for route path rows (since 1.17.0, REQ-ARCH-001 rule 1): the panel, the import and your own code
  * change rows through it, with the same validation, limits, conflict rules, events and route cache invalidation.
  * The default is {@see RoutePathManager}; alias this interface to decorate or replace it.
  *

@@ -10,7 +10,7 @@ use OutOfBoundsException;
 use Throwable;
 
 /**
- * Application service for operator URL redirects (since 1.16.0, REQ-ARCH-001 rules 1, 4, 5): the panel and your own
+ * Application service for operator URL redirects (since 1.17.0, REQ-ARCH-001 rules 1, 4, 5): the panel and your own
  * code create, update and delete redirects through it, with the same validation, cache invalidation and
  * {@see UrlRedirectChangedEvent}. The default is {@see UrlRedirectManager}; it exists only with
  * `url_redirects.enabled: true`.

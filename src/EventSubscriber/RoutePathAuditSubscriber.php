@@ -31,7 +31,7 @@ final class RoutePathAuditSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @deprecated since 1.16.0, the subscriber listens to RoutePathDefinitionChangedEvent; removed in 2.0
+     * @deprecated since 1.17.0, the subscriber listens to RoutePathDefinitionChangedEvent; removed in 2.0
      */
     public function onPathsChanged(RoutePathsChangedEvent $event): void
     {

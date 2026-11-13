@@ -17,7 +17,7 @@ use Throwable;
 use function sprintf;
 
 /**
- * Default {@see UrlRedirectManagerInterface} (since 1.16.0): validate → storage write → matcher cache invalidation →
+ * Default {@see UrlRedirectManagerInterface} (since 1.17.0): validate → storage write → matcher cache invalidation →
  * {@see UrlRedirectChangedEvent}. The event is dispatched after the storage write returned (the storage port commits
  * before it returns); a listener that throws is logged (its class only) and the write stands.
  *

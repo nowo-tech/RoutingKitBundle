@@ -131,12 +131,12 @@ final class ProductLivePathChecker implements LivePathCheckerInterface
 Panel access goes through `RoutingKitAccessCheckerInterface::canAccess(object $user)`
 (`nowo_routing_kit.security.access_checker`).
 
-**Reacting to changes.** `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` (since 1.16.0: `id`,
+**Reacting to changes.** `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` (since 1.17.0: `id`,
 `routeName`, `locale`, `path`, `enabled`, `deleted`, `definition`; plain PHP) is dispatched for every path saved,
 imported or deleted through `RoutePathManagerInterface`, including (since 1.15) a `deleted: true` event for each row a
 replace-all import removed. The deprecated `RoutePathsChangedEvent` (`definition`, `deleted`) is still dispatched right
 before it until 2.0. URL redirect writes through `UrlRedirectManagerInterface` (the panel or your own code, since
-1.16.0) dispatch `Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent` (since 1.15) after the storage write: scalars only
+1.17.0) dispatch `Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent` (since 1.15) after the storage write: scalars only
 (`redirectId`, `sourcePath`, `action` = `created` / `updated` / `deleted`, `actorId`, `occurredAt`). Listen to them
 in your infrastructure layer to update projections or write an audit. Key projections by `definition->id` /
 `redirectId`: a replace-all import sends the deletions first, then the saved rows, and an import from another
@@ -144,7 +144,7 @@ environment re-creates rows under new ids. A listener that throws on a redirect 
 (`RecordRedirectHit`) when `url_redirects.hits.message_bus` is set.
 
 **Application services.** Write from your own code through `Nowo\RoutingKitBundle\Service\RoutePathManagerInterface`
-and (since 1.16.0) `Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface`, never through the storages directly:
+and (since 1.17.0) `Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface`, never through the storages directly:
 they validate, invalidate the caches and dispatch the events exactly like the panel. `RoutePathManagerInterface`,
 `UrlRedirectManagerInterface`, `PublicPathResolverInterface` and `UrlRedirectMatcherInterface` are aliased to the
 defaults; alias them to replace or decorate one. Ports, extension points and the Symfony / DDD wiring:

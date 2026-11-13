@@ -7,7 +7,7 @@ namespace Nowo\RoutingKitBundle\Event;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 
 /**
- * A route path row was saved, imported or deleted through the route path manager (since 1.16.0). Dispatched after the
+ * A route path row was saved, imported or deleted through the route path manager (since 1.17.0). Dispatched after the
  * storage write returned, right after the deprecated {@see RoutePathsChangedEvent}, with the same rows and order.
  *
  * Plain PHP (no framework base class, REQ-ARCH-001 rules 3 and 4): ids and scalars, plus the immutable row itself.

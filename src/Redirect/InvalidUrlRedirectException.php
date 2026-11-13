@@ -9,7 +9,7 @@ use InvalidArgumentException;
 use function implode;
 
 /**
- * The redirect was rejected by {@see UrlRedirectValidator} (since 1.16.0); nothing was written.
+ * The redirect was rejected by {@see UrlRedirectValidator} (since 1.17.0); nothing was written.
  */
 final class InvalidUrlRedirectException extends InvalidArgumentException
 {

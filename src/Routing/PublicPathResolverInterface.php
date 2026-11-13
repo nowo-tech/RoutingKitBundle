@@ -7,7 +7,7 @@ namespace Nowo\RoutingKitBundle\Routing;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 
 /**
- * Resolves the public paths of a route path row (prefixed / unprefixed) and which one is canonical (since 1.16.0,
+ * Resolves the public paths of a route path row (prefixed / unprefixed) and which one is canonical (since 1.17.0,
  * REQ-ARCH-001 rule 1). The default is {@see PublicPathResolver}; the static helper
  * {@see PublicPathResolver::indexDefinitions()} builds the optional $index.
  */

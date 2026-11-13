@@ -154,7 +154,7 @@ final class RoutePathManager implements RoutePathManagerInterface
     }
 
     /**
-     * The deprecated framework-typed event first (BC order), then its plain twin (since 1.16.0).
+     * The deprecated framework-typed event first (BC order), then its plain twin (since 1.17.0).
      */
     private function dispatchChanged(RoutePathDefinition $definition, bool $deleted = false): void
     {

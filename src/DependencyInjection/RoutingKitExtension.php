@@ -431,7 +431,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$trackHits', $redirects['hits']['enabled'])
             ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
-        // Application service for redirect writes (since 1.16.0): the panel and host code share it.
+        // Application service for redirect writes (since 1.17.0): the panel and host code share it.
         $container->getDefinition(UrlRedirectManager::class)
             ->setArgument('$storage', new Reference(UrlRedirectStorageInterface::class))
             ->setArgument('$matcher', new Reference(UrlRedirectMatcherInterface::class))

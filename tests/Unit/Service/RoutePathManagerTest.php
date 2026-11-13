@@ -97,7 +97,7 @@ PHP);
 
         self::assertNotNull($saved->id);
         self::assertSame(1, $router->warmUpCalls);
-        // The deprecated event, then its plain twin (since 1.16.0) for the same row.
+        // The deprecated event, then its plain twin (since 1.17.0) for the same row.
         self::assertCount(2, $dispatches);
         self::assertInstanceOf(RoutePathsChangedEvent::class, $dispatches[0]);
         self::assertFalse($dispatches[0]->deleted);
@@ -296,7 +296,7 @@ PHP);
         $summary = array_map(static fn (RoutePathsChangedEvent $event): array => [$event->definition->id, $event->deleted], $events);
         self::assertSame([['rk_gone', true], ['rk_kept', false]], $summary, 'deletions first');
         self::assertSame('/articulos/{slug}', $events[0]->definition->path, 'the event carries the removed row');
-        // The plain twin carries the same rows, in the same order (since 1.16.0).
+        // The plain twin carries the same rows, in the same order (since 1.17.0).
         self::assertSame($summary, array_map(static fn (RoutePathDefinitionChangedEvent $event): array => [$event->id, $event->deleted], $twins));
     }
 

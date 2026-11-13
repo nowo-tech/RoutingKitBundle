@@ -57,7 +57,7 @@ use function min;
  * Active only when `url_redirects.enabled` and `web_ui.enabled` are true; otherwise every action is a
  * 404. Access uses the panel guard (security.access_roles). Writes are CSRF-protected; delete uses the UiKit
  * confirm dialog, with a full-page confirmation (page/confirm) as the no-JS fallback (CSP-friendly). Writes go through
- * {@see UrlRedirectManagerInterface} (since 1.16.0), the same application service host code uses.
+ * {@see UrlRedirectManagerInterface} (since 1.17.0), the same application service host code uses.
  */
 final class UrlRedirectPanelController
 {

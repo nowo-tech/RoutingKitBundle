@@ -7,7 +7,7 @@ namespace Nowo\RoutingKitBundle\Redirect;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Hot-path lookup of operator URL redirects (since 1.16.0, REQ-ARCH-001 rule 1). The default is
+ * Hot-path lookup of operator URL redirects (since 1.17.0, REQ-ARCH-001 rule 1). The default is
  * {@see UrlRedirectMatcher} (cached enabled map, buffered hit counting). reset() (symfony/contracts) is the request
  * boundary: write the pending hits and drop the memoised map.
  */
