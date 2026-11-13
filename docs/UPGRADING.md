@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+  - [To 1.17.0](#to-1170)
 - [To 1.16.1](#to-1161)
 - [To 1.16.0](#to-1160)
 - [To 1.15.2](#to-1152)
@@ -102,6 +103,35 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+### To 1.17.0
+
+From **1.16.1**: no change needed; everything is additive and the defaults are unchanged. 1.16.0 was tagged by mistake without this code; this release contains the features first announced for 1.16.0.
+
+- Listen to `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` instead of the deprecated
+  `RoutePathsChangedEvent` (removed in **2.0**). Both are dispatched for every row, the deprecated one first; do not
+  listen to both unless your handler is idempotent, or you handle each change twice. (The bundle's own
+  `CanonicalRedirectSubscriber` does listen to both, on purpose: its handler only deletes a cache entry, so running
+  it twice is the same as running it once. `RoutePathAuditSubscriber` writes a log line, which is not idempotent, so
+  it listens to the new event only.) Map `$event->definition` → `$event->definition` (same object),
+  `$event->deleted` → `$event->deleted`, and prefer the scalar `id`, `routeName`, `locale`, `path`, `enabled`.
+- The bundle's `RoutePathAuditSubscriber` and `CanonicalRedirectSubscriber` now subscribe to the new event. If you
+  stopped propagation of `RoutePathsChangedEvent` to silence them, stop `RoutePathDefinitionChangedEvent` instead
+  (it is not a stoppable event: remove or decorate the subscriber).
+- Write URL redirects from application code through `Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface`
+  instead of calling the storage, the validator and the matcher yourself: it also dispatches `UrlRedirectChangedEvent`.
+  **It validates but does not authorize**: it never looks at the current user, `security.access_roles` or
+  `RoutingKitAccessCheckerInterface` (`$actorId` is only recorded). The bundle's panel is guarded by the access
+  checker plus form CSRF before it calls the manager; a controller, command, API endpoint or message handler of your
+  own must do its own authorization check. Being mounted under `/admin` is not one.
+- If your own `RoutePathStorageInterface` adapter writes rows outside `RoutePathManager` and **dispatches**
+  `RoutePathsChangedEvent` to make the bundle drop its canonical table, that keeps working until **2.0**:
+  `CanonicalRedirectSubscriber` still listens to the deprecated event as well. `RoutePathAuditSubscriber` does not
+  (it would log every manager write twice), so dispatch `RoutePathDefinitionChangedEvent` if you want the audit line
+  — and dispatch only the new event once you no longer need 1.16-era listeners.
+- Prefer the interfaces in your type hints: `Service\RoutePathManagerInterface`, `Routing\PublicPathResolverInterface`,
+  `Redirect\UrlRedirectMatcherInterface`. The class ids still resolve. `UrlRedirectPanelController` takes an optional
+  `$manager` (last constructor argument).
 
 ## To 1.16.1
 

@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Controller;
 
-use DateTimeImmutable;
-use Nowo\RoutingKitBundle\Event\UrlRedirectChangedEvent;
 use Nowo\RoutingKitBundle\Form\RoutingPanelActionType;
 use Nowo\RoutingKitBundle\Form\UrlRedirectType;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Nowo\RoutingKitBundle\Panel\PanelView;
-use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
+use Nowo\RoutingKitBundle\Redirect\InvalidUrlRedirectException;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectData;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectManager;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcherInterface;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
@@ -54,7 +56,8 @@ use function min;
  *
  * Active only when `url_redirects.enabled` and `web_ui.enabled` are true; otherwise every action is a
  * 404. Access uses the panel guard (security.access_roles). Writes are CSRF-protected; delete uses the UiKit
- * confirm dialog, with a full-page confirmation (page/confirm) as the no-JS fallback (CSP-friendly).
+ * confirm dialog, with a full-page confirmation (page/confirm) as the no-JS fallback (CSP-friendly). Writes go through
+ * {@see UrlRedirectManagerInterface} (since 1.17.0), the same application service host code uses.
  */
 final class UrlRedirectPanelController
 {
@@ -69,13 +72,14 @@ final class UrlRedirectPanelController
         private readonly FormFactoryInterface $formFactory,
         private readonly ?PanelAccessGuard $accessGuard = null,
         private readonly ?UrlRedirectStorageInterface $storage = null,
-        private readonly ?UrlRedirectMatcher $matcher = null,
+        private readonly ?UrlRedirectMatcherInterface $matcher = null,
         private readonly ?UrlRedirectValidator $validator = null,
         private readonly ?TranslatorInterface $translator = null,
         private readonly int $listPageSize = 50,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?ClockInterface $clock = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        private readonly ?UrlRedirectManagerInterface $manager = null,
     ) {
     }
 
@@ -156,9 +160,7 @@ final class UrlRedirectPanelController
                 return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
             }
 
-            $this->enabledStorage()->delete($id);
-            $this->matcher?->invalidate();
-            $this->dispatchChanged($id, $redirect->getSourcePath(), UrlRedirectChangedEvent::ACTION_DELETED, null);
+            $this->redirectManager()->delete($id, $this->accessGuard?->userIdentifier());
 
             return new RedirectResponse($this->view->pathPrefix . '/redirects?status=deleted');
         }
@@ -179,7 +181,7 @@ final class UrlRedirectPanelController
 
     private function form(Request $request, ?UrlRedirect $existing): Response
     {
-        [$storage, $validator] = $this->services();
+        $manager = $this->redirectManager();
 
         /** @var FormInterface<array<string, mixed>|null> $form */
         $form = $this->formFactory->create(UrlRedirectType::class, [
@@ -198,26 +200,18 @@ final class UrlRedirectPanelController
             $target = is_string($data['target_url'] ?? null) ? $data['target_url'] : '';
             $status = is_numeric($data['status_code'] ?? null) ? (int) $data['status_code'] : 0;
             $note   = is_string($data['note'] ?? null) ? $data['note'] : '';
-            $errors = $validator->validate($source, $target, $status, $note, $existing?->getId());
+            $input  = new UrlRedirectData($source, $target, $status, (bool) ($data['enabled'] ?? false), $note);
+            $errors = $manager->validate($input, $existing?->getId());
 
             if ($errors === []) {
-                $now      = $this->clock?->now() ?? new DateTimeImmutable();
-                $user     = $this->accessGuard?->userIdentifier();
-                $redirect = $existing ?? (new UrlRedirect())->setCreatedAt($now)->setCreatedBy($user);
-                // @igor-ignore - Per-request value object loaded from storage, not a shared service.
-                $redirect
-                    ->setSourcePath($source)
-                    ->setTargetUrl($target)
-                    ->setStatusCode($status)
-                    ->setEnabled((bool) ($data['enabled'] ?? false))
-                    ->setNote($note)
-                    ->setUpdatedAt($now)
-                    ->setUpdatedBy($user);
-
                 $saved = null;
                 try {
-                    $saved = $storage->save($redirect);
-                    $this->matcher?->invalidate();
+                    // The manager validates again, writes, invalidates the matcher cache and dispatches
+                    // UrlRedirectChangedEvent; a listener that throws is logged there and the write stands (KE-R-L1).
+                    $saved = $manager->save($input, $existing?->getId(), $this->accessGuard?->userIdentifier());
+                } catch (InvalidUrlRedirectException $invalid) {
+                    // Changed between the two checks (e.g. a concurrent write took the source path).
+                    $errors = $invalid->getErrors();
                 } catch (Throwable $exception) {
                     // Storage messages may expose file paths or SQL: log them, show a generic error.
                     $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);
@@ -225,20 +219,18 @@ final class UrlRedirectPanelController
                 }
 
                 if ($saved instanceof UrlRedirect) {
-                    // Outside the storage try: the redirect is saved even when a listener fails (KE-R-L1).
-                    $this->dispatchChanged(
-                        (string) $saved->getId(),
-                        $saved->getSourcePath(),
-                        $existing instanceof UrlRedirect ? UrlRedirectChangedEvent::ACTION_UPDATED : UrlRedirectChangedEvent::ACTION_CREATED,
-                        $now,
-                    );
-
                     return new RedirectResponse($this->view->pathPrefix . '/redirects?status=' . ($existing instanceof UrlRedirect ? 'saved' : 'created'));
                 }
             }
 
             foreach ($errors as $field => $key) {
-                $form->get($field)->addError(new FormError($this->trans($key), $key));
+                // The bundle's validator only returns form field names, but UrlRedirectManagerInterface is a
+                // replaceable service: a host manager may report a field this form does not have. Show it on the
+                // form instead of letting $form->get() throw a 500 on a write that was correctly refused (KE-R-M2).
+                // Cast the key: PHP turns a decimal integer-like array key into an int, which has() would reject.
+                $name        = (string) $field;
+                $errorTarget = $form->has($name) ? $form->get($name) : $form;
+                $errorTarget->addError(new FormError($this->trans($key), $key));
             }
         }
 
@@ -306,27 +298,6 @@ final class UrlRedirectPanelController
         ]);
     }
 
-    /**
-     * Since 1.15: id-only event after a successful write (no dispatcher: nothing). The write is done: a listener that
-     * throws is logged (its class only) and the panel still answers as saved / deleted.
-     *
-     * @param UrlRedirectChangedEvent::ACTION_* $action
-     */
-    private function dispatchChanged(string $id, string $sourcePath, string $action, ?DateTimeImmutable $at): void
-    {
-        try {
-            $this->eventDispatcher?->dispatch(new UrlRedirectChangedEvent(
-                $id,
-                $sourcePath,
-                $action,
-                $this->accessGuard?->userIdentifier(),
-                $at ?? $this->clock?->now() ?? new DateTimeImmutable(),
-            ));
-        } catch (Throwable $failure) {
-            $this->logger?->error('RoutingKit: URL redirect {action} event listener failed: {error}', ['action' => $action, 'error' => $failure::class, 'redirect_id' => $id]);
-        }
-    }
-
     private function find(string $id): UrlRedirect
     {
         $redirect = $this->enabledStorage()->findById($id);
@@ -359,6 +330,17 @@ final class UrlRedirectPanelController
         $this->accessGuard->assertGranted();
 
         return [$this->storage, $this->validator];
+    }
+
+    /**
+     * The configured redirect manager, or (controller built without one, e.g. in a test) the default manager over the
+     * controller's own services. 404 / 403 exactly like {@see services()}.
+     */
+    private function redirectManager(): UrlRedirectManagerInterface
+    {
+        [$storage, $validator] = $this->services();
+
+        return $this->manager ?? new UrlRedirectManager($storage, $validator, $this->matcher, $this->eventDispatcher, $this->clock, $this->logger);
     }
 
     private function trans(string $key): string

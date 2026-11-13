@@ -7,7 +7,7 @@ namespace Nowo\RoutingKitBundle\EventSubscriber;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
-use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -29,7 +29,7 @@ final class UrlRedirectSubscriber implements EventSubscriberInterface
     public const PRIORITY = 33;
 
     public function __construct(
-        private readonly UrlRedirectMatcher $redirects,
+        private readonly UrlRedirectMatcherInterface $redirects,
         private readonly ProtectedPaths $protectedPaths,
         private readonly LivePublicPaths $livePaths,
     ) {

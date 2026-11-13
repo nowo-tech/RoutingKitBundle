@@ -9,6 +9,7 @@ Operators send retired public URLs (old site, renamed pages, deleted posts) to a
 - [Protected paths](#protected-paths)
 - [Live pages and slug routes](#live-pages-and-slug-routes)
 - [Panel](#panel)
+- [Writing redirects from your own code](#writing-redirects-from-your-own-code)
 - [Storage](#storage)
 - [Hit counting](#hit-counting)
 - [Caching](#caching)
@@ -103,6 +104,19 @@ final class BlogLivePathChecker implements LivePathCheckerInterface
 - Audit: `createdAt` / `updatedAt` and `createdBy` / `updatedBy` (the panel user's **identifier string**, e.g. e-mail — no foreign key to a User entity).
 - Translations: `NowoRoutingKitBundle` domain (`redirects.*`, `nav.*`) in en, es, fr, de, it, pt, nl.
 
+## Writing redirects from your own code
+
+Write through `Redirect\UrlRedirectManagerInterface` (see
+[ARCHITECTURE.md](ARCHITECTURE.md#application-services)) so your writes get the same rules, cache invalidation and
+`UrlRedirectChangedEvent` as the panel's.
+
+**The manager validates; it does no authorization.** It never checks the current user, the configured
+`security.access_roles` or `RoutingKitAccessCheckerInterface` — `$actorId` is only recorded and sent in the event.
+The panel is guarded by the access checker plus form CSRF *before* it calls the manager; your own controller,
+command, API endpoint or message handler must add that check itself. A route being under `/admin` is not a check: an
+unguarded `POST /admin/api/redirects` typed on `UrlRedirectManagerInterface` lets any authenticated user publish
+`/promo -> https://attacker.example`, served as a 301 to every visitor from the next cache miss onwards.
+
 ## Storage
 
 Default: `FilesystemUrlRedirectStorage`, a JSON file (`url_redirects.file`) with the same locking model as the path storage (shared lock for reads, exclusive lock + atomic rename for writes, corrupt JSON fails closed). Keep it outside the web root.
@@ -165,7 +179,7 @@ The handler (`RecordRedirectHitHandler`) is registered only when a bus is config
 
 ## Caching
 
-`UrlRedirectMatcher` keeps the enabled-redirect map in `cache_pool` (default `cache.app`) for `cache_ttl` seconds and memoizes it per request. Panel writes invalidate it. Writes outside the panel (SQL, backup restore) are picked up when the TTL expires, or call `UrlRedirectMatcher::invalidate()`. Cache or storage failures degrade to "no redirects" with a log warning.
+`UrlRedirectMatcher` keeps the enabled-redirect map in `cache_pool` (default `cache.app`) for `cache_ttl` seconds and memoizes it per request. Writes through `UrlRedirectManagerInterface` (the panel and, since 1.17.0, your own code: see [ARCHITECTURE.md](ARCHITECTURE.md#application-services)) invalidate it. Writes that bypass it (SQL, backup restore) are picked up when the TTL expires, or call `UrlRedirectMatcherInterface::invalidate()`. Cache or storage failures degrade to "no redirects" with a log warning.
 
 ## CSP and templates
 

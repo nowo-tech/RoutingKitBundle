@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Service;
 
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
-use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
+use Nowo\RoutingKitBundle\Routing\PublicPathResolverInterface;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 
 use function array_unique;
@@ -20,7 +20,7 @@ final class RoutePathConflictDetector
 {
     public function __construct(
         private readonly RoutePathStorageInterface $storage,
-        private readonly PublicPathResolver $paths,
+        private readonly PublicPathResolverInterface $paths,
     ) {
     }
 

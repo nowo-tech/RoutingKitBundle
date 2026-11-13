@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\EventSubscriber;
 
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
 use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
@@ -42,7 +43,7 @@ final class RoutePathAuditSubscriberTest extends TestCase
     public function testDoesNothingWithoutLoggerAndExposesEvents(): void
     {
         self::assertSame(
-            [RoutePathsChangedEvent::class => 'onPathsChanged'],
+            [RoutePathDefinitionChangedEvent::class => 'onPathDefinitionChanged'],
             RoutePathAuditSubscriber::getSubscribedEvents(),
         );
         (new RoutePathAuditSubscriber())->onPathsChanged(new RoutePathsChangedEvent(

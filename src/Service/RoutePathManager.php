@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Service;
 
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
 use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
@@ -19,7 +20,7 @@ use function implode;
 use function preg_match;
 use function sprintf;
 
-final class RoutePathManager
+final class RoutePathManager implements RoutePathManagerInterface
 {
     public function __construct(
         private readonly RoutePathStorageInterface $storage,
@@ -62,7 +63,7 @@ final class RoutePathManager
         $this->assertNoConflicts([$definition], replaceAll: false);
 
         $saved = $this->storage->save($definition);
-        $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+        $this->dispatchChanged($saved);
 
         if ($invalidateCache && $this->autoInvalidateCache) {
             $this->cacheInvalidator->invalidate();
@@ -114,16 +115,16 @@ final class RoutePathManager
             // projection keyed by (route, locale) does not drop a row an import re-created under a new id.
             foreach ($previous as $removed) {
                 if (!isset($kept[(string) $removed->id])) {
-                    $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($removed, deleted: true));
+                    $this->dispatchChanged($removed, deleted: true);
                 }
             }
             foreach ($savedRows as $saved) {
-                $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+                $this->dispatchChanged($saved);
             }
         } else {
             foreach ($prepared as $definition) {
                 $saved = $this->storage->save($definition);
-                $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($saved));
+                $this->dispatchChanged($saved);
             }
         }
 
@@ -139,7 +140,7 @@ final class RoutePathManager
         $existing = $this->storage->findById($id);
         $this->storage->delete($id);
         if ($existing instanceof RoutePathDefinition) {
-            $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($existing, deleted: true));
+            $this->dispatchChanged($existing, deleted: true);
         }
 
         if ($invalidateCache && $this->autoInvalidateCache) {
@@ -150,6 +151,15 @@ final class RoutePathManager
     public function clearCache(): void
     {
         $this->cacheInvalidator->invalidate();
+    }
+
+    /**
+     * The deprecated framework-typed event first (BC order), then its plain twin (since 1.17.0).
+     */
+    private function dispatchChanged(RoutePathDefinition $definition, bool $deleted = false): void
+    {
+        $this->eventDispatcher->dispatch(new RoutePathsChangedEvent($definition, $deleted));
+        $this->eventDispatcher->dispatch(RoutePathDefinitionChangedEvent::fromDefinition($definition, $deleted));
     }
 
     private function prepareDefinition(RoutePathDefinition $definition): RoutePathDefinition

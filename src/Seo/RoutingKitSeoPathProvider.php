@@ -6,7 +6,7 @@ namespace Nowo\RoutingKitBundle\Seo;
 
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
-use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
+use Nowo\RoutingKitBundle\Routing\PublicPathResolverInterface;
 
 /**
  * Bridge API for SeoKit (and apps): resolve the public canonical path for a route + locale.
@@ -16,7 +16,7 @@ use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
 final class RoutingKitSeoPathProvider
 {
     public function __construct(
-        private readonly PublicPathResolver $paths,
+        private readonly PublicPathResolverInterface $paths,
         private readonly LocaleProviderInterface $locales,
     ) {
     }

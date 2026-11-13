@@ -17,7 +17,7 @@ use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
-use Nowo\RoutingKitBundle\Service\RoutePathManager;
+use Nowo\RoutingKitBundle\Service\RoutePathManagerInterface;
 use Nowo\UiKitBundle\View\Action;
 use Nowo\UiKitBundle\View\Column;
 use Nowo\UiKitBundle\View\Confirm;
@@ -59,7 +59,7 @@ final class RoutingPanelController
     private const MAX_IMPORT_PAYLOAD_BYTES = 1_048_576;
 
     public function __construct(
-        private readonly RoutePathManager $manager,
+        private readonly RoutePathManagerInterface $manager,
         private readonly RoutableControllerDiscovery $discovery,
         private readonly LocaleProviderInterface $locales,
         private readonly PanelView $view,

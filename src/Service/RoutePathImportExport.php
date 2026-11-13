@@ -27,7 +27,7 @@ final class RoutePathImportExport
     public const MIN_SIGNING_KEY_LENGTH = 32;
 
     public function __construct(
-        private readonly RoutePathManager $manager,
+        private readonly RoutePathManagerInterface $manager,
         private readonly string $signingKey,
     ) {
     }
