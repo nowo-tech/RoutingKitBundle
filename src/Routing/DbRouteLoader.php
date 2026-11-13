@@ -41,7 +41,7 @@ final class DbRouteLoader extends Loader implements ResetInterface
     public function __construct(
         private readonly RoutePathStorageInterface $storage,
         private readonly LocaleProviderInterface $locales,
-        private readonly PublicPathResolver $pathResolver,
+        private readonly PublicPathResolverInterface $pathResolver,
         private readonly RoutableControllerDiscovery $discovery,
         private readonly bool $registerUnprefixedDefault = true,
         private readonly bool $allowControllerOverride = false,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\EventSubscriber;
 
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
 use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -25,23 +26,30 @@ final class RoutePathAuditSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            RoutePathsChangedEvent::class => 'onPathsChanged',
+            RoutePathDefinitionChangedEvent::class => 'onPathDefinitionChanged',
         ];
     }
 
+    /**
+     * @deprecated since 1.16.0, the subscriber listens to RoutePathDefinitionChangedEvent; removed in 2.0
+     */
     public function onPathsChanged(RoutePathsChangedEvent $event): void
+    {
+        $this->onPathDefinitionChanged(RoutePathDefinitionChangedEvent::fromDefinition($event->definition, $event->deleted));
+    }
+
+    public function onPathDefinitionChanged(RoutePathDefinitionChangedEvent $event): void
     {
         if (!$this->logger instanceof LoggerInterface) {
             return;
         }
 
-        $definition = $event->definition;
         $this->logger->info('RoutingKit path {action}', [
             'action'     => $event->deleted ? 'deleted' : 'saved',
-            'route_name' => $definition->routeName,
-            'locale'     => $definition->locale,
-            'path'       => $definition->path,
-            'id'         => $definition->id,
+            'route_name' => $event->routeName,
+            'locale'     => $event->locale,
+            'path'       => $event->path,
+            'id'         => $event->definition->id,
             'user'       => $this->currentUserIdentifier(),
         ]);
     }

@@ -19,7 +19,7 @@ use function rtrim;
 /**
  * Resolves public paths (prefixed / unprefixed) and which one is canonical.
  */
-final class PublicPathResolver
+final class PublicPathResolver implements PublicPathResolverInterface
 {
     public function __construct(
         private readonly RoutePathStorageInterface $storage,

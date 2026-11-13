@@ -25,7 +25,10 @@ use Nowo\RoutingKitBundle\Redirect\LivePathCheckerInterface;
 use Nowo\RoutingKitBundle\Redirect\LivePublicPaths;
 use Nowo\RoutingKitBundle\Redirect\Message\RecordRedirectHitHandler;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectManager;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcher;
+use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcherInterface;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Routing\DbRouteLoader;
 use Nowo\RoutingKitBundle\Routing\DefaultLocaleRouter;
@@ -365,6 +368,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         foreach ([
             FilesystemUrlRedirectStorage::class,
             UrlRedirectMatcher::class,
+            UrlRedirectManager::class,
             UrlRedirectSubscriber::class,
             UrlRedirectValidator::class,
             ProtectedPaths::class,
@@ -375,6 +379,8 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         }
         // Resource loading aliases singly-implemented interfaces: drop it with its target.
         $container->removeAlias(UrlRedirectStorageInterface::class);
+        $container->removeAlias(UrlRedirectMatcherInterface::class);
+        $container->removeAlias(UrlRedirectManagerInterface::class);
     }
 
     /**
@@ -425,6 +431,16 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$trackHits', $redirects['hits']['enabled'])
             ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
+        // Application service for redirect writes (since 1.16.0): the panel and host code share it.
+        $container->getDefinition(UrlRedirectManager::class)
+            ->setArgument('$storage', new Reference(UrlRedirectStorageInterface::class))
+            ->setArgument('$matcher', new Reference(UrlRedirectMatcherInterface::class))
+            ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
+        $container->setAlias(UrlRedirectMatcherInterface::class, UrlRedirectMatcher::class)->setPublic(false);
+        $container->setAlias(UrlRedirectManagerInterface::class, UrlRedirectManager::class)->setPublic(false);
+
         // The handler carries #[AsMessageHandler] (autoconfigured by services.yaml); it only exists with a hit bus.
         if (!is_string($bus) || $bus === '' || !$redirects['hits']['enabled']) {
             $container->removeDefinition(RecordRedirectHitHandler::class);
@@ -433,6 +449,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         if ($container->hasDefinition(UrlRedirectPanelController::class)) {
             $container->getDefinition(UrlRedirectPanelController::class)
                 ->setArgument('$listPageSize', (int) $config['panel']['list_page_size'])
+                ->setArgument('$manager', new Reference(UrlRedirectManagerInterface::class))
                 ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
                 ->setArgument('$clock', new Reference(ClockInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE));
         }

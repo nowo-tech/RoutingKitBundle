@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+  - [To 1.16.0](#to-1160)
 - [To 1.15.2](#to-1152)
 - [To 1.15.1](#to-1151)
 - [To 1.15.0](#to-1150)
@@ -100,6 +101,23 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+### To 1.16.0
+
+From **1.15.x**: no change needed; everything is additive and the defaults are unchanged.
+
+- Listen to `Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent` instead of the deprecated
+  `RoutePathsChangedEvent` (removed in **2.0**). Both are dispatched for every row, the deprecated one first; do not
+  listen to both or you handle each change twice. Map `$event->definition` → `$event->definition` (same object),
+  `$event->deleted` → `$event->deleted`, and prefer the scalar `id`, `routeName`, `locale`, `path`, `enabled`.
+- The bundle's `RoutePathAuditSubscriber` and `CanonicalRedirectSubscriber` now subscribe to the new event. If you
+  stopped propagation of `RoutePathsChangedEvent` to silence them, stop `RoutePathDefinitionChangedEvent` instead
+  (it is not a stoppable event: remove or decorate the subscriber).
+- Write URL redirects from application code through `Nowo\RoutingKitBundle\Redirect\UrlRedirectManagerInterface`
+  instead of calling the storage, the validator and the matcher yourself: it also dispatches `UrlRedirectChangedEvent`.
+- Prefer the interfaces in your type hints: `Service\RoutePathManagerInterface`, `Routing\PublicPathResolverInterface`,
+  `Redirect\UrlRedirectMatcherInterface`. The class ids still resolve. `UrlRedirectPanelController` takes an optional
+  `$manager` (last constructor argument).
 
 ## To 1.15.2
 

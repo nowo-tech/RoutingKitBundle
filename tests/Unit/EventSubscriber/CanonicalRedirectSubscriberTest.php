@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\EventSubscriber;
 
-use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
 use Nowo\RoutingKitBundle\Locale\ConfigurableLocaleProvider;
 use Nowo\RoutingKitBundle\Model\AliasMode;
@@ -47,8 +47,8 @@ final class CanonicalRedirectSubscriberTest extends TestCase
     public function testSubscribedEventsConfiguration(): void
     {
         self::assertSame([
-            'kernel.request'              => ['onKernelRequest', 33],
-            RoutePathsChangedEvent::class => 'onRoutePathsChanged',
+            'kernel.request'                       => ['onKernelRequest', 33],
+            RoutePathDefinitionChangedEvent::class => 'onRoutePathsChanged',
         ], CanonicalRedirectSubscriber::getSubscribedEvents());
     }
 

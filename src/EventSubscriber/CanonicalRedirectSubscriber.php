@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\EventSubscriber;
 
-use Nowo\RoutingKitBundle\Event\RoutePathsChangedEvent;
+use Nowo\RoutingKitBundle\Event\RoutePathDefinitionChangedEvent;
 use Nowo\RoutingKitBundle\Locale\LocaleProviderInterface;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Model\TrailingSlashStyle;
 use Nowo\RoutingKitBundle\Routing\PublicPathResolver;
+use Nowo\RoutingKitBundle\Routing\PublicPathResolverInterface;
 use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Routing\SafePublicPath;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
@@ -43,7 +44,7 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
 
     public function __construct(
         private readonly RoutePathStorageInterface $storage,
-        private readonly PublicPathResolver $paths,
+        private readonly PublicPathResolverInterface $paths,
         private readonly LocaleProviderInterface $locales,
         private readonly bool $enabled = true,
         private readonly int $redirectStatus = 301,
@@ -58,7 +59,7 @@ final class CanonicalRedirectSubscriber implements EventSubscriberInterface, Res
     {
         return [
             KernelEvents::REQUEST         => ['onKernelRequest', 33],
-            RoutePathsChangedEvent::class => 'onRoutePathsChanged',
+            RoutePathDefinitionChangedEvent::class => 'onRoutePathsChanged',
         ];
     }
 

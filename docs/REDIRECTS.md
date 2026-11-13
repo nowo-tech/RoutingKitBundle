@@ -159,7 +159,7 @@ The handler (`RecordRedirectHitHandler`) is registered only when a bus is config
 
 ## Caching
 
-`UrlRedirectMatcher` keeps the enabled-redirect map in `cache_pool` (default `cache.app`) for `cache_ttl` seconds and memoizes it per request. Panel writes invalidate it. Writes outside the panel (SQL, backup restore) are picked up when the TTL expires, or call `UrlRedirectMatcher::invalidate()`. Cache or storage failures degrade to "no redirects" with a log warning.
+`UrlRedirectMatcher` keeps the enabled-redirect map in `cache_pool` (default `cache.app`) for `cache_ttl` seconds and memoizes it per request. Writes through `UrlRedirectManagerInterface` (the panel and, since 1.16.0, your own code: see [ARCHITECTURE.md](ARCHITECTURE.md#application-services)) invalidate it. Writes that bypass it (SQL, backup restore) are picked up when the TTL expires, or call `UrlRedirectMatcherInterface::invalidate()`. Cache or storage failures degrade to "no redirects" with a log warning.
 
 ## CSP and templates
 

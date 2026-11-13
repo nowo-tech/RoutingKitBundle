@@ -15,6 +15,8 @@ services:
             - '../../Resources/'
             - '../../Seo/RoutingKitSeoPathBuilderDecorator.php'
             - '../../Redirect/Message/RecordRedirectHit.php'
+            - '../../Redirect/UrlRedirectData.php'
+            - '../../Redirect/InvalidUrlRedirectException.php'
             - '../../NowoRoutingKitBundle.php'
             # default_locale_unprefixed (opt-in): registered by the extension only when enabled.
             - '../../Routing/DefaultLocaleRouter.php'
@@ -42,6 +44,9 @@ services:
     Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator: ~
     Nowo\RoutingKitBundle\Service\RoutePathConflictDetector: ~
     Nowo\RoutingKitBundle\Service\RoutePathManager: ~
+    # REQ-ARCH-001 rule 1: alias the interfaces to replace or decorate a default (the class ids keep working).
+    Nowo\RoutingKitBundle\Service\RoutePathManagerInterface: '@Nowo\RoutingKitBundle\Service\RoutePathManager'
+    Nowo\RoutingKitBundle\Routing\PublicPathResolverInterface: '@Nowo\RoutingKitBundle\Routing\PublicPathResolver'
     Nowo\RoutingKitBundle\Service\RoutePathImportExport: ~
     Nowo\RoutingKitBundle\Seo\RoutingKitSeoPathProvider: ~
     Nowo\RoutingKitBundle\Security\PanelAccessGuard:

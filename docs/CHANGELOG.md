@@ -58,6 +58,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Redirect\UrlRedirectManagerInterface` / `UrlRedirectManager`: application service for URL redirects (`validate()`, `save()`, `delete()` with `Redirect\UrlRedirectData` and `Redirect\InvalidUrlRedirectException`). It validates, writes through the storage port, invalidates the matcher cache and dispatches `UrlRedirectChangedEvent`, so redirects written from application code get the same rules and event as panel writes (REQ-ARCH-001 rules 1, 4, 5). The panel now writes through it; its responses, messages and events are unchanged.
+- `Service\RoutePathManagerInterface`, `Routing\PublicPathResolverInterface`, `Redirect\UrlRedirectMatcherInterface`, aliased to the defaults; the bundle's own services are typed against them, so a host replaces or decorates a default by aliasing the interface (REQ-ARCH-001 rule 1). The class ids keep working.
+- `Event\RoutePathDefinitionChangedEvent`: plain-PHP twin of `RoutePathsChangedEvent` (no framework base class; `id`, `routeName`, `locale`, `path`, `enabled`, `deleted`, `definition`), dispatched right after it for every row (REQ-ARCH-001 rules 3 and 4). The bundle's own subscribers listen to it.
+- `docs/ARCHITECTURE.md`: public surface, ports and extension points, application services, events, standard Symfony and DDD host wiring.
+
+### Deprecated
+
+- `Event\RoutePathsChangedEvent` (extends `Symfony\Contracts\EventDispatcher\Event`): listen to `RoutePathDefinitionChangedEvent`; removed in 2.0. `RoutePathAuditSubscriber::onPathsChanged()` is deprecated with it.
+
 ### Changed
 
 - Demo uses the UiKit base style (REQ-DEMO-014)

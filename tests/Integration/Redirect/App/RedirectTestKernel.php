@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Integration\Redirect\App;
 
+use Closure;
 use Nowo\FormKitBundle\NowoFormKitBundle;
 use Nowo\RoutingKitBundle\NowoRoutingKitBundle;
 use Nowo\UiKitBundle\NowoUiKitBundle;
@@ -26,10 +27,12 @@ final class RedirectTestKernel extends Kernel
 
     /**
      * @param bool $importBundleRoutes false keeps only the host default `routing.controllers` resource (REQ-SF-004 rule 7)
+     * @param (Closure(ContainerConfigurator): void)|null $hostServices extra host service config (e.g. alias overrides)
      */
     public function __construct(
         private readonly string $baseDir,
         private readonly bool $importBundleRoutes = true,
+        private readonly ?Closure $hostServices = null,
     ) {
         parent::__construct('test', false);
     }
@@ -90,6 +93,10 @@ final class RedirectTestKernel extends Kernel
         $services->set(PagesController::class)->public()->tag('controller.service_arguments');
         $services->set(BlogLivePathChecker::class);
         $services->set('logger', NullLogger::class);
+
+        if ($this->hostServices instanceof Closure) {
+            ($this->hostServices)($container);
+        }
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
