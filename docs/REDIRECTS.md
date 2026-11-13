@@ -140,7 +140,13 @@ final class DoctrineUrlRedirectStorage implements UrlRedirectStorageInterface
 }
 ```
 
-Then generate and review the migration in the host (`php bin/console doctrine:migrations:diff`). On MySQL, give `source_path` a binary / case-sensitive collation (`utf8mb4_bin`) so `/Old` and `/old` stay distinct sources, as they are at request time.
+Then generate and review the migration in the host (`php bin/console doctrine:migrations:diff`). On MySQL / MariaDB, give `source_path` a binary **NO PAD** collation so `/Old` and `/old` stay distinct sources, as they are at request time, and so `/old` and `/old ` are not the same source either:
+
+- MySQL 8.0.17 or later: `utf8mb4_0900_bin`;
+- MariaDB: `utf8mb4_nopad_bin`;
+- MySQL 5.7 only: `utf8mb4_bin`, the fallback, because 5.7 has no NO PAD collation.
+
+`utf8mb4_bin` alone is not enough on MySQL 8 or MariaDB: it is a binary collation but it is PAD SPACE, so trailing spaces are ignored in comparisons and in unique keys (`'/old' = '/old   '`). `utf8mb4_unicode_ci` and the other `_ci` collations are worse, because they also ignore case and accents. RoutingKit ships no schema, so this collation is a host decision (REQ-SEC-006); for example `ALTER TABLE redirect MODIFY source_path VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL;`, with your table name and the collation for your server.
 
 ## Hit counting
 
