@@ -59,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Documentation: `docs/REDIRECTS.md` told hosts to give `source_path` `utf8mb4_bin`, which is PAD SPACE on MySQL 8 and MariaDB. It now gives the REQ-SEC-006 advice: `utf8mb4_0900_bin` (MySQL 8.0.17+), `utf8mb4_nopad_bin` (MariaDB), `utf8mb4_bin` only on MySQL 5.7.
+
 ## [1.16.0] - 2026-11-13
 
 ### Changed
