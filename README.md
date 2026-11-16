@@ -166,6 +166,10 @@ make test-coverage
 make coverage-check
 ```
 
+- PHP: **100%** lines (PHPUnit unit + integration kernels; gate 100% in CI `Code Coverage`)
+- TS/JS: N/A (no TypeScript / JavaScript in the bundle; the demo's Playwright e2e specs are not coverage-measured)
+- Python: N/A
+
 ## License
 
 MIT

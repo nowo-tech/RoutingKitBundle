@@ -242,6 +242,10 @@ Full findings and residuals: [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDI
 | `/_routing` | Path CRUD panel |
 | `/health` | Health check |
 
+**Demo smoke (REQ-TEST-011).** `make demo-smoke` (repository root) runs `make -C demo release-verify`: it starts the
+demo, requests `http://127.0.0.1:$PORT/` (default port 8058) expecting HTTP 200, and stops it. CI runs the same target
+in `.github/workflows/demo-smoke.yml` (weekly, on `v*` tags, on demand and on pull requests touching `demo/`).
+
 ---
 
 ## Troubleshooting

@@ -61,6 +61,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI: `.github/workflows/demo-smoke.yml` runs `make demo-smoke` (demo boot + HTTP 200) weekly, on `v*` tags, on demand and on pull requests touching `demo/` (REQ-TEST-011)
+- Dependabot: npm updates for the demo Playwright package `demo/symfony8/e2e` (REQ-GH-002)
+
+### Documentation
+
+- CONFIGURATION: shipped locales and how to override the `NowoRoutingKitBundle` translations from the app (REQ-I18N-001 / REQ-I18N-002)
+- README `Tests and coverage`: TS/JS and Python marked N/A (REQ-TEST-007)
+- Spec Kit: the 1.15–1.17 sources (service interfaces, `UrlRedirectManager`, `UrlRedirectData`, `InvalidUrlRedirectException`, both change events) mapped in `specs/001-baseline/code-inventory.md` (89/89); FR-15 / FR-23 and `REQ-REDIR-009` added (REQ-SPECKIT-001 / 003)
+
 ## [1.17.0] - 2026-11-13
 
 ### Added

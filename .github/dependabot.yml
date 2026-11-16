@@ -43,3 +43,20 @@ updates:
       - "github-actions"
     commit-message:
       prefix: "chore(ci):"
+
+  # Demo Playwright e2e (REQ-DEMO-013)
+  - package-ecosystem: "npm"
+    directory: "/demo/symfony8/e2e"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "HecFranco"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps):"
