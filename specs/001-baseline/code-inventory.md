@@ -2,8 +2,8 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/routing-kit-bundle`  
-**Last audited**: 2026-10-28  
-**Coverage summary**: **80/80** files under `src/` mapped (see [Coverage summary](#coverage-summary)). PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
+**Last audited**: 2026-11-16 (1.17.0)  
+**Coverage summary**: **89/89** files under `src/` mapped (see [Coverage summary](#coverage-summary)). PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
 
 Every production file under `src/` maps to one or more baseline `FR-*` requirements.
 
@@ -63,13 +63,16 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `Routing/SafePublicPath.php` | Rejects unsafe public path strings. | FR-05 |
 | `Routing/DbRouteLoader.php` | `nowo_routing_kit` route loader (`ResetInterface`). | FR-02, FR-10, FR-19 |
 | `Routing/RouteCacheInvalidator.php` | Clears/warms router cache; route-table version + in-process router reset. | FR-09, FR-19 |
+| `Routing/PublicPathResolverInterface.php` | Query service interface of the resolver (1.17.0); the bundle's services type against it. | FR-02, FR-03, FR-23 |
 | `Routing/DefaultLocaleRouter.php` | Decorates `router.default`: the default locale never appears in generated URLs. | FR-20 |
 
 ## Events and subscribers
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Event/RoutePathsChangedEvent.php` | Dispatched on save/delete. | FR-15 |
+| `Event/RoutePathsChangedEvent.php` | Dispatched on save/delete (deprecated since 1.17.0, removed in 2.0). | FR-15 |
+| `Event/RoutePathDefinitionChangedEvent.php` | Plain-PHP twin dispatched for every saved / imported / deleted row (ids and scalars, 1.17.0). | FR-15, FR-23 |
+| `Event/UrlRedirectChangedEvent.php` | Dispatched after every redirect create / update / delete (1.15.0). | 002 REQ-REDIR-009 |
 | `EventSubscriber/CanonicalRedirectSubscriber.php` | Redirects non-canonical twins / slash variants. | FR-11, FR-13 |
 | `EventSubscriber/RootRedirectSubscriber.php` | Optional `/` redirect. | FR-12 |
 | `EventSubscriber/RoutePathAuditSubscriber.php` | Logs path mutations when a security token exists. | FR-08 |
@@ -100,6 +103,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
 | `Service/RoutePathManager.php` | Validates, persists, invalidates cache, dispatches events. | FR-05, FR-08, FR-09, FR-15 |
+| `Service/RoutePathManagerInterface.php` | Application service interface for route paths (1.17.0). | FR-15, FR-23 |
 | `Service/RoutePathConflictDetector.php` | Detects colliding public paths. | FR-05 |
 | `Service/RoutePathImportExport.php` | Signed export/import. | FR-08 |
 | `Controller/RoutingPanelController.php` | Twig CRUD + CSRF + clear cache. | FR-08, FR-09, FR-17 |
@@ -138,6 +142,11 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `Redirect/LivePublicPaths.php` | Router match + checkers: is the source a live page. | 002 REQ-REDIR-003 |
 | `Redirect/UrlRedirectMatcher.php` | Cached enabled map, per-request memo, invalidation, hit recording. | 002 REQ-REDIR-004, 002 REQ-REDIR-008 |
 | `Redirect/UrlRedirectValidator.php` | Source / target / status validation, protected / live / loop / chain / duplicate checks. | 002 REQ-REDIR-006 |
+| `Redirect/UrlRedirectMatcherInterface.php` | Query service interface of the matcher (1.17.0). | 002 REQ-REDIR-004, FR-23 |
+| `Redirect/UrlRedirectManagerInterface.php` | Application service interface for redirects: `validate()`, `save()`, `delete()` (1.17.0). | 002 REQ-REDIR-009 |
+| `Redirect/UrlRedirectManager.php` | Default application service: validates, writes through the storage, invalidates the matcher, dispatches `UrlRedirectChangedEvent`. | 002 REQ-REDIR-009 |
+| `Redirect/UrlRedirectData.php` | Input DTO of the application service (source, target, status, enabled, note). | 002 REQ-REDIR-009 |
+| `Redirect/InvalidUrlRedirectException.php` | Refused write with per-field translation keys; nothing written. | 002 REQ-REDIR-009 |
 | `Redirect/Message/RecordRedirectHit.php` | Messenger message for asynchronous hit counting. | 002 REQ-REDIR-008 |
 | `Redirect/Message/RecordRedirectHitHandler.php` | Handler writing the hit through the storage. | 002 REQ-REDIR-008 |
 
@@ -164,14 +173,14 @@ Audit command: `git ls-files src | wc -l` (2026-10-28).
 | Locale | 3 | 3 |
 | Model / enums | 5 | 5 |
 | Storage | 4 | 4 |
-| Routing | 5 | 5 |
-| Events and subscribers | 7 | 7 |
+| Routing | 6 | 6 |
+| Events and subscribers | 9 | 9 |
 | Security | 4 | 4 |
 | Form | 4 | 4 |
-| Service and controller | 8 | 8 |
+| Service and controller | 9 | 9 |
 | Seo | 2 | 2 |
 | YAML configuration | 3 | 3 |
 | Twig views | 10 | 10 |
-| URL redirects (`src/Redirect/`, since 1.6.0) | 7 | 7 |
+| URL redirects (`src/Redirect/`, since 1.6.0) | 12 | 12 |
 | Translations | 7 | 7 |
-| **Total production files (`git ls-files src`)** | **80** | **80** |
+| **Total production files (`git ls-files src`)** | **89** | **89** |

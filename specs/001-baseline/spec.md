@@ -26,14 +26,15 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-12 | Optional root `/` redirect to the default-locale home. |
 | FR-13 | Trailing-slash styles including redirect-to-omit / redirect-to-keep. |
 | FR-14 | Bundle Twig namespace `NowoRoutingKitBundle`; app overrides win (REQ-TWIG-001). `@!NowoRoutingKitBundle` targets the bundle copy; admin chrome hooks per [`003-admin-chrome-hooks`](../003-admin-chrome-hooks/spec.md) (v1.7.0). |
-| FR-15 | Path mutations dispatch `RoutePathsChangedEvent`. |
+| FR-15 | Path mutations dispatch `RoutePathDefinitionChangedEvent` (plain PHP: `id`, `routeName`, `locale`, `path`, `enabled`, `deleted`, `definition`) after the storage write, preceded until 2.0 by the deprecated `RoutePathsChangedEvent`. |
 | FR-16 | Optional SeoKit bridge decorates `SeoPathBuilderInterface::pagePath`. |
 | FR-17 | Panel POST actions validate CSRF when `CsrfTokenManagerInterface` is available. |
 | FR-18 | Seven minimum translation locales for the panel domain `NowoRoutingKitBundle`. |
 | FR-19 | Safe under FrankenPHP **worker** with the kernel **not** reset between requests: no per-request state leaks; panel path changes propagate to every worker sharing `%kernel.cache_dir%` on the next main request. |
 | FR-20 | With `default_locale_unprefixed`, the default locale never appears in URLs: `DefaultLocaleRouter` generates bare URLs and `GET /{default}/…` answers a 301 to the bare twin (`DefaultLocalePrefixRedirectSubscriber`). |
 | FR-21 | `CsrfProtectionPass` fails the container build when the panel is enabled without form CSRF protection (fail closed). |
-| FR-22 | Operator URL redirects (opt-in `url_redirects`) per [`002-url-redirects`](../002-url-redirects/spec.md) `REQ-REDIR-001` … `REQ-REDIR-008`. |
+| FR-22 | Operator URL redirects (opt-in `url_redirects`) per [`002-url-redirects`](../002-url-redirects/spec.md) `REQ-REDIR-001` … `REQ-REDIR-009`. |
+| FR-23 | Hosts type against `RoutePathManagerInterface`, `PublicPathResolverInterface`, `UrlRedirectMatcherInterface` and `UrlRedirectManagerInterface` (aliased to the defaults, 1.17.0); ports, events and value objects carry no Doctrine / HttpFoundation / Form types (REQ-ARCH-001, [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)). |
 
 ## User scenarios
 
@@ -101,4 +102,5 @@ make test-coverage
 - FR-10: `tests/Unit/Routing/DbRouteLoaderTest.php`
 - FR-14: `tests/Unit/DependencyInjection/Compiler/TwigPathsPassTest.php`
 - FR-15: `tests/Unit/Service/RoutePathManagerTest.php`
+- FR-23: `tests/Integration/Redirect/UrlRedirectManagerKernelTest.php`, `tests/Integration/Redirect/UrlRedirectPanelRaceKernelTest.php`
 - FR-16: `tests/Unit/Seo/*` (when SeoKit present) / coverage exclude otherwise

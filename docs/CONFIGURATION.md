@@ -137,4 +137,20 @@ nowo_form_kit:
 
 Prefer `security.access_roles`. Legacy `panel.role: ROLE_X` still maps to `access_roles: [ROLE_X]`; `panel.role: null` maps to `access_roles: []` (fail-closed: the panel denies everyone). Always add host `access_control` for `web_ui.path_prefix`.
 
+### Translations (REQ-I18N-001 / REQ-I18N-002)
+
+Panel and redirect labels use the translation domain `NowoRoutingKitBundle`, shipped in seven locales: `en`, `es`,
+`fr`, `de`, `it`, `pt`, `nl` (same keys in every catalogue; `make validate-translations` checks it). Application
+catalogues win over the bundle's and missing keys fall back to it, so to change a label create
+`translations/NowoRoutingKitBundle.<locale>.yaml` in your app with only the keys you want to change, then clear the
+cache:
+
+```yaml
+# translations/NowoRoutingKitBundle.es.yaml
+panel.title: 'Rutas públicas'
+panel.new: 'Nueva ruta'
+```
+
+Copy key names from `vendor/nowo-tech/routing-kit-bundle/src/Resources/translations/NowoRoutingKitBundle.en.yaml`.
+
 See `src/Resources/config/packages/nowo_routing_kit.yaml` for a full example.
