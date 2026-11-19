@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.18.0](#to-1180)
 - [To 1.17.0](#to-1170)
 - [To 1.16.1](#to-1161)
 - [To 1.16.0](#to-1160)
@@ -103,6 +104,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.18.0
+
+From **1.17.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 Concurrency (REQ-RUNTIME-003); see [CONCURRENCY.md](CONCURRENCY.md). No configuration change is required.
 
