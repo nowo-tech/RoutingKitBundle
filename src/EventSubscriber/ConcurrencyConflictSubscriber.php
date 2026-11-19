@@ -9,6 +9,7 @@ use Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException;
 use Nowo\TransactionContract\TransientStorageFailure;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -37,7 +38,8 @@ use function str_starts_with;
  * requests whose `_controller` is one of this bundle's controllers are answered: host routes keep their own handling.
  * Any other failure (unique-key refusals, I/O errors) is left alone.
  *
- * Stateless: the mark lives on the request, the ledger is read by difference.
+ * Stateless: the mark lives on the main request (read through RequestStack, also for sub-requests), the ledger is read
+ * by difference.
  */
 final readonly class ConcurrencyConflictSubscriber implements EventSubscriberInterface
 {
@@ -62,6 +64,7 @@ final readonly class ConcurrencyConflictSubscriber implements EventSubscriberInt
         private StorageWriteLedger $ledger,
         private int $status = 409,
         private int $retryAfter = 1,
+        private ?RequestStack $requestStack = null,
     ) {
     }
 
@@ -129,6 +132,10 @@ final readonly class ConcurrencyConflictSubscriber implements EventSubscriberInt
 
     private function committedInRequest(Request $request): bool
     {
+        // The marks live on the main request: a bundle controller rendered in a sub-request (fragment, ESI, forward)
+        // must still see the writes made earlier in the main request (UN-RK-2).
+        $request = $this->requestStack?->getMainRequest() ?? $request;
+
         $mark = $request->attributes->get(self::MARK_ATTRIBUTE);
         if (is_int($mark) && $this->ledger->count() !== $mark) {
             return true;

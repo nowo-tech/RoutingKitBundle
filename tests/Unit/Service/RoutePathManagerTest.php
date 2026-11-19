@@ -14,6 +14,7 @@ use Nowo\RoutingKitBundle\Routing\RouteCacheInvalidator;
 use Nowo\RoutingKitBundle\Service\RoutePathConflictDetector;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -323,6 +324,121 @@ PHP);
         $manager->import([
             new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
         ]);
+    }
+
+    /**
+     * UN-RK-1: a merge import that meets a storage lock on row 2 keeps row 1 saved (CONFLICT_002) and still
+     * invalidates the route cache, so row 1 goes live. A failure on the first row invalidates nothing.
+     */
+    public function testMergeImportFailingHalfWayStillInvalidatesTheCacheForTheSavedRows(): void
+    {
+        $inner   = new InMemoryRoutePathStorage();
+        $storage = $this->storageFailingOnSave($inner, 2);
+        $router  = new WarmableRouterSpy();
+        $manager = $this->mergeManager($storage, $router);
+
+        try {
+            $manager->import([
+                new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
+                new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
+            ]);
+            self::fail('The lock timeout must propagate.');
+        } catch (StorageLockTimeoutException) {
+            self::assertCount(1, $inner->all(), 'Row 1 stays saved.');
+            self::assertSame(1, $router->warmUpCalls, 'The saved row goes live.');
+        }
+
+        $first = new WarmableRouterSpy();
+        try {
+            $this->mergeManager($this->storageFailingOnSave(new InMemoryRoutePathStorage(), 1), $first)
+                ->import([new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}')]);
+            self::fail('The lock timeout must propagate.');
+        } catch (StorageLockTimeoutException) {
+            self::assertSame(0, $first->warmUpCalls, 'Nothing saved, nothing to invalidate.');
+        }
+    }
+
+    public function testMergeImportKeepsTheOriginalFailureWhenTheInvalidationFails(): void
+    {
+        $router = $this->createMockForIntersectionOfInterfaces([RouterInterface::class, WarmableInterface::class]);
+        $router->method('getContext')->willReturn(new RequestContext());
+        $router->method('warmUp')->willThrowException(new RuntimeException('warm-up failed'));
+
+        $manager = $this->mergeManager($this->storageFailingOnSave(new InMemoryRoutePathStorage(), 2), $router);
+
+        $this->expectException(StorageLockTimeoutException::class);
+        $manager->import([
+            new RoutePathDefinition('app_article_show', 'en', '/articles/{slug}'),
+            new RoutePathDefinition('app_article_show', 'es', '/articulos/{slug}'),
+        ]);
+    }
+
+    private function mergeManager(RoutePathStorageInterface $storage, RouterInterface $router): RoutePathManager
+    {
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnArgument(0);
+
+        return new RoutePathManager(
+            $storage,
+            $this->createValidator(),
+            new RouteCacheInvalidator($router, $this->cacheDir),
+            $dispatcher,
+            $this->createConflictDetector($storage),
+            autoInvalidateCache: true,
+            rejectConflicts: false,
+        );
+    }
+
+    private function storageFailingOnSave(InMemoryRoutePathStorage $inner, int $failingSave): RoutePathStorageInterface
+    {
+        return new class($inner, $failingSave) implements RoutePathStorageInterface {
+            private int $saves = 0;
+
+            public function __construct(
+                private readonly InMemoryRoutePathStorage $inner,
+                private readonly int $failingSave,
+            ) {
+            }
+
+            public function all(): array
+            {
+                return $this->inner->all();
+            }
+
+            public function find(string $routeName, string $locale): ?RoutePathDefinition
+            {
+                return $this->inner->find($routeName, $locale);
+            }
+
+            public function findById(string $id): ?RoutePathDefinition
+            {
+                return $this->inner->findById($id);
+            }
+
+            public function findByRouteName(string $routeName): array
+            {
+                return $this->inner->findByRouteName($routeName);
+            }
+
+            public function save(RoutePathDefinition $definition): RoutePathDefinition
+            {
+                if (++$this->saves === $this->failingSave) {
+                    throw new StorageLockTimeoutException('/var/routing_kit/paths.json.lock', 0.05);
+                }
+
+                return $this->inner->save($definition);
+            }
+
+            public function delete(string $id): void
+            {
+                $this->inner->delete($id);
+            }
+
+            public function replaceAll(array $definitions): array
+            {
+                return $this->inner->replaceAll($definitions);
+            }
+        };
     }
 
     public function testConflictsWithinDetectsBatchCollisions(): void

@@ -12,6 +12,7 @@ use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 use function array_unique;
 use function array_values;
@@ -122,10 +123,7 @@ final class RoutePathManager implements RoutePathManagerInterface
                 $this->dispatchChanged($saved);
             }
         } else {
-            foreach ($prepared as $definition) {
-                $saved = $this->storage->save($definition);
-                $this->dispatchChanged($saved);
-            }
+            $this->importMerge($prepared);
         }
 
         if ($this->autoInvalidateCache) {
@@ -133,6 +131,36 @@ final class RoutePathManager implements RoutePathManagerInterface
         }
 
         return count($prepared);
+    }
+
+    /**
+     * Merge import: one save per row, so not atomic as a whole. When a row fails (for example a storage lock wait
+     * that ran out, CONFLICT_002) after earlier rows were saved, the route cache is still invalidated, so the saved
+     * rows go live; the original failure is rethrown, even when the invalidation itself fails (the route-table version
+     * file is written before the router warm-up, so other workers still pick the change up).
+     *
+     * @param list<RoutePathDefinition> $prepared
+     */
+    private function importMerge(array $prepared): void
+    {
+        $saved = 0;
+
+        try {
+            foreach ($prepared as $definition) {
+                $this->dispatchChanged($this->storage->save($definition));
+                ++$saved;
+            }
+        } catch (Throwable $failure) {
+            if ($saved > 0 && $this->autoInvalidateCache) {
+                try {
+                    $this->cacheInvalidator->invalidate();
+                } catch (Throwable) {
+                    // Keep the original failure: it is the one the caller must answer (409 CONFLICT_002, 400...).
+                }
+            }
+
+            throw $failure;
+        }
     }
 
     public function delete(string $id, bool $invalidateCache = true): void

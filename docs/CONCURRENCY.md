@@ -68,7 +68,8 @@ A `StorageLockTimeoutException` (or any `Nowo\TransactionContract\TransientStora
 
 - **What "already wrote" means.**
   - A filesystem store wrote since the main request started. `StorageWriteLedger` is a monotonic counter; a mark is
-    taken at `kernel.request` and compared at `kernel.exception`. Redirect hit counts are statistics and are not
+    taken at the main `kernel.request` and read back from the main request (also when a bundle controller runs in a
+    sub-request) at `kernel.exception`. Redirect hit counts are statistics and are not
     counted, so a leftover hit flushed at the start of a request never turns its conflict into `CONFLICT_002`.
   - Or, when the host runs nowo-tech/transaction-doctrine ≥ 1.6 with `commit_detection`, its request `CommitMark` saw
     a database commit. This covers the host's own writes earlier in the request.
@@ -139,7 +140,8 @@ FrankenPHP worker mode with kernel reset off is covered:
 ## Residual risks
 
 - **Merge import is not atomic.** A merge import (`replace_all` off) saves row by row. If the lock times out half way,
-  the rows already saved stay saved. The answer is `CONFLICT_002`: reload the list before importing again. Use
+  the rows already saved stay saved, and the route cache is still invalidated so they go live. The answer is
+  `CONFLICT_002`: reload the list before importing again. Use
   "replace all" for an all-or-nothing import.
 - **Synchronous hits may be dropped.** A synchronous redirect hit that meets a held lock after the response is logged
   (`Redirect hit not recorded`) and dropped. Hit counts are statistics. Use `url_redirects.hits.message_bus` to get
@@ -148,6 +150,10 @@ FrankenPHP worker mode with kernel reset off is covered:
 - **Read timeouts on host routes.** On host routes, a read that times out raises `StorageLockTimeoutException`
   wherever the caller does not catch it, for example `PublicPathResolver` from Twig. The host's error handling decides
   the answer. Before this release such a read waited without limit.
+- **Busy sites without a cache pool.** Lock waits poll: on a busy site with `url_redirects.cache_pool` or
+  `redirects.canonical_cache_pool` set to `null`, every request reads the store under a shared lock. A save, or a
+  synchronous hit, may then not find a free moment before `storage.lock_timeout` and time out. Keep a cache pool
+  configured on busy sites (the default is `cache.app`).
 - **No cross-host locking.** See [Multi-server deployments](#multi-server-deployments).
 
 ## Tests

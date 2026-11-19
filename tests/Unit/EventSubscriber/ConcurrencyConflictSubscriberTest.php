@@ -17,6 +17,7 @@ use ReflectionProperty;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -131,6 +132,35 @@ final class ConcurrencyConflictSubscriberTest extends TestCase
 
         $answer = $this->answer(new ConcurrencyConflictSubscriber($ledger), $request, $this->timeout());
         self::assertSame('CONFLICT_001', $answer->getHeaders()['X-Conflict-Code']);
+    }
+
+    /**
+     * UN-RK-2: a bundle controller rendered in a sub-request reads the marks of the main request.
+     */
+    public function testSubRequestReadsTheMarkOfTheMainRequest(): void
+    {
+        $ledger     = new StorageWriteLedger();
+        $main       = new Request();
+        $stack      = new RequestStack([$main]);
+        $subscriber = new ConcurrencyConflictSubscriber($ledger, requestStack: $stack);
+
+        $subscriber->onKernelRequest(new RequestEvent($this->kernel(), $main, HttpKernelInterface::MAIN_REQUEST));
+        $ledger->record();
+
+        $sub = new Request();
+        $sub->attributes->set('_controller', self::BUNDLE_CONTROLLER);
+        $stack->push($sub);
+
+        $event = new ExceptionEvent($this->kernel(), $sub, HttpKernelInterface::SUB_REQUEST, $this->timeout());
+        $subscriber->onKernelException($event);
+        $answer = $event->getThrowable();
+        self::assertInstanceOf(HttpException::class, $answer);
+        self::assertSame('CONFLICT_002', $answer->getHeaders()['X-Conflict-Code']);
+        self::assertArrayNotHasKey('Retry-After', $answer->getHeaders());
+
+        // An empty stack (no main request known) falls back to the event's request.
+        $alone = new ConcurrencyConflictSubscriber($ledger, requestStack: new RequestStack());
+        self::assertSame('CONFLICT_001', $this->answer($alone, $this->request($ledger), $this->timeout())->getHeaders()['X-Conflict-Code']);
     }
 
     public function testConfiguredStatusAndRetryAfterAndTheFailureHint(): void

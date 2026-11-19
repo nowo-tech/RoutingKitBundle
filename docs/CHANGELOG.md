@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A storage lock held by a stuck or slow process no longer blocks every reader and writer without limit (the `flock()` wait had no timeout)
+- A merge import that fails half way (a storage lock timeout or a refused row) still invalidates the route cache when earlier rows were saved, so they go live
 - The panel no longer turns a storage lock wait into a form error (create / edit path, create / edit redirect) or a 400 (import): it reaches the conflict answer
 
 ### Changed
