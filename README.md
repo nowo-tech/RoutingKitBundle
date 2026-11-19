@@ -153,6 +153,7 @@ make -C demo/symfony8 demo-screenshots   # refreshes docs/images/demo/*.webp
 - [Customising the admin chrome](docs/USAGE.md#customising-the-admin-chrome) — UiKit layout and theme; no page copies
 - [Templates](docs/TEMPLATES.md) — panel pages → UiKit scaffolds, view models, data blocks (REQ-UI-003)
 - [URL redirects](docs/REDIRECTS.md)
+- [Concurrency (REQ-RUNTIME-003)](docs/CONCURRENCY.md) — bounded file locks, 409 + `X-Conflict-Code`, multi-server limits
 - [PSR evaluation (REQ-CS-007)](docs/PSR.md)
 - [Demo (FrankenPHP)](docs/DEMO-FRANKENPHP.md)
 - [GitHub Actions CI requirements](docs/GITHUB_CI.md)

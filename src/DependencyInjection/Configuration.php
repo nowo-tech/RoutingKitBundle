@@ -9,6 +9,7 @@ use Nowo\RoutingKitBundle\Panel\PanelChrome;
 use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
 use Nowo\RoutingKitBundle\Routing\SafePublicPath;
+use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -119,6 +120,29 @@ final class Configuration implements ConfigurationInterface
                         ->scalarNode('path_storage')
                             ->info('Service id implementing RoutePathStorageInterface.')
                             ->defaultNull()
+                        ->end()
+                        ->floatNode('lock_timeout')
+                            ->info('Seconds a read or write of the JSON file stores (paths and url_redirects) waits for the file lock before failing with StorageLockTimeoutException (admin routes answer 409 + CONFLICT_001). 0 = try once.')
+                            ->min(0.0)
+                            ->max(60.0)
+                            ->defaultValue(FilesystemRoutePathStorage::DEFAULT_LOCK_TIMEOUT)
+                        ->end()
+                    ->end()
+                ->end()
+                ->arrayNode('conflict_response')
+                    ->info('REQ-RUNTIME-003: answer of the admin routes when the storage stays locked (X-Conflict-Code CONFLICT_001 / CONFLICT_002).')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->enumNode('status')
+                            ->info('HTTP status: 409 (platform default) or 503.')
+                            ->values([409, 503])
+                            ->defaultValue(409)
+                        ->end()
+                        ->integerNode('retry_after')
+                            ->info('Retry-After seconds sent with CONFLICT_001 (never with CONFLICT_002).')
+                            ->min(0)
+                            ->max(3600)
+                            ->defaultValue(1)
                         ->end()
                     ->end()
                 ->end()

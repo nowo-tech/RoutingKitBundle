@@ -104,6 +104,27 @@
 
 ## Unreleased
 
+Concurrency (REQ-RUNTIME-003); see [CONCURRENCY.md](CONCURRENCY.md). No configuration change is required.
+
+- **Bounded lock waits.** The JSON stores used to wait for `{file}.lock` without limit. They now give up after
+  `storage.lock_timeout` (default 5 s) and throw `StorageLockTimeoutException`. It extends
+  `Nowo\TransactionContract\TransientStorageFailure`, which extends `RuntimeException`, so existing
+  `catch (RuntimeException)` blocks still catch it. Its message is generic; the lock path is in `$lockPath`.
+  - Code that calls the stores or the managers directly (commands, host services) can now get it under heavy
+    contention. Retry it later; nothing was written by the call that threw.
+  - On host routes, a read that times out (for example `PublicPathResolver` from Twig) now raises instead of hanging.
+- **Conflict answer on the panel.** A lock timeout on the bundle's admin routes now answers **409** with
+  `X-Conflict-Code: CONFLICT_001` and `Retry-After`, or `CONFLICT_002` (no `Retry-After`) when the request had already
+  written. It used to be a form error, a 400 (import) or a hang. The host's error page renders it.
+  - To keep a 503, set `conflict_response.status: 503`.
+  - The response carries `Cache-Control: no-store`.
+- **New dependency** `nowo-tech/transaction-contract` ^1.0 (no transitive dependencies).
+- **Constructors.** The `FilesystemRoutePathStorage` and `FilesystemUrlRedirectStorage` constructors gain two optional
+  arguments, `float $lockTimeout = 5.0` and `?StorageWriteLedger $writeLedger = null`. Existing calls keep working.
+- **Several servers.** `flock()` does not lock across hosts, and is unreliable on most network filesystems. If several
+  app servers share the JSON files, switch to a database-backed `storage.path_storage` / `url_redirects.storage`
+  (see [CONCURRENCY.md](CONCURRENCY.md#multi-server-deployments)).
+
 ## To 1.17.0
 
 From **1.16.1**:

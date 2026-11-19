@@ -61,6 +61,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `storage.lock_timeout` (default 5.0 s, 0–60): the JSON stores wait for `{file}.lock` with non-blocking retries up to this deadline, then throw `Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException` (REQ-RUNTIME-003 rule 9)
+- `conflict_response.status` (409 or 503, default 409) and `conflict_response.retry_after` (default 1): a storage lock timeout on the bundle's admin routes answers 409 + `X-Conflict-Code: CONFLICT_001` + `Retry-After`, or `CONFLICT_002` without `Retry-After` when the request had already written (`ConcurrencyConflictSubscriber`, `StorageWriteLedger`; transaction-doctrine's request `CommitMark` honoured when present). Host routes are never answered (REQ-RUNTIME-003 rule 6)
+- Dependency `nowo-tech/transaction-contract` ^1.0: `StorageLockTimeoutException` is a `TransientStorageFailure`, and a host storage that throws one gets the same 409 answer
+- `docs/CONCURRENCY.md`: write-path table, conflict codes, host options, multi-server limits of `flock()`, residual risks
+- Tests: bounded lock waits (including a lock held by another process), multi-process races on both stores (no lost hit, no lost insert, one winner per source / route + locale), kernel tests for `CONFLICT_001` / `CONFLICT_002` / 503
+- CI: "Dependency floor (nowo-tech/transaction-* lowest, demo lock)" job
+
+### Fixed
+
+- A storage lock held by a stuck or slow process no longer blocks every reader and writer without limit (the `flock()` wait had no timeout)
+- The panel no longer turns a storage lock wait into a form error (create / edit path, create / edit redirect) or a 400 (import): it reaches the conflict answer
+
 ### Changed
 
 - CI: `.github/workflows/demo-smoke.yml` runs `make demo-smoke` (demo boot + HTTP 200) weekly, on `v*` tags, on demand and on pull requests touching `demo/` (REQ-TEST-011)

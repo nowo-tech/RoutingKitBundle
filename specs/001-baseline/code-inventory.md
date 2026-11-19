@@ -54,6 +54,9 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `Storage/FilesystemRoutePathStorage.php` | JSON filesystem storage (`LOCK_SH` reads / `LOCK_EX` writes). | FR-01, FR-06, FR-19 |
 | `Storage/UrlRedirectStorageInterface.php` | URL redirect persistence contract. | 002 REQ-REDIR-001 |
 | `Storage/FilesystemUrlRedirectStorage.php` | JSON redirect storage with `flock`, atomic rename, fail-closed parsing. | 002 REQ-REDIR-001 |
+| `Storage/FileLock.php` | Bounded `flock()` (non-blocking retries until `storage.lock_timeout`). | FR-24 |
+| `Storage/StorageLockTimeoutException.php` | Lock wait ran out (`TransientStorageFailure`). | FR-24 |
+| `Concurrency/StorageWriteLedger.php` | Monotonic count of durable store writes (CONFLICT_002 detection). | FR-24 |
 
 ## Routing
 
@@ -79,6 +82,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `EventSubscriber/RouteTableFreshnessSubscriber.php` | Rebuilds this worker's router when the route-table version changes. | FR-09, FR-19 |
 | `EventSubscriber/DefaultLocalePrefixRedirectSubscriber.php` | `GET /{default}/…` → 301 to the bare URL of the same page. | FR-20 |
 | `EventSubscriber/UrlRedirectSubscriber.php` | `kernel.request` URL redirect listener (priority 33). | 002 REQ-REDIR-005 |
+| `EventSubscriber/ConcurrencyConflictSubscriber.php` | Admin-route lock timeouts → 409 + `X-Conflict-Code` (CONFLICT_001 / CONFLICT_002). | FR-24 |
 
 ## Security
 
@@ -172,9 +176,9 @@ Audit command: `git ls-files src | wc -l` (2026-10-28).
 | Attribute, discovery, validation | 4 | 4 |
 | Locale | 3 | 3 |
 | Model / enums | 5 | 5 |
-| Storage | 4 | 4 |
+| Storage (with `Concurrency/`) | 7 | 7 |
 | Routing | 6 | 6 |
-| Events and subscribers | 9 | 9 |
+| Events and subscribers | 10 | 10 |
 | Security | 4 | 4 |
 | Form | 4 | 4 |
 | Service and controller | 9 | 9 |
@@ -183,4 +187,4 @@ Audit command: `git ls-files src | wc -l` (2026-10-28).
 | Twig views | 10 | 10 |
 | URL redirects (`src/Redirect/`, since 1.6.0) | 12 | 12 |
 | Translations | 7 | 7 |
-| **Total production files (`git ls-files src`)** | **89** | **89** |
+| **Total production files (`git ls-files src`)** | **93** | **93** |

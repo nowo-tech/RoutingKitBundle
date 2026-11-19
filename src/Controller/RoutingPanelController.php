@@ -18,6 +18,7 @@ use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManagerInterface;
+use Nowo\TransactionContract\TransientStorageFailure;
 use Nowo\UiKitBundle\View\Action;
 use Nowo\UiKitBundle\View\Column;
 use Nowo\UiKitBundle\View\Confirm;
@@ -277,6 +278,9 @@ final class RoutingPanelController
             $this->importExport->import($decoded, (bool) ($data['replace_all'] ?? false));
             // @igor-ignore - HTTP handler delegates to services; no controller worker state.
             $this->manager->clearCache();
+        } catch (TransientStorageFailure $conflict) {
+            // A storage lock wait that ran out: 409 + X-Conflict-Code (ConcurrencyConflictSubscriber), not a 400.
+            throw $conflict;
         } catch (Throwable $e) {
             $message = $e instanceof RuntimeException ? $e->getMessage() : 'Import failed.';
 
@@ -345,6 +349,9 @@ final class RoutingPanelController
                 $this->manager->save($definition);
 
                 return new RedirectResponse($this->pathPrefix . '/');
+            } catch (TransientStorageFailure $conflict) {
+                // A storage lock wait that ran out: 409 + X-Conflict-Code (ConcurrencyConflictSubscriber), not a form error.
+                throw $conflict;
             } catch (Throwable $e) {
                 $form->addError(new FormError($e->getMessage()));
             }

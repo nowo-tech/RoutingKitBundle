@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Storage;
 
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use RuntimeException;
 
 use function array_values;
 use function dirname;
-use function fclose;
 use function file_get_contents;
 use function file_put_contents;
-use function flock;
-use function fopen;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -33,19 +31,28 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const LOCK_EX;
 use const LOCK_SH;
-use const LOCK_UN;
 
 /**
  * JSON file storage for route path definitions (Doctrine-free default).
  *
  * Mutations take an exclusive lock on `{paths}.lock` to avoid lost updates; reads take a shared lock
  * so concurrent readers (every worker thread on every request) do not serialize.
- * Corrupt JSON fails closed (does not wipe the file on the next save).
+ * Every lock wait is bounded by `$lockTimeout` ({@see FileLock}, {@see StorageLockTimeoutException}). flock() does not
+ * lock across hosts: see docs/CONCURRENCY.md. Corrupt JSON fails closed (does not wipe the file on the next save).
  */
 final class FilesystemRoutePathStorage implements RoutePathStorageInterface
 {
+    /** Default `storage.lock_timeout`: seconds a read or write waits for the storage lock. */
+    public const DEFAULT_LOCK_TIMEOUT = 5.0;
+
+    /**
+     * @param float $lockTimeout seconds to wait for `{file}.lock` before {@see StorageLockTimeoutException} (`storage.lock_timeout`)
+     * @param StorageWriteLedger|null $writeLedger counts durable writes for the CONFLICT_002 request-level detection
+     */
     public function __construct(
         private readonly string $filePath,
+        private readonly float $lockTimeout = self::DEFAULT_LOCK_TIMEOUT,
+        private readonly ?StorageWriteLedger $writeLedger = null,
     ) {
     }
 
@@ -153,23 +160,12 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
     {
         $this->ensureDirectory();
 
-        $lockPath = $this->filePath . '.lock';
-        $handle   = @fopen($lockPath, 'c+');
-        if ($handle === false) {
-            throw new RuntimeException(sprintf('Unable to open storage lock "%s".', $lockPath)); // @codeCoverageIgnore
-        }
-
-        if (!flock($handle, $operation)) {
-            fclose($handle); // @codeCoverageIgnore
-
-            throw new RuntimeException(sprintf('Unable to lock storage "%s".', $lockPath)); // @codeCoverageIgnore
-        }
+        $handle = FileLock::acquire($this->filePath . '.lock', $operation, $this->lockTimeout);
 
         try {
             return $callback();
         } finally {
-            flock($handle, LOCK_UN);
-            fclose($handle);
+            FileLock::release($handle);
         }
     }
 
@@ -240,6 +236,8 @@ final class FilesystemRoutePathStorage implements RoutePathStorageInterface
         if (!@rename($tmp, $this->filePath)) {
             throw new RuntimeException(sprintf('Unable to replace storage file "%s".', $this->filePath)); // @codeCoverageIgnore
         }
+
+        $this->writeLedger?->record();
     }
 
     private function ensureDirectory(): void

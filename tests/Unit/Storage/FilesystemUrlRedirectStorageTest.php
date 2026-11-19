@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Unit\Storage;
 
 use DateTimeImmutable;
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use Nowo\RoutingKitBundle\Storage\FilesystemUrlRedirectStorage;
+use Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
+use const LOCK_EX;
+use const LOCK_UN;
 
 final class FilesystemUrlRedirectStorageTest extends TestCase
 {
@@ -128,5 +133,46 @@ final class FilesystemUrlRedirectStorageTest extends TestCase
         } finally {
             @unlink($this->dir . '/nested');
         }
+    }
+
+    public function testHeldLockTimesOutWithoutWritingAndWritesAreCounted(): void
+    {
+        $ledger  = new StorageWriteLedger();
+        $storage = new FilesystemUrlRedirectStorage($this->file, 0.05, $ledger);
+        $old     = $storage->save((new UrlRedirect())->setSourcePath('/old')->setTargetUrl('/new'));
+        $at      = new DateTimeImmutable('2026-11-19T10:00:00+00:00');
+        $storage->recordHit('/old', $at);
+        $storage->recordHit('/unknown', $at);
+        $storage->delete('missing');
+        self::assertSame(1, $ledger->count(), 'Only the save counts: a hit is statistics, a missing id writes nothing.');
+        self::assertSame(1, $storage->findBySource('/old')?->getHits(), 'The hit was written all the same.');
+        $before = (string) file_get_contents($this->file);
+
+        $holder = fopen($this->file . '.lock', 'c+');
+        self::assertIsResource($holder);
+        self::assertTrue(flock($holder, LOCK_EX));
+
+        try {
+            foreach ([
+                static fn (): UrlRedirect => $storage->save((new UrlRedirect())->setSourcePath('/other')->setTargetUrl('/x')),
+                static fn () => $storage->delete((string) $old->getId()),
+                static fn () => $storage->recordHit('/old', $at),
+                static fn (): array => $storage->enabledMap(),
+            ] as $call) {
+                try {
+                    $call();
+                    self::fail('A held storage lock must time out.');
+                } catch (StorageLockTimeoutException $timeout) {
+                    self::assertSame($this->file . '.lock', $timeout->lockPath);
+                }
+            }
+        } finally {
+            flock($holder, LOCK_UN);
+            fclose($holder);
+        }
+
+        self::assertSame($before, (string) file_get_contents($this->file), 'Nothing was written.');
+        self::assertSame(1, $ledger->count());
+        self::assertSame([1], array_map(static fn (UrlRedirect $r): int => $r->getHits(), $storage->all()), 'The hit stands, nothing else changed.');
     }
 }

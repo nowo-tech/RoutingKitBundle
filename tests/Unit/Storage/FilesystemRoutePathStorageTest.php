@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Nowo\RoutingKitBundle\Tests\Unit\Storage;
 
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Model\CanonicalStyle;
 use Nowo\RoutingKitBundle\Model\RoutePathDefinition;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
+use Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
+use const LOCK_EX;
+use const LOCK_UN;
 
 final class FilesystemRoutePathStorageTest extends TestCase
 {
@@ -155,6 +160,44 @@ final class FilesystemRoutePathStorageTest extends TestCase
         $this->expectExceptionMessage('Unable to replace storage file');
 
         $storage->save(new RoutePathDefinition('app_home', 'en', '/'));
+    }
+
+    public function testHeldLockTimesOutWithoutWritingAndWritesAreCounted(): void
+    {
+        $ledger  = new StorageWriteLedger();
+        $storage = new FilesystemRoutePathStorage($this->file, 0.05, $ledger);
+        $kept    = $storage->save(new RoutePathDefinition('app_about', 'en', '/about'));
+        $storage->replaceAll([$kept, new RoutePathDefinition('app_contact', 'en', '/contact')]);
+        $storage->delete('missing');
+        self::assertSame(3, $ledger->count(), 'save, replaceAll and delete each commit one write.');
+        $before = (string) file_get_contents($this->file);
+
+        $holder = fopen($this->file . '.lock', 'c+');
+        self::assertIsResource($holder);
+        self::assertTrue(flock($holder, LOCK_EX));
+
+        try {
+            foreach ([
+                static fn (): RoutePathDefinition => $storage->save(new RoutePathDefinition('app_new', 'en', '/new')),
+                static fn () => $storage->delete((string) $kept->id),
+                static fn (): array => $storage->replaceAll([]),
+                static fn (): array => $storage->all(),
+            ] as $call) {
+                try {
+                    $call();
+                    self::fail('A held storage lock must time out.');
+                } catch (StorageLockTimeoutException $timeout) {
+                    self::assertSame($this->file . '.lock', $timeout->lockPath);
+                }
+            }
+        } finally {
+            flock($holder, LOCK_UN);
+            fclose($holder);
+        }
+
+        self::assertSame($before, (string) file_get_contents($this->file), 'Nothing was written.');
+        self::assertSame(3, $ledger->count());
+        self::assertCount(2, $storage->all());
     }
 
     private function removeDir(string $dir): void

@@ -68,6 +68,30 @@ final class ConfigurationTest extends TestCase
         self::assertFalse($config['seo_kit_bridge']);
     }
 
+    public function testConcurrencyOptions(): void
+    {
+        $processor = new Processor();
+        $defaults  = $processor->processConfiguration(new Configuration(), [[]]);
+        self::assertSame(5.0, $defaults['storage']['lock_timeout']);
+        self::assertSame(['status' => 409, 'retry_after' => 1], $defaults['conflict_response']);
+
+        $custom = $processor->processConfiguration(new Configuration(), [[
+            'storage'           => ['lock_timeout' => 0],
+            'conflict_response' => ['status' => 503, 'retry_after' => 0],
+        ]]);
+        self::assertEqualsWithDelta(0.0, $custom['storage']['lock_timeout'], 0.0);
+        self::assertSame(['status' => 503, 'retry_after' => 0], $custom['conflict_response']);
+
+        foreach ([['conflict_response' => ['status' => 500]], ['storage' => ['lock_timeout' => -1]], ['storage' => ['lock_timeout' => 61]]] as $invalid) {
+            try {
+                $processor->processConfiguration(new Configuration(), [$invalid]);
+                self::fail('Invalid concurrency option accepted.');
+            } catch (InvalidConfigurationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
     public function testProvidesDefaults(): void
     {
         $processor     = new Processor();

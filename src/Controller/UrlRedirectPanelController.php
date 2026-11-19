@@ -17,6 +17,7 @@ use Nowo\RoutingKitBundle\Redirect\UrlRedirectMatcherInterface;
 use Nowo\RoutingKitBundle\Redirect\UrlRedirectValidator;
 use Nowo\RoutingKitBundle\Security\PanelAccessGuard;
 use Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface;
+use Nowo\TransactionContract\TransientStorageFailure;
 use Nowo\UiKitBundle\View\Action;
 use Nowo\UiKitBundle\View\Column;
 use Nowo\UiKitBundle\View\Confirm;
@@ -212,6 +213,9 @@ final class UrlRedirectPanelController
                 } catch (InvalidUrlRedirectException $invalid) {
                     // Changed between the two checks (e.g. a concurrent write took the source path).
                     $errors = $invalid->getErrors();
+                } catch (TransientStorageFailure $conflict) {
+                    // A storage lock wait that ran out: 409 + X-Conflict-Code (ConcurrencyConflictSubscriber), not a form error.
+                    throw $conflict;
                 } catch (Throwable $exception) {
                     // Storage messages may expose file paths or SQL: log them, show a generic error.
                     $this->logger?->error('RoutingKit: URL redirect not saved: {message}', ['message' => $exception->getMessage(), 'exception' => $exception]);

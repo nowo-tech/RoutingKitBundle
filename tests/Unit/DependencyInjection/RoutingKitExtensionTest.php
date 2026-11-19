@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Tests\Unit\DependencyInjection;
 
 use LogicException;
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\DependencyInjection\Compiler\PanelAccessGuardPass;
 use Nowo\RoutingKitBundle\DependencyInjection\Configuration;
 use Nowo\RoutingKitBundle\DependencyInjection\RoutingKitExtension;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\ConcurrencyConflictSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RouteTableFreshnessSubscriber;
@@ -135,6 +137,31 @@ final class RoutingKitExtensionTest extends TestCase
             $invalidator->getArgument('$routeLoader'),
         );
         self::assertTrue($container->hasDefinition(RouteTableFreshnessSubscriber::class));
+    }
+
+    public function testWiresTheStorageLockTimeoutAndTheConflictAnswer(): void
+    {
+        $container = $this->createContainer();
+        (new RoutingKitExtension())->load([[
+            'storage'           => ['lock_timeout' => 0.5],
+            'conflict_response' => ['status' => 503, 'retry_after' => 7],
+            'url_redirects'     => ['enabled' => true],
+        ]], $container);
+
+        foreach ([FilesystemRoutePathStorage::class, FilesystemUrlRedirectStorage::class] as $store) {
+            $definition = $container->getDefinition($store);
+            self::assertSame(0.5, $definition->getArgument('$lockTimeout'));
+            self::assertSame(StorageWriteLedger::class, (string) $definition->getArgument('$writeLedger'));
+        }
+
+        $subscriber = $container->getDefinition(ConcurrencyConflictSubscriber::class);
+        self::assertSame(503, $subscriber->getArgument('$status'));
+        self::assertSame(7, $subscriber->getArgument('$retryAfter'));
+        self::assertTrue($container->hasDefinition(StorageWriteLedger::class));
+
+        $disabled = $this->createContainer();
+        (new RoutingKitExtension())->load([['enabled' => false]], $disabled);
+        self::assertFalse($disabled->hasDefinition(ConcurrencyConflictSubscriber::class), 'A disabled bundle answers nothing.');
     }
 
     public function testLoadUsesCustomAliasesWhenConfigured(): void

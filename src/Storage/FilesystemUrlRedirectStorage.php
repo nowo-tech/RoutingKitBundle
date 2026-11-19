@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\Storage;
 
 use DateTimeImmutable;
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Model\UrlRedirect;
 use RuntimeException;
 
 use function array_values;
 use function bin2hex;
 use function dirname;
-use function fclose;
 use function file_get_contents;
 use function file_put_contents;
-use function flock;
-use function fopen;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -38,20 +36,28 @@ use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 use const LOCK_EX;
 use const LOCK_SH;
-use const LOCK_UN;
 
 /**
  * JSON file storage for operator URL redirects (Doctrine-free default, REQ-REDIR-001).
  *
  * Same locking model as {@see FilesystemRoutePathStorage}: exclusive lock on `{file}.lock` for writes,
- * shared lock for reads, atomic rename, corrupt JSON fails closed. Hit counting rewrites the file
+ * shared lock for reads, bounded lock waits, atomic rename, corrupt JSON fails closed. Hit counting rewrites the file
  * under the exclusive lock: dispatch hits through Messenger (`url_redirects.hits.message_bus`) or
  * disable them (`url_redirects.hits.enabled: false`) on high-traffic legacy URLs.
  */
 final class FilesystemUrlRedirectStorage implements UrlRedirectStorageInterface
 {
+    /** Default `storage.lock_timeout`: seconds a read or write waits for the storage lock. */
+    public const DEFAULT_LOCK_TIMEOUT = 5.0;
+
+    /**
+     * @param float $lockTimeout seconds to wait for `{file}.lock` before {@see StorageLockTimeoutException} (`storage.lock_timeout`)
+     * @param StorageWriteLedger|null $writeLedger counts durable writes for the CONFLICT_002 request-level detection
+     */
     public function __construct(
         private readonly string $filePath,
+        private readonly float $lockTimeout = self::DEFAULT_LOCK_TIMEOUT,
+        private readonly ?StorageWriteLedger $writeLedger = null,
     ) {
     }
 
@@ -129,7 +135,7 @@ final class FilesystemUrlRedirectStorage implements UrlRedirectStorageInterface
                 return;
             }
             $redirect->setHits($redirect->getHits() + 1)->setLastHitAt($at);
-            $this->persistUnlocked($items);
+            $this->persistUnlocked($items, countsAsRequestWrite: false);
         });
     }
 
@@ -159,23 +165,12 @@ final class FilesystemUrlRedirectStorage implements UrlRedirectStorageInterface
     {
         $this->ensureDirectory();
 
-        $lockPath = $this->filePath . '.lock';
-        $handle   = @fopen($lockPath, 'c+');
-        if ($handle === false) {
-            throw new RuntimeException(sprintf('Unable to open storage lock "%s".', $lockPath)); // @codeCoverageIgnore
-        }
-
-        if (!flock($handle, $operation)) {
-            fclose($handle); // @codeCoverageIgnore
-
-            throw new RuntimeException(sprintf('Unable to lock storage "%s".', $lockPath)); // @codeCoverageIgnore
-        }
+        $handle = FileLock::acquire($this->filePath . '.lock', $operation, $this->lockTimeout);
 
         try {
             return $callback();
         } finally {
-            flock($handle, LOCK_UN);
-            fclose($handle);
+            FileLock::release($handle);
         }
     }
 
@@ -223,8 +218,11 @@ final class FilesystemUrlRedirectStorage implements UrlRedirectStorageInterface
 
     /**
      * @param array<string, UrlRedirect> $items
+     * @param bool $countsAsRequestWrite false for hit counting: statistics written at kernel.terminate or
+     *                                   by a leftover flush at the next kernel.request are not part of
+     *                                   an admin request's work (no false CONFLICT_002)
      */
-    private function persistUnlocked(array $items): void
+    private function persistUnlocked(array $items, bool $countsAsRequestWrite = true): void
     {
         $payload = [];
         foreach ($items as $redirect) {
@@ -243,6 +241,10 @@ final class FilesystemUrlRedirectStorage implements UrlRedirectStorageInterface
 
         if (!@rename($tmp, $this->filePath)) {
             throw new RuntimeException(sprintf('Unable to replace storage file "%s".', $this->filePath)); // @codeCoverageIgnore
+        }
+
+        if ($countsAsRequestWrite) {
+            $this->writeLedger?->record();
         }
     }
 

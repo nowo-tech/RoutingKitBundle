@@ -35,6 +35,7 @@ Routing Kit Bundle provides **DB-driven (pluggable) locale paths** for Symfony: 
 | FR-21 | `CsrfProtectionPass` fails the container build when the panel is enabled without form CSRF protection (fail closed). |
 | FR-22 | Operator URL redirects (opt-in `url_redirects`) per [`002-url-redirects`](../002-url-redirects/spec.md) `REQ-REDIR-001` … `REQ-REDIR-009`. |
 | FR-23 | Hosts type against `RoutePathManagerInterface`, `PublicPathResolverInterface`, `UrlRedirectMatcherInterface` and `UrlRedirectManagerInterface` (aliased to the defaults, 1.17.0); ports, events and value objects carry no Doctrine / HttpFoundation / Form types (REQ-ARCH-001, [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)). |
+| FR-24 | Concurrency (REQ-RUNTIME-003, [`docs/CONCURRENCY.md`](../../docs/CONCURRENCY.md)): every JSON store lock wait is bounded by `storage.lock_timeout` (`StorageLockTimeoutException`, a `TransientStorageFailure`); on the bundle's admin routes a lock timeout answers 409 (or `conflict_response.status`) + `X-Conflict-Code: CONFLICT_001` + `Retry-After`, or `CONFLICT_002` without `Retry-After` when the request had already written; host routes are never answered. |
 
 ## User scenarios
 
@@ -103,4 +104,5 @@ make test-coverage
 - FR-14: `tests/Unit/DependencyInjection/Compiler/TwigPathsPassTest.php`
 - FR-15: `tests/Unit/Service/RoutePathManagerTest.php`
 - FR-23: `tests/Integration/Redirect/UrlRedirectManagerKernelTest.php`, `tests/Integration/Redirect/UrlRedirectPanelRaceKernelTest.php`
+- FR-24: `tests/Unit/Storage/FileLockTest.php`, `tests/Unit/EventSubscriber/ConcurrencyConflictSubscriberTest.php`, `tests/Integration/Concurrency/FilesystemStoreRaceTest.php`, `tests/Integration/Concurrency/StorageLockConflictKernelTest.php`
 - FR-16: `tests/Unit/Seo/*` (when SeoKit present) / coverage exclude otherwise

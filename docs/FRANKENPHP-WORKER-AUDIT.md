@@ -45,7 +45,7 @@ A bundle that is safe under **B** is safe under **A** and under classic mode / P
 | Output, headers, `exit`, shutdown functions | ✅ | None; responses are Symfony `Response` objects |
 | Resources (files, sockets, cURL) held open | ✅ | The storage lock file handle is opened and closed inside each call (`try/finally`) |
 | Memory growth across requests | ✅ | No caches or accumulating arrays in services |
-| Blocking I/O and timeouts | ✅ | Reads use `LOCK_SH`; `CanonicalRedirectSubscriber` reads the storage once per main request plus one small version-file read (W-02) |
+| Blocking I/O and timeouts | ✅ | Reads use `LOCK_SH`; `CanonicalRedirectSubscriber` reads the storage once per main request plus one small version-file read (W-02). Every lock wait is bounded by `storage.lock_timeout` (non-blocking retries, see [CONCURRENCY.md](CONCURRENCY.md)) |
 | Third-party static state | ✅ | Symfony `Router` memoization (collection, matcher, generator, per-thread compiled-routes cache) is dropped when the route-table version changes (W-01) |
 | PHPStan FrankenPHP rulesets | ✅ | `ruleset-classic.neon` + `ruleset-worker.neon` included in `phpstan.neon.dist` |
 
