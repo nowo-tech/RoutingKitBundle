@@ -10,6 +10,9 @@ Root key: `nowo_routing_kit`.
 | `locale_provider` | `null` | Service id for `LocaleProviderInterface` (overrides YAML locales) |
 | `storage.paths_file` | `%kernel.project_dir%/var/routing_kit/paths.json` | JSON storage path |
 | `storage.path_storage` | `null` | Custom `RoutePathStorageInterface` service id (must implement `replaceAll`) |
+| `storage.lock_timeout` | `5.0` | Seconds a read or write of the JSON stores (paths and `url_redirects`) waits for `{file}.lock` before `StorageLockTimeoutException`; `0` = try once, max `60`. See [CONCURRENCY.md](CONCURRENCY.md) |
+| `conflict_response.status` | `409` | Status of a storage lock conflict on the admin routes (`409` or `503`), with `X-Conflict-Code: CONFLICT_001` / `CONFLICT_002` |
+| `conflict_response.retry_after` | `1` | `Retry-After` seconds sent with `CONFLICT_001` (never with `CONFLICT_002`) |
 | `discovery.scan_dirs` | `[%kernel.project_dir%/src/Controller]` | Controllers scanned for `#[Routable]` |
 | `panel.allow_controller_override` | `false` | Allow selecting a discovery controller override (never free-form) |
 | `panel.max_definitions` | `500` | Hard cap on stored path rows (REQ-PERF-001) |

@@ -119,7 +119,7 @@ unguarded `POST /admin/api/redirects` typed on `UrlRedirectManagerInterface` let
 
 ## Storage
 
-Default: `FilesystemUrlRedirectStorage`, a JSON file (`url_redirects.file`) with the same locking model as the path storage (shared lock for reads, exclusive lock + atomic rename for writes, corrupt JSON fails closed). Keep it outside the web root.
+Default: `FilesystemUrlRedirectStorage`, a JSON file (`url_redirects.file`) with the same locking model as the path storage (shared lock for reads, exclusive lock + atomic rename for writes, lock waits bounded by `storage.lock_timeout`, corrupt JSON fails closed). Keep it outside the web root. `flock()` does not lock across servers: see [CONCURRENCY.md](CONCURRENCY.md#multi-server-deployments).
 
 For a database, implement `Nowo\RoutingKitBundle\Storage\UrlRedirectStorageInterface` and set `url_redirects.storage` to the service id. The bundle ships **no Doctrine entity** (it has no Doctrine dependency); the host owns the table and its migration. Example with Doctrine ORM:
 

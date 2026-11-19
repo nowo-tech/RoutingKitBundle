@@ -17,6 +17,8 @@ services:
             - '../../Redirect/Message/RecordRedirectHit.php'
             - '../../Redirect/UrlRedirectData.php'
             - '../../Redirect/InvalidUrlRedirectException.php'
+            - '../../Storage/StorageLockTimeoutException.php'
+            - '../../Storage/FileLock.php'
             - '../../NowoRoutingKitBundle.php'
             # default_locale_unprefixed (opt-in): registered by the extension only when enabled.
             - '../../Routing/DefaultLocaleRouter.php'
@@ -55,6 +57,10 @@ services:
             $allowUnauthenticated: false
             $roleGateDisabled: false
 
+
+    # REQ-RUNTIME-003: storage lock timeouts on the admin routes → 409 + X-Conflict-Code (configured by the extension).
+    Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger: ~
+    Nowo\RoutingKitBundle\EventSubscriber\ConcurrencyConflictSubscriber: ~
 
     Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber: ~
     Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber: ~

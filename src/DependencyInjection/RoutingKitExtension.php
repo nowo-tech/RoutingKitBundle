@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
 use LogicException;
+use Nowo\RoutingKitBundle\Concurrency\StorageWriteLedger;
 use Nowo\RoutingKitBundle\Controller\RoutingPanelController;
 use Nowo\RoutingKitBundle\Controller\UrlRedirectPanelController;
 use Nowo\RoutingKitBundle\Discovery\RoutableControllerDiscovery;
 use Nowo\RoutingKitBundle\EventSubscriber\CanonicalRedirectSubscriber;
+use Nowo\RoutingKitBundle\EventSubscriber\ConcurrencyConflictSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\DefaultLocalePrefixRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RootRedirectSubscriber;
 use Nowo\RoutingKitBundle\EventSubscriber\RoutePathAuditSubscriber;
@@ -357,6 +359,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         $container->removeDefinition(PanelAccessGuard::class);
         $container->removeDefinition(RoutePathImportExport::class);
         $container->removeDefinition(UrlRedirectPanelController::class);
+        $container->removeDefinition(ConcurrencyConflictSubscriber::class);
         $this->removeUrlRedirectServices($container);
         if ($container->hasDefinition(RoutingKitTwigExtension::class)) {
             $container->removeDefinition(RoutingKitTwigExtension::class);
@@ -400,7 +403,9 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
         }
 
         $container->getDefinition(FilesystemUrlRedirectStorage::class)
-            ->setArgument('$filePath', $redirects['file']);
+            ->setArgument('$filePath', $redirects['file'])
+            ->setArgument('$lockTimeout', (float) $config['storage']['lock_timeout'])
+            ->setArgument('$writeLedger', new Reference(StorageWriteLedger::class));
         $storage = $redirects['storage'];
         $container->setAlias(
             UrlRedirectStorageInterface::class,
@@ -482,7 +487,12 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
     private function configureStorage(ContainerBuilder $container, array $config): void
     {
         $container->getDefinition(FilesystemRoutePathStorage::class)
-            ->setArgument('$filePath', $config['storage']['paths_file']);
+            ->setArgument('$filePath', $config['storage']['paths_file'])
+            ->setArgument('$lockTimeout', (float) $config['storage']['lock_timeout'])
+            ->setArgument('$writeLedger', new Reference(StorageWriteLedger::class));
+        $container->getDefinition(ConcurrencyConflictSubscriber::class)
+            ->setArgument('$status', (int) $config['conflict_response']['status'])
+            ->setArgument('$retryAfter', (int) $config['conflict_response']['retry_after']);
 
         $override = $config['storage']['path_storage'] ?? null;
         if (is_string($override) && $override !== '') {

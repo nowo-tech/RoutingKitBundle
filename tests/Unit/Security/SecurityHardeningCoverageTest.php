@@ -20,6 +20,7 @@ use Nowo\RoutingKitBundle\Service\RoutePathImportExport;
 use Nowo\RoutingKitBundle\Service\RoutePathManager;
 use Nowo\RoutingKitBundle\Storage\FilesystemRoutePathStorage;
 use Nowo\RoutingKitBundle\Storage\RoutePathStorageInterface;
+use Nowo\RoutingKitBundle\Storage\StorageLockTimeoutException;
 use Nowo\RoutingKitBundle\Tests\Support\FormKitTestSupport;
 use Nowo\RoutingKitBundle\Validation\RoutePathValidator;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +38,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 use Twig\Environment;
 
 use const JSON_THROW_ON_ERROR;
@@ -371,9 +373,50 @@ PHP);
         return new RoutePathImportExport($manager, 'routing-kit-test-signing-key-32ch!!');
     }
 
-    private function createPanelWithExplodingImport(): RoutingPanelController
+    /**
+     * A storage lock wait that ran out is not an import error (400) nor a form error: it reaches the kernel, where
+     * ConcurrencyConflictSubscriber answers 409 + X-Conflict-Code (REQ-RUNTIME-003).
+     */
+    public function testStorageLockTimeoutEscapesTheImportAndTheForm(): void
     {
-        $storage = new class implements RoutePathStorageInterface {
+        $timeout   = new StorageLockTimeoutException('/var/routing_kit/paths.json.lock', 0.05);
+        $locked    = $this->createPanelWithExplodingImport($timeout);
+        $emptyJson = json_encode([], JSON_THROW_ON_ERROR);
+        $envelope  = [
+            'version'   => 1,
+            'payload'   => [],
+            'signature' => hash_hmac('sha256', $emptyJson, 'routing-kit-test-signing-key-32ch!!'),
+        ];
+
+        try {
+            $locked->import(Request::create('/import', 'POST', [
+                '_csrf_token'  => 'token-value',
+                'payload_json' => json_encode($envelope, JSON_THROW_ON_ERROR),
+                'replace_all'  => '1',
+            ]));
+            self::fail('The import must not swallow a storage lock timeout.');
+        } catch (StorageLockTimeoutException $escaped) {
+            self::assertSame($timeout, $escaped);
+        }
+
+        $this->expectExceptionObject($timeout);
+        $locked->create(Request::create('/new', 'POST', [
+            '_csrf_token' => 'token-value',
+            'route_name'  => 'app_about',
+            'locale'      => 'en',
+            'path'        => '/about',
+            'enabled'     => '1',
+        ]));
+    }
+
+    private function createPanelWithExplodingImport(?Throwable $boom = null): RoutingPanelController
+    {
+        $storage = new class($boom ?? new Error('storage boom')) implements RoutePathStorageInterface {
+            public function __construct(
+                private readonly Throwable $boom,
+            ) {
+            }
+
             public function all(): array
             {
                 return [];
@@ -396,7 +439,7 @@ PHP);
 
             public function save(RoutePathDefinition $definition): RoutePathDefinition
             {
-                throw new Error('storage boom');
+                throw $this->boom;
             }
 
             public function delete(string $id): void
@@ -405,7 +448,7 @@ PHP);
 
             public function replaceAll(array $definitions): array
             {
-                throw new Error('storage boom');
+                throw $this->boom;
             }
         };
         $locales    = new ConfigurableLocaleProvider('en', ['en']);
