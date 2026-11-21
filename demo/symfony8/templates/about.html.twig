@@ -2,8 +2,19 @@
 
 {% block title %}About{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a class="nowo-ui-btn nowo-ui-btn--outline" href="/">Home</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {
+        title: 'About',
+        intro: 'Sample page for app_about. Override its public path per locale in the routing panel.',
+        toolbar: _toolbar,
+    }) }}
+{% endblock %}
+
 {% block body %}
-    <h1>About</h1>
-    <p>Sample page for <code>app_about</code>. Override its public path per locale in the <a class="nowo-ui-link" href="/_routing">routing panel</a>.</p>
-    <p><a class="nowo-ui-link" href="/">← Home</a></p>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Locale paths', kind: 'content'} %}
+        {% block section_body %}
+            <p>Sample page for <code>app_about</code>. Override its public path per locale in the <a href="/_routing">routing panel</a>.</p>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}
