@@ -1,20 +1,17 @@
-{#- REQ-DEMO-014: the demo shell is UiKit's admin layout with UiKit's default theme (nowo-ui.css from the bundle's own
-    asset package, no CSS framework, no CDN). It is also the host layout of the Routing Kit panel pages
-    (nowo_ui_kit.layouts.admin). The header menu lists the demo pages with the active item. -#}
-{% extends '@NowoUiKit/layout/admin.html.twig' %}
-
+{#- REQ-DEMO-014: the demo runs inside UiKit's shared demo platform shell. This file only declares the demo. It is also the
+    host layout of the Routing Kit panel pages (nowo_ui_kit.layouts.admin). -#}
+{% extends '@NowoUiKit/demo_platform/layout.html.twig' %}
+{% set nowo_ui_demo_platform = {
+    bundle: 'Routing Kit',
+    home_route: 'homepage',
+    repository: 'https://github.com/nowo-tech/RoutingKitBundle',
+    translation_domain: false,
+    nav: [
+        {label: 'Home', route: 'homepage', section: 'Demo'},
+        {label: 'About', route: 'app_about', section: 'Demo'},
+        {label: 'Blog post', route: 'app_blog_show', params: {slug: 'hello-world'}, section: 'Demo'},
+        {label: 'Routing panel', route: 'nowo_routing_kit_panel', section: 'Routing Kit', active: ['nowo_routing_kit_panel*']},
+        {label: 'URL redirects', route: 'nowo_routing_kit_redirects', section: 'Routing Kit', active: ['nowo_routing_kit_redirects*']},
+    ],
+} %}
 {% block nowo_ui_document_title %}{% block title %}Routing Kit Demo{% endblock %}{% endblock %}
-
-{% block nowo_ui_navigation %}
-    {% set _route = app.request.attributes.get('_route')|default('') %}
-    <header class="nowo-ui-header" data-testid="demo-masthead">
-        <a class="nowo-ui-brand" href="/">Routing Kit Demo</a>
-        <nav class="nowo-ui-menu" aria-label="Demo">
-            <a class="nowo-ui-link" href="/"{% if _route == 'homepage' %} aria-current="page"{% endif %}>Home</a>
-            <a class="nowo-ui-link" href="/_routing/">Routing panel</a>
-            <a class="nowo-ui-link" href="/_routing/redirects">URL redirects</a>
-        </nav>
-    </header>
-{% endblock %}
-
-{% block nowo_ui_content %}{% block body %}{% endblock %}{% endblock %}
