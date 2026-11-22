@@ -29,6 +29,11 @@ final class PageContractGermanTest extends PageContractTestCase
         self::assertStringContainsString('Noch keine Pfaddefinitionen.', $html);
     }
 
+    protected static function formActionsOrderChecked(): bool
+    {
+        return true;
+    }
+
     protected static function locale(): string
     {
         return 'de';

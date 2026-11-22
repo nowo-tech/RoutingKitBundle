@@ -63,6 +63,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Form actions order (Beacon UX-017):** the path and redirect forms (new / edit) put Cancel first, then the primary
+  on the right, like the UiKit dialogs (the import dialog already did): the order comes from the UiKit form scaffold.
+  Requires `nowo-tech/ui-kit-bundle` **^2.66** (was ^2.2). The page contract tests check the order
+  (`formActionsOrderChecked()`).
+
 ## [1.19.0] - 2026-11-22
 
 ### Added

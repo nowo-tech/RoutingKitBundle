@@ -290,6 +290,22 @@ final class PageContractTest extends PageContractTestCase
         return [dirname(__DIR__, 3) . '/src/Resources/translations'];
     }
 
+    /** UiKit 2.66 (Beacon UX-017): every form actions row puts Cancel first, then the primary. */
+    protected static function formActionsOrderChecked(): bool
+    {
+        return true;
+    }
+
+    public function testPathAndRedirectFormsPutCancelFirst(): void
+    {
+        foreach ([
+            ['@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null)],
+            ['@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm(null)],
+        ] as [$template, $context]) {
+            self::assertSame([['cancel', 'primary']], $this->renderPage(new PageFixture($template, $context))->formActionsRows(), $template);
+        }
+    }
+
     protected static function templatesDocument(): string
     {
         return dirname(__DIR__, 3) . '/docs/TEMPLATES.md';
