@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.20.1](#to-1201)
 - [To 1.20.0](#to-1200)
 - [To 1.19.0](#to-1190)
 - [To 1.18.0](#to-1180)
@@ -106,6 +107,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.20.1
+
+From **1.20.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 - **Form actions order.** With UiKit **2.66.1** the path and redirect forms put the primary first again, then Cancel
   (UiKit's default `theme.form_actions_order: primary_first`). Hosts that want Cancel first set
