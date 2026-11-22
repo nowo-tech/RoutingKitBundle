@@ -2,8 +2,8 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/routing-kit-bundle`  
-**Last audited**: 2026-11-16 (1.17.0)  
-**Coverage summary**: **89/89** files under `src/` mapped (see [Coverage summary](#coverage-summary)). PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
+**Last audited**: 2026-11-22 (1.19.0)  
+**Coverage summary**: **94/94** files under `src/` mapped (see [Coverage summary](#coverage-summary)). PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
 
 Every production file under `src/` maps to one or more baseline `FR-*` requirements.
 
@@ -114,6 +114,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 | `Twig/RoutingKitTwigExtension.php` | Panel Twig globals (1.x; deprecated since 1.9). | FR-08, FR-14 |
 | `Panel/PanelView.php` | Renders panel pages on the UiKit page contract (template per page, layout, nav, role-gate flag) — spec 004. | FR-08, FR-14 |
 | `Panel/PanelChrome.php` | Deprecated 1.x class / partial maps and their bridge into `nowo_ui_kit.theme.bundles` — spec 004. | FR-14 |
+| `Panel/HeaderActionsPlacement.php` | `web_ui.header_actions` enum (`buttons` default, `page_actions`): header actions as buttons or as items of UiKit's page-actions menu (UiKit 2.21+); stateless (1.19.0). | FR-25 |
 | `Controller/UrlRedirectPanelController.php` | URL redirects panel (list, new, edit, delete with confirmation). | 002 REQ-REDIR-007 |
 
 ## Seo
@@ -168,7 +169,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 
 ## Coverage summary
 
-Audit command: `git ls-files src | wc -l` (2026-10-28).
+Audit command: `git ls-files src | wc -l` (2026-11-22).
 
 | Category | Files | Mapped |
 | --- | ---: | ---: |
@@ -181,10 +182,10 @@ Audit command: `git ls-files src | wc -l` (2026-10-28).
 | Events and subscribers | 10 | 10 |
 | Security | 4 | 4 |
 | Form | 4 | 4 |
-| Service and controller | 9 | 9 |
+| Service and controller | 10 | 10 |
 | Seo | 2 | 2 |
 | YAML configuration | 3 | 3 |
 | Twig views | 10 | 10 |
 | URL redirects (`src/Redirect/`, since 1.6.0) | 12 | 12 |
 | Translations | 7 | 7 |
-| **Total production files (`git ls-files src`)** | **93** | **93** |
+| **Total production files (`git ls-files src`)** | **94** | **94** |
