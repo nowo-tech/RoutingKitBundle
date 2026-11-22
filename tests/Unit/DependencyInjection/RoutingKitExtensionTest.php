@@ -733,6 +733,7 @@ final class RoutingKitExtensionTest extends TestCase
                 'import_display'      => 'modal',
                 'show_row_count'      => false,
                 'primary_action_last' => true,
+                'header_actions'      => 'page_actions',
             ],
         ]], $container);
 
@@ -743,6 +744,7 @@ final class RoutingKitExtensionTest extends TestCase
         self::assertSame('modal', $view->getArgument('$importDisplay'));
         self::assertFalse($view->getArgument('$showRowCount'));
         self::assertTrue($view->getArgument('$primaryActionLast'));
+        self::assertSame('page_actions', $view->getArgument('$headerActions'));
         self::assertFalse($view->getArgument('$urlRedirectsEnabled'));
         self::assertSame('/admin/routing', $container->getParameter('nowo.routing_kit.web_ui.path_prefix'));
         self::assertSame('ROLE_ROUTES', $container->getParameter('nowo.routing_kit.panel.role'));

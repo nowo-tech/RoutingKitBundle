@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `web_ui.header_actions` (`buttons` | `page_actions`, default `buttons`): with `page_actions` the header actions of the paths and redirects lists (New, Export, Clear routing cache, Import) are UiKit `View\Action` items of the square page-actions menu (the page header uses UiKit's split layout and no action stays a filled primary button), instead of a row of header buttons. The actions keep their kind, target, POST + CSRF form and dialog opener, and `PageHeader::$actions` is the same list a host compact header reads for its own page-actions menu. Needs UiKit 2.21+ (an older UiKit keeps the buttons). Nothing changes with the default. `Nowo\RoutingKitBundle\Panel\HeaderActionsPlacement`, `PanelView::listHeader()`.
+
 ### Changed
 
 - Demo: runs in UiKit's demo platform shell (`nowo-tech/ui-kit-bundle` ^2.60); the demo's own header is gone and the pages use the shell page headers and section cards. Demo only, no bundle change.

@@ -106,7 +106,7 @@ final class RoutingPanelController
         $actions = $this->view->primaryActionLast ? [...$actions, $create] : [$create, ...$actions];
 
         $listPage = new ListPage(
-            new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => $this->locales->getDefaultLocale()]), $actions, tabs: $this->view->nav('routes')),
+            $this->view->listHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => $this->locales->getDefaultLocale()]), $actions, $this->view->nav('routes')),
             [
                 new Column('routeName', PanelView::label('panel.col.route'), required: true),
                 new Column('locale', PanelView::label('panel.col.locale')),

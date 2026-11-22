@@ -26,6 +26,7 @@ Root key: `nowo_routing_kit`.
 | `web_ui.import_display` | `modal` | Signed JSON import: `modal` (UiKit `dialog` `#modal-routing-import`, opened from the "Import" page action; needs `js/nowo-ui-dialog.js`, loaded by the UiKit document layout; default since 1.9.1) or `inline` (card under the paths table) |
 | `web_ui.show_row_count` | `false` | "N row(s)" caption of the tables (default `false` since 1.9.1: the pagination summary already shows the count) |
 | `web_ui.primary_action_last` | `false` | Render "New path" after Export / Clear cache / Import |
+| `web_ui.header_actions` | `buttons` | `buttons`: one button per header action. `page_actions`: the header actions (New, Export, Clear cache, Import; New redirect) are items of UiKit's page-actions menu (split header, no filled primary button); a host compact header reads the same `PageHeader::$actions`. UiKit 2.21+ |
 | `security.access_roles` | `[ROLE_ADMIN]` | At least one role required; **empty** = fail-closed (every panel request is denied). Still firewall the prefix |
 | `security.access_checker` | `null` | Custom `RoutingKitAccessCheckerInterface` service id (`null` = Configurable by roles) |
 | `security.allow_unauthenticated` | `false` | DEV/DEMO only — skip in-bundle role check (AllowAll) and show the **UNSAFE** banner on every panel page; panel requires SecurityBundle when `false` |

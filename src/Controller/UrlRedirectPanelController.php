@@ -107,9 +107,9 @@ final class UrlRedirectPanelController
 
         return $this->view->render('redirects_index', 'redirects', [
             'page' => new ListPage(
-                new PageHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
+                $this->view->listHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
                     new Action('create', PanelView::label('redirects.new'), $prefix . '/redirects/new', variant: 'primary', attributes: ['data-testid' => 'redirect-new']),
-                ], tabs: $this->view->nav('redirects')),
+                ], $this->view->nav('redirects')),
                 [
                     new Column('sourcePath', PanelView::label('redirects.col.source'), required: true),
                     new Column('targetUrl', PanelView::label('redirects.col.target'), required: true),

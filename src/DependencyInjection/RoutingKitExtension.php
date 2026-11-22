@@ -594,6 +594,7 @@ final class RoutingKitExtension extends Extension implements PrependExtensionInt
             ->setArgument('$showRowCount', (bool) $webUi['show_row_count'])
             ->setArgument('$primaryActionLast', (bool) $webUi['primary_action_last'])
             ->setArgument('$urlRedirectsEnabled', (bool) $config['url_redirects']['enabled'])
+            ->setArgument('$headerActions', (string) $webUi['header_actions'])
             // Shows panel.role_gate_warning: the in-bundle role check is skipped (AllowAll checker).
             ->setArgument('$roleGateDisabled', (bool) $config['security']['allow_unauthenticated']);
 

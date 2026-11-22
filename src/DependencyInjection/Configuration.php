@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\RoutingKitBundle\DependencyInjection;
 
 use InvalidArgumentException;
+use Nowo\RoutingKitBundle\Panel\HeaderActionsPlacement;
 use Nowo\RoutingKitBundle\Panel\PanelChrome;
 use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Redirect\ProtectedPaths;
@@ -278,6 +279,11 @@ final class Configuration implements ConfigurationInterface
                         ->booleanNode('primary_action_last')
                             ->info('Render the primary "New" action after the secondary page actions.')
                             ->defaultFalse()
+                        ->end()
+                        ->enumNode('header_actions')
+                            ->info('Where the header actions (New, Export, Clear cache, Import) go: "buttons" (default) = one button per action in the page header; "page_actions" = UiKit View\\Action items in the square page-actions menu (UiKit split header; the compact header of the host reads the same PageHeader actions). Needs UiKit 2.21+.')
+                            ->values(HeaderActionsPlacement::MODES)
+                            ->defaultValue(HeaderActionsPlacement::BUTTONS)
                         ->end()
                         ->booleanNode('main_landmark')
                             ->info('Deprecated, no effect: the layout (UiKit or host) owns the <main> landmark.')
