@@ -107,6 +107,10 @@
 
 ## Unreleased
 
+- **Form actions order.** With UiKit **2.66.1** the path and redirect forms put the primary first again, then Cancel
+  (UiKit's default `theme.form_actions_order: primary_first`). Hosts that want Cancel first set
+  `nowo_ui_kit.theme.form_actions_order: cancel_first`. The import dialog keeps Cancel first either way.
+
 ## To 1.20.0
 
 From **1.19.0**:

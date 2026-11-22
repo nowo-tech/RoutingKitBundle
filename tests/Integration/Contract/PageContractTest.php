@@ -8,6 +8,8 @@ use Nowo\RoutingKitBundle\Panel\PanelView;
 use Nowo\RoutingKitBundle\Tests\Support\PanelPageFixtures;
 use Nowo\UiKitBundle\Test\PageContractTestCase;
 use Nowo\UiKitBundle\Test\PageFixture;
+use Nowo\UiKitBundle\Test\StubHost;
+use Nowo\UiKitBundle\Theme\Theme;
 use Nowo\UiKitBundle\View\ConfirmPage;
 use Nowo\UiKitBundle\View\PageHeader;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -290,19 +292,28 @@ final class PageContractTest extends PageContractTestCase
         return [dirname(__DIR__, 3) . '/src/Resources/translations'];
     }
 
-    /** UiKit 2.66 (Beacon UX-017): every form actions row puts Cancel first, then the primary. */
+    /**
+     * UiKit 2.66 (Beacon UX-017): every form actions row is checked. On UiKit 2.66.1 the rule follows the configured order
+     * (page forms in theme.form_actions_order, dialogs Cancel first); on 2.66.0 it checks Cancel first everywhere.
+     */
     protected static function formActionsOrderChecked(): bool
     {
         return true;
     }
 
-    public function testPathAndRedirectFormsPutCancelFirst(): void
+    /**
+     * UiKit 2.66.1 (owner decision 2026-11-22): the path and redirect forms get their actions row from the UiKit form
+     * scaffold, in the stub theme's theme.form_actions_order (primary_first by default since 2.66.1, cancel_first on
+     * 2.66.0).
+     */
+    public function testPathAndRedirectFormsFollowTheConfiguredOrder(): void
     {
+        $expected = Theme::fromConfig('none', StubHost::theme())->formActionsOrder() === 'primary_first' ? [['primary', 'cancel']] : [['cancel', 'primary']];
         foreach ([
             ['@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null)],
             ['@NowoRoutingKitBundle/panel/redirects/form.html.twig', PanelPageFixtures::redirectsForm(null)],
         ] as [$template, $context]) {
-            self::assertSame([['cancel', 'primary']], $this->renderPage(new PageFixture($template, $context))->formActionsRows(), $template);
+            self::assertSame($expected, $this->renderPage(new PageFixture($template, $context))->formActionsRows(), $template);
         }
     }
 

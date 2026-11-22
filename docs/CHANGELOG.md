@@ -64,6 +64,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Form actions order follows UiKit again (UiKit 2.66.1, owner decision 2026-11-22):** the path and redirect forms
+  (new / edit) get their order from the UiKit form scaffold, which follows `theme.form_actions_order`: from UiKit 2.66.1
+  the primary first, then Cancel (the 1.19 order), unless the host sets `form_actions_order: cancel_first`. The import
+  dialog keeps Cancel first. Still `nowo-tech/ui-kit-bundle` **^2.66**.
+- Tests: `testPathAndRedirectFormsFollowTheConfiguredOrder` (was `testPathAndRedirectFormsPutCancelFirst`) checks the
+  forms against the stub theme's configured order instead of a hard-coded Cancel first (green on UiKit 2.66.0 and
+  2.66.1).
+
 ## [1.20.0] - 2026-11-22
 
 ### Changed
