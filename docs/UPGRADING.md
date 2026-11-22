@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 1.20.0](#to-1200)
 - [To 1.19.0](#to-1190)
 - [To 1.18.0](#to-1180)
 - [To 1.17.0](#to-1170)
@@ -105,6 +106,14 @@
   - [Storage](#storage)
 
 ## Unreleased
+
+## To 1.20.0
+
+From **1.19.0**:
+
+```bash
+composer update nowo-tech/routing-kit-bundle
+```
 
 - Requires `nowo-tech/ui-kit-bundle` **^2.66** (form actions order, Beacon UX-017): the path and redirect forms put
   Cancel first, then the primary. UiKit's `theme.form_actions_order: primary_first` restores the old order host-wide.
