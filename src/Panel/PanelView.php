@@ -11,6 +11,7 @@ use Nowo\UiKitBundle\View\Action;
 use Nowo\UiKitBundle\View\AreaNav;
 use Nowo\UiKitBundle\View\AreaNavItem;
 use Nowo\UiKitBundle\View\Label;
+use Nowo\UiKitBundle\View\PageHeader;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
 
@@ -78,6 +79,7 @@ final readonly class PanelView implements AreaNavProviderInterface
         public bool $primaryActionLast = false,
         public bool $urlRedirectsEnabled = false,
         public bool $roleGateDisabled = false,
+        public string $headerActions = HeaderActionsPlacement::BUTTONS,
     ) {
     }
 
@@ -102,6 +104,17 @@ final readonly class PanelView implements AreaNavProviderInterface
             'aria-haspopup'            => 'dialog',
             'data-testid'              => 'routing-kit-import-open',
         ]);
+    }
+
+    /**
+     * Page header of the list pages: the header actions as buttons or, with {@code web_ui.header_actions: page_actions},
+     * in the page-actions menu ({@see HeaderActionsPlacement}).
+     *
+     * @param list<Action> $actions
+     */
+    public function listHeader(Label $title, Label $intro, array $actions, ?AreaNav $tabs): PageHeader
+    {
+        return HeaderActionsPlacement::apply($this->headerActions, new PageHeader($title, $intro, $actions, tabs: $tabs));
     }
 
     public function template(string $page): string

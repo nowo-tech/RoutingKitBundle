@@ -9,6 +9,7 @@ use Nowo\RoutingKitBundle\Tests\Support\PanelPageFixtures;
 use Nowo\UiKitBundle\Test\PageContractTestCase;
 use Nowo\UiKitBundle\Test\PageFixture;
 use Nowo\UiKitBundle\View\ConfirmPage;
+use Nowo\UiKitBundle\View\PageHeader;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Component\Translation\DataCollectorTranslator;
@@ -38,6 +39,8 @@ final class PageContractTest extends PageContractTestCase
         yield 'path form (edit)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form($definitions[2]));
         yield 'path form (create, controller override)' => new PageFixture('@NowoRoutingKitBundle/panel/form.html.twig', PanelPageFixtures::form(null, controllerOverride: true));
         yield 'path delete (no-JS confirm)' => new PageFixture('@NowoRoutingKitBundle/panel/delete.html.twig', PanelPageFixtures::delete($definitions[2]));
+        yield 'paths list (header actions in the page-actions menu)' => new PageFixture('@NowoRoutingKitBundle/panel/index.html.twig', PanelPageFixtures::index($definitions, headerActions: 'page_actions'));
+        yield 'redirects list (header actions in the page-actions menu)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, headerActions: 'page_actions'));
         yield 'redirects list' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, 'created'));
         yield 'redirects list (row count)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex($redirects, rowCount: true));
         yield 'redirects list (empty)' => new PageFixture('@NowoRoutingKitBundle/panel/redirects/index.html.twig', PanelPageFixtures::redirectsIndex([]));
@@ -108,6 +111,48 @@ final class PageContractTest extends PageContractTestCase
         self::assertStringContainsString('<noscript><a class="', $html);
         self::assertStringContainsString('nowo-ui-action__fallback" href="/_routing/delete/rk_3"', $html);
         self::assertStringNotContainsString('routing-kit-role-gate-warning', $html);
+    }
+
+    public function testHeaderActionsGoToThePageActionsMenuOnRequest(): void
+    {
+        $header = PanelPageFixtures::index(PanelPageFixtures::definitions(), headerActions: 'page_actions')['page']->header;
+        self::assertSame('split', $header->actionsLayout);
+        $html = $this->headerHtml($header);
+
+        self::assertStringContainsString('data-nowo-ui-header-more', $html, 'The square page-actions menu replaces the buttons.');
+        self::assertStringContainsString('href="/_routing/new"', $html, 'New path is a menu item.');
+        self::assertStringContainsString('action="/_routing/export"', $html, 'Export keeps its POST form.');
+        self::assertStringContainsString('action="/_routing/clear-cache"', $html);
+        self::assertStringContainsString('data-testid="routing-kit-import-open"', $html, 'Import keeps its dialog opener.');
+        self::assertStringNotContainsString('nowo-ui-btn--primary', substr($html, 0, (int) strpos($html, 'data-nowo-ui-header-more')), 'No filled primary button in the header.');
+    }
+
+    public function testHeaderActionsStayButtonsInTheKitHeaderByDefault(): void
+    {
+        $header = PanelPageFixtures::index(PanelPageFixtures::definitions())['page']->header;
+
+        self::assertSame('toolbar', $header->actionsLayout);
+        self::assertSame('primary', $header->actions[0]->resolvedVariant(), 'New path stays the primary button.');
+    }
+
+    public function testRedirectsHeaderActionsGoToThePageActionsMenuOnRequest(): void
+    {
+        $header = PanelPageFixtures::redirectsIndex(PanelPageFixtures::redirects(), headerActions: 'page_actions')['page']->header;
+        self::assertSame('split', $header->actionsLayout);
+        $html = $this->headerHtml($header);
+
+        self::assertStringContainsString('data-nowo-ui-header-more', $html);
+        self::assertStringContainsString('data-testid="redirect-new"', $html);
+        self::assertStringContainsString('href="/_routing/redirects/new"', $html);
+    }
+
+    /**
+     * The header actions the way UiKit's page header draws a split header (the contract test's stub theme replaces the
+     * page header partial, so the real `header_actions` partial is rendered on the header's actions).
+     */
+    private function headerHtml(PageHeader $header): string
+    {
+        return $this->renderPage(new PageFixture('@NowoUiKitBundle/partials/_header_actions.html.twig', ['actions' => $header->actions, 'bundle' => PanelView::BUNDLE]))->html;
     }
 
     public function testRouteDeleteConfirmPagePostsWithCsrf(): void

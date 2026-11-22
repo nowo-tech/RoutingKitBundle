@@ -24,6 +24,7 @@ nowo_routing_kit:
         import_display: modal     # modal (dialog from the Import action) | inline (card under the table)
         show_row_count: false     # the pagination summary already shows the count
         primary_action_last: false
+        header_actions: buttons    # buttons | page_actions (UiKit View\Action items in the page-actions menu, UiKit 2.21+)
     security:
         access_roles: [ROLE_ADMIN]
         allow_unauthenticated: false

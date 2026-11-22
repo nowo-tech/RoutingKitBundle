@@ -210,7 +210,9 @@ UiKit and the panel inherits it — no RoutingKit-specific chrome configuration 
 3. **Scaffolds** — `templates/bundles/NowoUiKitBundle/page/list.html.twig` (or `form`, `confirm`) re-skins every list /
    form / confirm page of every bundle.
 4. **Options** — `web_ui.import_display: inline` (card instead of the default dialog), `web_ui.show_row_count: true`,
-   `web_ui.primary_action_last: true`. Row actions follow `nowo_ui_kit.row_actions_display` / `icon_set`.
+   `web_ui.primary_action_last: true`, `web_ui.header_actions: page_actions` (New / Export / Clear cache / Import as
+   UiKit `View\Action` items of the page-actions menu instead of header buttons; default `buttons`).
+   Row actions follow `nowo_ui_kit.row_actions_display` / `icon_set`.
 5. **One page** — `web_ui.templates.<page>` with a template that extends `@!NowoRoutingKitBundle/…` and redefines a
    data block ([TEMPLATES.md](TEMPLATES.md)).
 

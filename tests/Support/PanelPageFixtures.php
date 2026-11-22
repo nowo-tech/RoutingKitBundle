@@ -70,7 +70,7 @@ final class PanelPageFixtures
      *
      * @return array<string, mixed>
      */
-    public static function index(array $rows, string $importDisplay = 'modal', bool $roleGateDisabled = false, bool $redirects = true, bool $rowCount = false): array
+    public static function index(array $rows, string $importDisplay = 'modal', bool $roleGateDisabled = false, bool $redirects = true, bool $rowCount = false, string $headerActions = 'buttons'): array
     {
         $rowActions = [];
         foreach ($rows as $key => $row) {
@@ -90,7 +90,7 @@ final class PanelPageFixtures
 
         return [
             'page' => new ListPage(
-                new PageHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => 'en']), $actions, tabs: self::view($redirects)->nav('routes')),
+                self::view($redirects, $headerActions)->listHeader(PanelView::label('panel.title'), PanelView::label('panel.subtitle', ['%default%' => 'en']), $actions, self::view($redirects)->nav('routes')),
                 [
                     new Column('routeName', PanelView::label('panel.col.route'), required: true),
                     new Column('locale', PanelView::label('panel.col.locale')),
@@ -155,7 +155,7 @@ final class PanelPageFixtures
      *
      * @return array<string, mixed>
      */
-    public static function redirectsIndex(array $rows, ?string $status = null, bool $rowCount = false): array
+    public static function redirectsIndex(array $rows, ?string $status = null, bool $rowCount = false, string $headerActions = 'buttons'): array
     {
         $rowActions = [];
         foreach ($rows as $key => $redirect) {
@@ -167,9 +167,9 @@ final class PanelPageFixtures
 
         return [
             'page' => new ListPage(
-                new PageHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
+                self::view(true, $headerActions)->listHeader(PanelView::label('redirects.title'), PanelView::label('redirects.intro'), [
                     new Action('create', PanelView::label('redirects.new'), self::PREFIX . '/redirects/new', variant: 'primary', attributes: ['data-testid' => 'redirect-new']),
-                ], tabs: self::view()->nav('redirects')),
+                ], self::view()->nav('redirects')),
                 [
                     new Column('sourcePath', PanelView::label('redirects.col.source'), required: true),
                     new Column('targetUrl', PanelView::label('redirects.col.target'), required: true),
@@ -271,9 +271,9 @@ final class PanelPageFixtures
         ];
     }
 
-    public static function view(bool $redirects = true): PanelView
+    public static function view(bool $redirects = true, string $headerActions = 'buttons'): PanelView
     {
-        return new PanelView(new Environment(new ArrayLoader()), self::PREFIX, urlRedirectsEnabled: $redirects);
+        return new PanelView(new Environment(new ArrayLoader()), self::PREFIX, urlRedirectsEnabled: $redirects, headerActions: $headerActions);
     }
 
     public static function factory(): FormFactoryInterface

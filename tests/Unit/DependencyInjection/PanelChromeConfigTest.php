@@ -28,8 +28,17 @@ final class PanelChromeConfigTest extends TestCase
         self::assertSame('modal', $webUi['import_display'], 'Import dialog by default since 1.9.1.');
         self::assertFalse($webUi['show_row_count'], 'No row-count caption by default since 1.9.1.');
         self::assertFalse($webUi['primary_action_last']);
+        self::assertSame('buttons', $webUi['header_actions'], 'Header actions stay buttons by default.');
         self::assertSame([], $webUi['delete_confirm_attr']);
         self::assertArrayNotHasKey('main_landmark', $webUi);
+    }
+
+    public function testHeaderActionsAcceptsOnlyKnownModes(): void
+    {
+        self::assertSame('page_actions', $this->process(['web_ui' => ['header_actions' => 'page_actions']])['web_ui']['header_actions']);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process(['web_ui' => ['header_actions' => 'toolbar']]);
     }
 
     public function testUnknownClassKeyIsRejected(): void
