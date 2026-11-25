@@ -31,17 +31,18 @@ for one minor version.
 ## Requirements
 
 - **FR-001** Pages → scaffolds: `panel/index`, `panel/redirects/index` → `page/list`; `panel/form`,
-  `panel/redirects/form` → `page/form`; `panel/redirects/delete` → `page/confirm` (see `docs/TEMPLATES.md`).
+  `panel/redirects/form` → `page/form`; `panel/delete`, `panel/redirects/delete` → `page/confirm` (see `docs/TEMPLATES.md`).
 - **FR-002** Controllers build `ListPage` / `FormPage` / `ConfirmPage` with `Label`s of the `NowoRoutingKitBundle`
   domain, `bundle: NowoRoutingKitBundle`, `layout: web_ui.layout_template`; deletes are POST `Action`s with a CSRF
   `FormView` and a `Confirm`.
 - **FR-003** Removed local chrome: `panel/layout`, `panel/base`, `panel/_modal_shell`, inline `confirm()`; the import
-  modal uses the UiKit `modal_shell` partial, the nav the `tabs` partial, notices the `flashes` partial / slots.
+  dialog uses the framework-free UiKit `dialog` partial (Cancel first, then Import; `web_ui.import_display: inline` renders the same form in a card), the nav the `tabs` partial, notices the `flashes` partial / slots.
 - **FR-004** Canonical keys `web_ui.enabled`, `web_ui.path_prefix`, `web_ui.layout_template` (default null),
   `web_ui.templates.<page>`; deprecated aliases `panel.enabled`, `panel.path_prefix`, `panel.role`; deprecated
   `web_ui.classes` / `partials` (bridged), `css_framework`, `icon_set`, `ui_kit_assets`, `main_landmark`,
   `delete_confirm_attr`.
 - **FR-005** A `web_ui.layout_template` without the canonical blocks is wrapped by a deprecated bridge.
+- **FR-007** Bundle form theme `panel/_form_theme.html.twig` (`PanelView::FORM_THEME`, applied through `FormPage::formThemes` and to the import form on top of the host's themes): checkbox rows render as UiKit check labels followed by the field errors and help. It is the one file allowed to emit a raw `<input>` (REQ-TWIG-005 form-theme exception, allowlisted in `.scripts/check-no-raw-html-form.sh`).
 - **FR-006** Every label / placeholder used by the pages exists in the 7 shipped locales.
 
 ## Success criteria
