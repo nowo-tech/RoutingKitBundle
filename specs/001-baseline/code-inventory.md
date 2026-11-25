@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/routing-kit-bundle`  
-**Last audited**: 2026-11-22 (1.19.0)  
+**Last audited**: 2026-11-25 (1.20.1)  
 **Coverage summary**: **94/94** files under `src/` mapped (see [Coverage summary](#coverage-summary)). PHPUnit line coverage target 100% of included `src/` PHP (optional SeoKit bridge files may be excluded from the coverage denominator when SeoKit is not installed).
 
 Every production file under `src/` maps to one or more baseline `FR-*` requirements.
@@ -136,7 +136,16 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 
 | Path | Responsibility | Spec FR-* IDs |
 | --- | --- | --- |
-| `Resources/views/panel/*` | Panel pages extending the UiKit scaffolds (`page/list`, `page/form`, `page/confirm`) + nav / notices / import partials ([docs/TEMPLATES.md](../../docs/TEMPLATES.md)). | FR-08, FR-09, FR-14, FR-17 |
+| `Resources/views/panel/index.html.twig` | Route paths list on the UiKit `page/list` scaffold: row cells, inline import card, import dialog block, panel notices ([docs/TEMPLATES.md](../../docs/TEMPLATES.md)). | FR-08, FR-09, FR-14, FR-25, 004 FR-001 |
+| `Resources/views/panel/form.html.twig` | Route path create / edit form on `page/form`: form errors and the conflict preview before the child loop. | FR-08, FR-14, 004 FR-001 |
+| `Resources/views/panel/delete.html.twig` | Route path delete: full-page confirmation on `page/confirm`, the no-JS fallback of the list / edit confirm dialog (POST deletes, CSRF-protected). | FR-08, FR-17, 004 FR-001 |
+| `Resources/views/panel/_notices.html.twig` | Panel notices after the host flashes: role-gate warning when `security.allow_unauthenticated` is true, redirect status message through the UiKit `flashes` partial. | FR-08, FR-17, 004 FR-003 |
+| `Resources/views/panel/_import_form.html.twig` | Signed JSON import form: body in the UiKit `dialog` partial (Cancel first, then Import via `form=`) or inline in a card; child-loop rendering. | FR-08, FR-17, 004 FR-003 |
+| `Resources/views/panel/_form_theme.html.twig` | Bundle form theme (`PanelView::FORM_THEME`): checkbox rows as UiKit check labels; the one REQ-TWIG-005 raw-`<input>` exception. | FR-14, 004 FR-007 |
+| `Resources/views/panel/_legacy_layout.html.twig` | Deprecated BC bridge (1.9, removed in 2.0): wraps a 1.x `web_ui.layout_template` that renders `body` instead of the UiKit canonical blocks; selected by `PanelView` when the layout has no `nowo_ui_content` block. | FR-14, 004 FR-005 |
+| `Resources/views/panel/redirects/index.html.twig` | URL redirects list on `page/list` (source, target, status, hits cells; delete through the UiKit confirm dialog; `?status=` notice). | FR-22, 002 REQ-REDIR-007, 004 FR-001 |
+| `Resources/views/panel/redirects/form.html.twig` | URL redirect create / edit form on `page/form` (form-level errors before the child loop). | FR-22, 002 REQ-REDIR-007, 004 FR-001 |
+| `Resources/views/panel/redirects/delete.html.twig` | URL redirect delete: full-page confirmation on `page/confirm`, no-JS fallback of the list dialog. | FR-22, 002 REQ-REDIR-007, 004 FR-001 |
 
 ## URL redirects (`src/Redirect/`, since 1.6.0)
 
@@ -169,7 +178,7 @@ Every production file under `src/` maps to one or more baseline `FR-*` requireme
 
 ## Coverage summary
 
-Audit command: `git ls-files src | wc -l` (2026-11-22).
+Audit command: `git ls-files src | wc -l` (2026-11-25).
 
 | Category | Files | Mapped |
 | --- | ---: | ---: |
